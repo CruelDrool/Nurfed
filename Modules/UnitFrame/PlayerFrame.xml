@@ -1,0 +1,332 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+ http://localhost/UI.xsd">
+
+	<Script file="PlayerFrame.lua"/>
+	 <Button name="Nurfed_Unit_Player" inherits="Nurfed_UnitFrame" virtual="true">
+		<Frames>
+			<StatusBar name="$parentHealth" parentKey="health" inherits="Nurfed_Unit_hp">
+				<Size x="130" y="13"/>
+				<Anchors>
+					<Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-5" y="25" />
+				</Anchors>
+				<Layers>
+					<Layer level="OVERLAY">
+						<FontString parentKey="perc" inherits="Nurfed_UnitFontHPperc" justifyH="RIGHT">
+							<Size x="39" y="9"/>
+							<Anchors>
+								<Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="TOPRIGHT" x="0" y="0"/>
+							</Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+				<Attributes>
+					<Attribute name="textFormat" type="string" value="$cur ($max)"/>
+					<Attribute name="missFormat" type="string" value="$miss"/>
+					<Attribute name="percFormat" type="string" value="$perc"/>
+					<Attribute name="glide" type="boolean" value="true"/>
+					<Attribute name="glideFade" type="number" value="0.35"/>
+				</Attributes>
+			</StatusBar>
+			
+			<StatusBar parentKey="powerBar" inherits="Nurfed_Unit_mp">
+				<Size x="130" y="10"/>
+				<Anchors>
+					<Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-5" y="14" />
+				</Anchors>
+				<Attributes>
+					<Attribute name="textFormat" type="string" value="$cur ($max)"/>
+					<Attribute name="glide" type="boolean" value="true"/>
+					<Attribute name="glideFade" type="number" value="0.35"/>
+				</Attributes>
+			</StatusBar>
+			
+			<StatusBar parentKey="xp" frameStrata="LOW">
+				<Size x="170" y="8"/>
+				<Anchors>
+					<Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-5" y="5" />
+				</Anchors>
+				<Layers>
+					<Layer level="BACKGROUND">
+						<Texture parentKey="bg" file="Interface\AddOns\Nurfed\Images\statusbar5">
+							<Color r="0" g="0" b="1" a="0.25"/>
+						</Texture>
+					</Layer>
+					<Layer level="OVERLAY">
+						<FontString parentKey="text" inherits="Nurfed_UnitFontSmall" justifyH="CENTER">
+							<Shadow>
+								<Color r="0" g="0" b="0" a="0.75"/>
+								<Offset x="-1" y="-1"/>
+							</Shadow>
+						</FontString>
+						<FontString parentKey="perc" inherits="Nurfed_UnitFontSmall" justifyH="RIGHT">
+							<Shadow>
+								<Color r="0" g="0" b="0" a="0.75"/>
+								<Offset x="-1" y="-1"/>
+							</Shadow>
+						</FontString>
+					</Layer>
+				</Layers>
+				<Attributes>
+					<Attribute name="textFormat" type="string" value="$cur/$max ($rest)"/>
+					<Attribute name="percFormat" type="string" value="$perc"/>
+				</Attributes>
+				<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5"/>
+			</StatusBar>
+
+			<Frame parentKey="additionalPowerBar" frameStrata="LOW" hidden="true">
+				<Size x="80" y="15"/>
+				<Anchors>
+					<Anchor point="TOPRIGHT" relativeTo="$parent" x="0" y="15"/>
+				</Anchors>
+				<Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+					<BackgroundInsets left="2" right="2" top="2" bottom="2"/>
+					<TileSize val="16"/>
+					<EdgeSize val="8"/>
+					<Color r="0" g="0" b="0" a="0.75"/>
+				</Backdrop>
+				<Frames>
+					<StatusBar parentKey="statusbar" frameStrata="LOW" orientation="HORIZONTAL">
+						<Size x="74" y="9"/>
+						<Anchors>
+							<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMLEFT" x="3" y="3" />
+						</Anchors>
+						<Layers>
+							<Layer level="BACKGROUND">
+								<Texture parentKey="bg" file="Interface\AddOns\Nurfed\Images\statusbar5">
+									<Color r="0" g="1" b="1" a="0.25"/>
+								</Texture>
+							</Layer>
+							<Layer level="OVERLAY">
+								<FontString parentKey="text" inherits="Nurfed_UnitFontSmallOutline" justifyH="LEFT"/>
+							</Layer>
+						</Layers>
+						<Attributes>
+							<Attribute name="textFormat" type="string" value="$cur ($max)"/>
+							<Attribute name="glide" type="boolean" value="true"/>
+							<Attribute name="glideFade" type="number" value="0.35"/>
+						</Attributes>
+						<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5"/>
+					</StatusBar>
+				</Frames>
+			</Frame>
+
+			<Frame parentKey="cast" inherits="Nurfed_Unit_casting">
+				<Anchors>
+					<Anchor point="RIGHT" relativeTo="$parent" relativePoint="LEFT" />
+				</Anchors>
+				<Attributes>
+					<Attribute name="textFormat" type="string" value="$spell"/>
+				</Attributes>
+			</Frame>
+
+			<StatusBar name="$parentRune1" inherits ="Nurfed_Unit_rune">
+				<Size x="12" y="8"/>
+				<Anchors>
+					<Anchor point="TOP" relativeTo="$parent" relativePoint="BOTTOM" x="-35" y="0"/>
+				</Anchors>
+			</StatusBar>
+
+			<StatusBar name="$parentRune2" inherits ="Nurfed_Unit_rune">
+				<Size x="12" y="8"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="$parentRune1" relativePoint="TOPRIGHT" x="2" y="0"/>
+				</Anchors>
+			</StatusBar>
+
+			<StatusBar name="$parentRune3" inherits ="Nurfed_Unit_rune">
+				<Size x="12" y="8"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="$parentRune2" relativePoint="TOPRIGHT" x="2" y="0"/>
+				</Anchors>
+			</StatusBar>
+
+			<StatusBar name="$parentRune4" inherits ="Nurfed_Unit_rune">
+				<Size x="12" y="8"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="$parentRune3" relativePoint="TOPRIGHT" x="2" y="0"/>
+				</Anchors>
+			</StatusBar>
+
+			<StatusBar name="$parentRune5" inherits ="Nurfed_Unit_rune">
+				<Size x="12" y="8"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="$parentRune4" relativePoint="TOPRIGHT" x="2" y="0"/>
+				</Anchors>
+			</StatusBar>
+
+			<StatusBar name="$parentRune6" inherits ="Nurfed_Unit_rune">
+				<Size x="12" y="8"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="$parentRune5" relativePoint="TOPRIGHT" x="2" y="0"/>
+				</Anchors>
+			</StatusBar>
+
+			<PlayerModel inherits="Nurfed_Unit_model">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT" x="5" y="-5"/>
+				</Anchors>
+			</PlayerModel>
+			
+			<Frame name="$parentReadyCheck" parentKey="readyCheck" inherits="ReadyCheckStatusTemplate" hidden="true">
+				<Size x="40" y="40"/>
+				<Anchors>
+					<Anchor point="CENTER" relativeKey="$parent.model" relativePoint="CENTER" x="0" y="0"/>
+				</Anchors>
+			</Frame>
+			
+			<Frame parentKey="feedback">
+				<Frames>
+					<MessageFrame parentKey="heal" displayDuration="1" fadeDuration="0.5" fade="true" insertMode="BOTTOM">
+						<Size x="110" y="11"/>
+						<Anchors>
+							<Anchor point="BOTTOMLEFT" relativeTo="$parent" relativePoint="BOTTOMLEFT" x="5" y="13"/>
+						</Anchors>
+						<FontString inherits="Nurfed_UnitFontOutline" justifyH="LEFT"/>
+					</MessageFrame>
+					<MessageFrame parentKey="damage" displayDuration="1" fadeDuration="0.5" fade="true" insertMode="TOP">
+						<Size x="110" y="11"/>
+						<Anchors>
+							<Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT" x="5" y="-5"/>
+						</Anchors>
+						<FontString inherits="Nurfed_UnitFontOutline" justifyH="LEFT"/>
+					</MessageFrame>
+				</Frames>
+			</Frame>
+
+			<Frame parentKey="state">
+				<Size x="19" y="19"/>
+				<Anchors>
+					<Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPRIGHT" x="-49" y="-2"/>
+				</Anchors>
+				<Layers>
+					<Layer level="ARTWORK">
+						<Texture parentKey="restIcon" file="Interface\CharacterFrame\UI-StateIcon" hidden="true">
+							<TexCoords left="0" right="0.5" top="0" bottom="0.5"/>
+						</Texture>
+						<Texture parentKey="restIconGlow" file="Interface\CharacterFrame\UI-StateIcon" hidden="true" alphaMode="ADD">
+							<TexCoords left="0" right="0.5" top="0.5" bottom="1.0"/>
+						</Texture>
+						<Texture parentKey="attackIcon" file="Interface\CharacterFrame\UI-StateIcon" hidden="true">
+							<TexCoords left="0.5" right="1.0" top="0" bottom="0.5"/>
+						</Texture>
+						<Texture parentKey="attackIconGlow" file="Interface\CharacterFrame\UI-StateIcon" hidden="true" alphaMode="ADD">
+							<Color r="1.0" g="0" b="0"/>
+							<TexCoords left="0.5" right="1.0" top="0.5" bottom="1.0"/>
+						</Texture>
+					</Layer>
+				</Layers>
+			</Frame>
+
+			<Frame parentKey="playTime" hidden="true">
+				<Size x="16" y="16"/>
+				<Anchors>
+				 <Anchor point="TOPLEFT" relativeTo="$parent" x="2" y="-2"/>
+				</Anchors>
+				<Layers>
+					<Layer level="BACKGROUND">
+						<Texture parentKey="icon" file="Interface\CharacterFrame\UI-Player-PlayTimeTired" setAllPoints="true"/>
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnEnter>
+						GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+						GameTooltip:SetText(self.tooltip, nil, nil, nil, nil, 1);
+					</OnEnter>
+					<OnLeave function="GameTooltip_Hide"/>
+				</Scripts>
+			</Frame>
+		</Frames>
+ 
+		<Layers>
+			<Layer level="OVERLAY">
+				<FontString parentKey="name" inherits="Nurfed_Unitfont" justifyH="LEFT">
+					<Size x="79" y="9"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPLEFT" x="45" y="-4"/>
+					</Anchors>
+				</FontString>
+				<FontString parentKey="infoline" inherits="Nurfed_UnitFontSmall" justifyH="LEFT">
+					<Size x="68" y="8"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.name" relativePoint="BOTTOMLEFT" x="0" y="0"/>
+					</Anchors>
+				</FontString>
+				<Texture parentKey="pvp" hidden="true">
+					<Size x="20" y="20"/>
+					<Anchors>
+						<Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPRIGHT" x="-32" y="-4"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="LFGRole" file="Interface\LFGFrame\UI-LFG-ICON-PORTRAITROLES" hidden="true">
+					<Size x="9" y="9"/>
+					<Anchors>
+						<Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPRIGHT" x="-30" y="-4"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="raidRole" hidden="true">
+					<Size x="9" y="9"/>
+					<Anchors>
+						<Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPRIGHT" x="-21" y="-4"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="master" file="Interface\GroupFrame\UI-Group-MasterLooter" hidden="true">
+					<Size x="9" y="9"/>
+					<Anchors>
+						<Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPRIGHT" x="-14" y="-4"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="leader" file="Interface\GroupFrame\UI-Group-LeaderIcon" hidden="true">
+					<Size x="10" y="10"/>
+					<Anchors>
+						<Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPRIGHT" x="-5" y="-4"/>
+					</Anchors>
+				</Texture>
+				<Texture parentKey="guide" file="Interface\LFGFrame\UI-LFG-ICON-PORTRAITROLES" hidden="true">
+					<Size x="10" y="10"/>
+					<Anchors>
+						<Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPRIGHT" x="-5" y="-4"/>
+					</Anchors>
+					<TexCoords left="0" right="0.296875" top="0.015625" bottom="0.3125"/>
+				</Texture>
+				<Texture parentKey="assistant" file="Interface\GroupFrame\UI-GROUP-ASSISTANTICON" hidden="true">
+					<Size x="10" y="10"/>
+					<Anchors>
+						<Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPRIGHT" x="-5" y="-4"/>
+					</Anchors>
+				</Texture>
+
+				<!--<FontString parentKey="level" inherits="Nurfed_UnitFontSmall" justifyH="RIGHT">
+					<Size x="20" y="8"/>
+					<Anchors>
+						<Anchor point="TOP" relativeTo="$parent" relativePoint="TOP" x="11" y="-5"/>
+					</Anchors>
+				</FontString>-->
+				<Texture parentKey="raidtarget" file="Interface\TargetingFrame\UI-RaidTargetingIcons" hidden="true">
+					<Size x="20" y="20"/>
+					<Anchors>
+						<Anchor point="CENTER" relativeTo="$parent" relativePoint="TOP" x="0" y="10"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<Frames>
+			<Frame inherits="Nurfed_Unit_Overlay" parentKey="overlay">
+				<Size x="204" y="90" />
+				<Anchors>
+					<Anchor point="TOPRIGHT" relativeTo="$parent" x="4" y="26"/>
+				</Anchors>
+			</Frame>
+		</Frames>
+		<Scripts>
+			<OnEnter function="UnitFrame_OnEnter"/>
+			<OnLeave function="UnitFrame_OnLeave"/>
+		</Scripts>
+		<HighlightTexture file="Interface\QuestFrame\UI-QuestTitleHighlight" alphaMode="ADD" hidden="true">
+			<Size x="130" y="16"/>
+			<Anchors>
+				<Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPRIGHT" x="-5" y="-5"/>
+			</Anchors>
+		</HighlightTexture>
+	</Button>
+
+</Ui>

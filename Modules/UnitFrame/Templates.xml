@@ -1,0 +1,507 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+ http://localhost/UI.xsd">
+
+	<Font name="Nurfed_UnitFont" font="Interface\AddOns\Nurfed\Fonts\framd.ttf" outline="NONE" virtual="true">
+		<FontHeight val="10"/>
+		<Color r="1" g="1" b="1"/>
+	</Font>
+
+	<Font name="Nurfed_UnitFontOutline" font="Interface\AddOns\Nurfed\Fonts\framd.ttf" outline="NORMAL" virtual="true">
+		<FontHeight val="10"/>
+		<Color r="1" g="1" b="1"/>
+	</Font>
+
+	<Font name="Nurfed_UnitFontSmall" font="Interface\AddOns\Nurfed\Fonts\framd.ttf" outline="NONE" virtual="true">
+		<FontHeight val="8"/>
+		<Color r="1" g="1" b="1"/>
+	</Font>
+
+	<Font name="Nurfed_UnitFontSmallOutline" font="Interface\AddOns\Nurfed\Fonts\framd.ttf" outline="NORMAL" virtual="true">
+		<FontHeight val="8"/>
+		<Color r="1" g="1" b="1"/>
+	</Font>
+
+	<Font name="Nurfed_CountFontOutline" font="Fonts\ARIALN.TTF" outline="NORMAL" virtual="true">
+		<FontHeight val="12"/>
+		<Color r="1" g="1" b="1"/>
+	</Font>
+
+	<Font name="Nurfed_UnitFontHPperc" font="Interface\AddOns\Nurfed\Fonts\framd.ttf" outline="NONE" virtual="true">
+		<FontHeight val="9"/>
+		<Color r="1" g="1" b="1"/>
+	</Font>
+
+	<Button name="Nurfed_UnitFrame" frameStrata="LOW" inherits="SecureUnitButtonTemplate" parent="UIParent" movable="true" virtual="true">
+		<Size x="180" y="59"/>
+		<Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+			<BackgroundInsets left="5" right="5" top="5" bottom="5"/>
+			<TileSize val="16"/>
+			<EdgeSize val="16"/>
+			<Color r="0" g="0" b="0" a="0.75"/>
+		</Backdrop>
+	</Button>
+	
+	<StatusBar name="Nurfed_Unit_hp" virtual="true">
+		<Frames>
+			<Frame parentKey="healAbsorb" frameLevel="2">
+				<Layers>
+					<Layer level="OVERLAY">
+						<Texture parentKey="leftShadow" file="Interface\RaidFrame\Absorb-Edge">
+							<Anchors>
+								<Anchor point="TOPLEFT" relativeKey="$parent.absorbFill" relativePoint="TOPLEFT" x="0" y="0"/>
+								<Anchor point="BOTTOMLEFT" relativeKey="$parent.absorbFill" relativePoint="BOTTOMLEFT" x="0" y="0"/>
+							</Anchors>
+						</Texture>
+						<Texture parentKey="rightShadow" file="Interface\RaidFrame\Absorb-Edge">
+							<Anchors>
+								<Anchor point="TOPLEFT" relativeKey="$parent.absorbFill" relativePoint="TOPRIGHT" x="-8" y="0"/>
+								<Anchor point="BOTTOMLEFT" relativeKey="$parent.absorbFill" relativePoint="BOTTOMRIGHT" x="-8" y="0"/>
+							</Anchors>
+							<TexCoords left="1" right="0" top="0" bottom="1"/>
+						</Texture>
+						<Texture file="Interface\RaidFrame\Absorb-Fill" parentKey="absorbFill" setAllPoints="true"/>
+					</Layer>
+				</Layers>
+			</Frame>
+
+			<Frame parentKey="myHealPrediction" frameLevel="2">
+				<Layers>
+					<Layer level="OVERLAY">
+						<Texture file="Interface\AddOns\Nurfed\Images\statusbar5">
+							<Color r="0.0" g="0.827" b="0.765"/>
+						</Texture>
+					</Layer>
+				</Layers>
+			</Frame>
+			
+			<Frame parentKey="otherHealPrediction" frameLevel="2">
+				<Layers>
+					<Layer level="OVERLAY">
+						<Texture file="Interface\AddOns\Nurfed\Images\statusbar5">
+							<Color r="0.0" g="0.631" b="0.557"/>
+						</Texture>
+					</Layer>
+				</Layers>
+			</Frame>
+
+			<Frame parentKey="totalAbsorb" frameLevel="2">
+				<Layers>
+					<Layer level="OVERLAY">
+						<!--<Texture file="Interface\RaidFrame\Shield-Fill"/>-->
+						<Texture file="Interface\AddOns\Nurfed\Images\statusbar5">
+							<Color r="0.6745" g="0.759" b="0.9765"/>
+						</Texture>
+					</Layer>
+					<Layer level="OVERLAY" textureSubLevel="1">
+						<Texture parentKey="overlay" file="Interface\RaidFrame\Shield-Overlay" vertTile="true" horizTile="true" setAllPoints="true"/>
+					</Layer>
+				</Layers>
+			</Frame>
+			
+		</Frames>
+		
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="bg" file="Interface\AddOns\Nurfed\Images\statusbar5">
+					<Color r="1" g="0" b="0" a="0.25"/>
+				</Texture>
+			</Layer>
+
+			<Layer level="OVERLAY">
+				<Texture parentKey="overAbsorbGlow" file="Interface\RaidFrame\Shield-Overshield" alphaMode="ADD" hidden="true">
+					<Size x="16" y="0"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPRIGHT" x="-7" y="0"/>
+						<Anchor point="BOTTOMLEFT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-7" y="0"/>
+					</Anchors>
+				</Texture>
+				
+				<Texture parentKey="overHealAbsorbGlow" file="Interface\RaidFrame\Absorb-Overabsorb" alphaMode="ADD" hidden="true">
+					<Size x="16" y="0"/>
+					<Anchors>
+						<Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMLEFT" x="7" y="0"/>
+						<Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPLEFT" x="7" y="0"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+
+			<Layer level="OVERLAY" textureSubLevel="1">
+				<FontString parentKey="text" inherits="Nurfed_UnitFont" justifyH="LEFT">
+					<Shadow>
+						<Color r="0" g="0" b="0" a="0.75"/>
+						<Offset x="-1" y="-1"/>
+					</Shadow>
+				</FontString>
+				<FontString parentKey="miss" inherits="Nurfed_UnitFontOutline" justifyH="RIGHT">
+					<Color r="0.8" g="0.06666666666666666666666666666667" b="0.06666666666666666666666666666667"/>
+				</FontString>
+			</Layer>
+		</Layers>
+		<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5"/>
+	</StatusBar>
+
+	<StatusBar name="Nurfed_Unit_mp" virtual="true">
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="bg" file="Interface\AddOns\Nurfed\Images\statusbar5">
+					<Color r="0" g="1" b="1" a="0.25"/>
+				</Texture>
+			</Layer>
+			<Layer level="OVERLAY">
+				<FontString parentKey="text" inherits="Nurfed_UnitFont" justifyH="LEFT">
+					<Shadow>
+						<Color r="0" g="0" b="0" a="0.75"/>
+						<Offset x="-1" y="-1"/>
+					</Shadow>
+				</FontString>
+			</Layer>
+		</Layers>
+		<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5"/>
+	</StatusBar>
+
+	<StatusBar name="Nurfed_Unit_Threat" virtual="true">
+		<Size x="170" y="8"/>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="bg" file="Interface\AddOns\Nurfed\Images\statusbar5">
+					<Color r="0" g="0" b="1" a="0.25"/>
+				</Texture>
+			</Layer>
+			<Layer level="OVERLAY">
+				<FontString parentKey="text" inherits="Nurfed_UnitFontSmall" justifyH="CENTER">
+					<Shadow>
+						<Color r="0" g="0" b="0" a="0.75"/>
+						<Offset x="-1" y="-1"/>
+					</Shadow>
+				</FontString>
+				<FontString parentKey="perc" inherits="Nurfed_UnitFontSmall" justifyH="RIGHT">
+					<Shadow>
+						<Color r="0" g="0" b="0" a="0.75"/>
+						<Offset x="-1" y="-1"/>
+					</Shadow>
+				</FontString>
+			</Layer>
+		</Layers>
+		<Attributes>
+			<Attribute name="textFormat" type="string" value="$cur"/>
+			<Attribute name="percFormat" type="string" value="$perc"/>
+			<Attribute name="glide" type="boolean" value="true"/>
+		</Attributes>
+
+		<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5"/>
+	</StatusBar>
+
+	<StatusBar name="Nurfed_Unit_rune" hidden="true" virtual="true">
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="bg" file="Interface\AddOns\Nurfed\Images\statusbar5">
+					<Color r="0" g="0" b="1" a="0.25"/>
+				</Texture>
+			</Layer>
+			<Layer level="OVERLAY">
+				<FontString parentKey="text" inherits="Nurfed_UnitFontSmall" justifyH="CENTER" text="!">
+					<Shadow>
+						<Color r="0" g="0" b="0" a="0.75"/>
+						<Offset x="-1" y="-1"/>
+					</Shadow>
+				</FontString>
+			</Layer>
+		</Layers>
+		<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5"/>
+	</StatusBar>
+
+	<Frame name="Nurfed_Unit_casting" hidden="true" virtual="true">
+		<Size x="15" y="59"/>
+		<Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+			<BackgroundInsets left="2" right="2" top="2" bottom="2"/>
+			<TileSize val="12"/>
+			<EdgeSize val="10"/>
+			<Color r="0" g="0" b="0" a="0.0"/>
+		</Backdrop>
+		<Frames>
+			<StatusBar parentKey="statusbar" orientation="VERTICAL" frameLevel="1">
+				<Size x="10" y="44"/>
+				<Anchors>
+					<Anchor point="TOP" x="0" y="-3"/>
+				</Anchors>
+				<Layers>
+					<Layer level="ARTWORK">
+						<FontString parentKey="text" inherits="Nurfed_UnitFontSmall" justifyH="LEFT">
+							<Size x="10" y="44"/>
+							<Anchors>
+								<Anchor point="TOP"/>
+							</Anchors>
+							<Shadow>
+								<Color r="0" g="0" b="0" a="0.75"/>
+								<Offset x="-1" y="-1"/>
+							</Shadow>
+						</FontString>
+						<FontString parentKey="time" inherits="Nurfed_UnitFontSmall" justifyH="LEFT">
+							<Anchors>
+								<Anchor point="BOTTOM" relativePoint="TOP" x="0" y="3"/>
+							</Anchors>
+							<Shadow>
+								<Color r="0" g="0" b="0" a="0.75"/>
+								<Offset x="-1" y="-1"/>
+							</Shadow>
+						</FontString>
+						<Texture parentKey="icon">
+							<Size x="10" y="10"/>
+							<Anchors>
+								<Anchor point="TOP" relativePoint="BOTTOM" x="0" y="0"/>
+							</Anchors>
+						</Texture>
+					</Layer>
+				</Layers>
+				<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5"/>
+			</StatusBar>
+		</Frames>
+	</Frame>
+
+	<PlayerModel name="Nurfed_Unit_model" parentKey="model" virtual="true">
+		<Size x="40" y="40"/>
+		<Layers>
+			<Layer level="OVERLAY">
+				<Texture parentKey="portrait" setAllPoints="true" hidden="true">
+					<TexCoords left="0.15" right="0.85" top="0.15" bottom="0.85"/>
+				</Texture>
+			</Layer>
+		</Layers>
+	</PlayerModel>
+
+	<Button name="Nurfed_Unit_mini" inherits="SecureUnitButtonTemplate" hidden="true" virtual="true">
+		<Size x="80" y="22"/>
+		<Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+			<BackgroundInsets left="2" right="2" top="2" bottom="2"/>
+			<TileSize val="16"/>
+			<EdgeSize val="8"/>
+			<Color r="0" g="0" b="0" a="0.75"/>
+		</Backdrop>
+		<Layers>
+			<Layer level="OVERLAY">
+				<FontString parentKey="name" inherits="Nurfed_UnitFontSmall" justifyH="LEFT">
+					<Size x="75" y="8"/>
+					<Anchors>
+						<Anchor point="TOPLEFT" relativePoint="TOPLEFT" x="3" y="-2"/>
+					</Anchors>
+					<Shadow>
+						<Color r="0" g="0" b="0" a="0.75"/>
+						<Offset x="-1" y="-1"/>
+					</Shadow>
+				</FontString>
+			</Layer>
+		</Layers>
+		<Frames>
+			<StatusBar parentKey="hp" orientation="HORIZONTAL">
+				<Size x="74" y="9"/>
+				<Anchors>
+					<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMLEFT" x="3" y="3" />
+				</Anchors>
+				<Layers>
+					<Layer level="BACKGROUND">
+						<Texture file="Interface\AddOns\Nurfed\Images\statusbar5">
+							<Color r="1" g="0" b="0" a="0.25"/>
+						</Texture>
+					</Layer>
+					<Layer level="OVERLAY">
+						<FontString parentKey="perc" inherits="Nurfed_UnitFontSmallOutline" justifyH="RIGHT">
+							<Color r="1" g="0.25" b="0"/>
+						</FontString>
+					</Layer>
+				</Layers>
+				<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5"/>
+			</StatusBar>
+		</Frames>
+	</Button>
+
+	<Frame name="Nurfed_Unit_Overlay" frameStrata="MEDIUM" movable="true" enableMouse="true" frameLevel="10" hidden="true" virtual="true">
+		<Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+			<BackgroundInsets left="5" right="4" top="4" bottom="5"/>
+			<TileSize val="16"/>
+			<EdgeSize val="16"/>
+			<Color r="0" g="1" b="0" a="0.5"/>
+			<BorderColor r="0.5" g="0.5" b="0" a="0"/>
+		</Backdrop>
+		<Layers>
+			<Layer level="ARTWORK">
+				<FontString font="GameFontNormal" parentKey="text">
+					<Anchors>
+						<Anchor point="TOP" y="-5" />
+					</Anchors>
+				</FontString>
+				<FontString font="Nurfed_UnitFontSmallOutline" parentKey="placementCenter">
+					<Anchors>
+						<Anchor point="CENTER"/>
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnLoad>
+				self.text:SetText(self:GetParent():GetName())
+				self:RegisterForDrag("LeftButton")
+			</OnLoad>
+			<OnEnter>
+				self.enter = true
+				if not self:GetParent().isMoving then
+					self:SetBackdropBorderColor(0.5, 0.5, 0, 1)
+				end
+			</OnEnter>
+			<OnMouseDown>
+				if button == "LeftButton" then
+					self:SetBackdropBorderColor(0, 0, 0, 0)
+					local s = self:GetEffectiveScale()
+					local x, y = GetCursorPosition()
+					local xP, yP = self:GetParent():GetCenter()
+
+					self.xOffset = (xP*s - x)/s
+					self.yOffset = (yP*s - y)/s
+
+					self.x = x / s + self.xOffset
+					self.y = y / s + self.yOffset
+					
+					self.IsShiftKeyDown = IsShiftKeyDown()
+					self.IsControlKeyDown = IsControlKeyDown()
+
+					self:SetScript("OnUpdate",function(self, e)
+					
+						local x,y = GetCursorPosition()
+						local s = self:GetEffectiveScale()
+						x = x / s + self.xOffset
+						y = y / s + self.yOffset
+
+						if x ~= self.x and (not IsShiftKeyDown() and not self.IsShiftKeyDown) then
+							self.x = x
+						end
+					
+						if x ~= self.y and (not IsControlKeyDown() and not self.IsControlKeyDown) then
+							self.y = y
+						end
+
+						self:GetParent():ClearAllPoints()
+						self:GetParent():SetPoint("CENTER", UIParent, "BOTTOMLEFT", self.x, self.y)
+					end)
+				end
+
+			</OnMouseDown>
+			<OnMouseUp>
+				self:SetScript("OnUpdate", nil)
+				self:GetParent():SavePosition(parent)
+				if button == "LeftButton" then
+					self:SetBackdropBorderColor(0.5, 0.5, 0, 1)
+				end
+			</OnMouseUp>
+			<OnLeave>
+				self.enter = false
+				self:SetBackdropBorderColor(0, 0, 0, 0)
+			</OnLeave>
+			<OnDragStart>
+				local parent = self:GetParent()
+				self:SetBackdropBorderColor(0, 0, 0, 0)
+				--parent:StartMoving()
+				parent.isMoving = true
+			</OnDragStart>
+			<OnDragStop>
+				self:SetScript("OnUpdate", nil)
+				local parent = self:GetParent()
+				--parent:StopMovingOrSizing()
+				parent.isMoving = nil
+				parent:SavePosition(parent)
+				
+				if self.enter then
+					self:SetBackdropBorderColor(0.5, 0.5, 0, 1)
+				end
+			</OnDragStop>
+		</Scripts>
+	</Frame>
+	
+	<Frame name="Nurfed_Unit_Debuff" virtual="true" enableMouse="true">
+		<Size x="17" y="17"/>
+		<Layers>
+			<Layer level="ARTWORK">
+				<Texture parentKey="icon" setAllPoints="true"/>
+			</Layer>
+			<Layer level="OVERLAY">
+				<Texture parentKey="border" file="Interface\Buttons\UI-Debuff-Overlays" setAllPoints="true">
+					<Size x="17" y="17"/>
+					<!--<Anchors>
+						<Anchor point="TOPLEFT" x="-1" y="1"/>
+						<Anchor point="BOTTOMRIGHT" x="1" y="-1"/>
+					</Anchors>-->
+					<TexCoords left="0.296875" right="0.5703125" top="0" bottom="0.515625"/>
+				</Texture>
+				<FontString parentKey="count" inherits="Nurfed_UnitFontOutline" justifyH="RIGHT">
+					<Anchors>
+						<Anchor point="BOTTOMRIGHT" x="0" y="0"/>
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<Frames>
+			<Cooldown parentKey="cooldown" inherits="CooldownFrameTemplate" hideCountdownNumbers="true" reverse="true" drawEdge="true" hidden="true">
+				<Anchors>
+					<Anchor point="CENTER" x="0" y="-1"/>
+				</Anchors>
+			</Cooldown>
+		</Frames>
+		<Scripts>
+			<OnUpdate>
+				if ( GameTooltip:IsOwned(self) ) then
+				GameTooltip:SetUnitDebuff(self.unit, self:GetID());
+				end
+			</OnUpdate>
+			<OnEnter>
+				GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT", 15, -25);
+				GameTooltip:SetUnitDebuff(self.unit, self:GetID());
+			</OnEnter>
+			<OnLeave>
+				GameTooltip:Hide();
+			</OnLeave>
+		</Scripts>
+	</Frame>
+	
+	<Frame name="Nurfed_Unit_Buff" virtual="true" enableMouse="true">
+		<Size x="21" y="21"/>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="icon" setAllPoints="true"/>
+			</Layer>
+			<Layer level="ARTWORK">
+				<FontString parentKey="count" inherits="Nurfed_UnitFontOutline" justifyH="RIGHT">
+					<Anchors>
+						<Anchor point="BOTTOMRIGHT" x="0" y="0"/>
+					</Anchors>
+				</FontString>
+			</Layer>
+			<Layer level="OVERLAY">
+				<Texture parentKey="stealable" file="Interface\TargetingFrame\UI-TargetingFrame-Stealable" hidden="true" alphaMode="ADD">
+					<Size x="21" y="21"/>
+					<Anchors>
+						<Anchor point="CENTER" x="0" y="0"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<Frames>
+			<Cooldown parentKey="cooldown" inherits="CooldownFrameTemplate" hideCountdownNumbers="true" reverse="true" drawEdge="true">
+				<Anchors>
+					<Anchor point="CENTER" x="0" y="-1"/>
+				</Anchors>
+			</Cooldown>
+		</Frames>
+		<Scripts>
+			<OnUpdate>
+				if ( GameTooltip:IsOwned(self) ) then
+				GameTooltip:SetUnitBuff(self.unit, self:GetID());
+				end
+			</OnUpdate>
+			<OnEnter>
+				GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT", 15, -25);
+				GameTooltip:SetUnitBuff(self.unit, self:GetID());
+			</OnEnter>
+			<OnLeave>
+				GameTooltip:Hide();
+			</OnLeave>
+		</Scripts>
+	</Frame>	
+	</Ui>

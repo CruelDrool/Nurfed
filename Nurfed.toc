@@ -1,0 +1,38 @@
+## Interface: 60200
+## Version: 1.0
+## Title: Nurfed UI
+## Notes: Inspired by Tivoli and Apoco.
+## Author: CruelDrool
+## SavedVariables: NurfedDB
+## X-Category: Interface Enhancements
+
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
+
+Libs\AceAddon-3.0\AceAddon-3.0.xml
+Libs\AceEvent-3.0\AceEvent-3.0.xml
+Libs\AceHook-3.0\AceHook-3.0.xml
+Libs\AceDB-3.0\AceDB-3.0.xml
+Libs\AceDBOptions-3.0\AceDBOptions-3.0.xml
+Libs\AceLocale-3.0\AceLocale-3.0.xml
+Libs\AceConsole-3.0\AceConsole-3.0.xml
+Libs\AceGUI-3.0\AceGUI-3.0.xml
+Libs\AceConfig-3.0\AceConfig-3.0.xml
+
+Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
+Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
+Libs\LibWindow-1.1\LibWindow-1.1.lua
+
+Nurfed.lua
+Modules\UnitFrame\UnitFrame.lua
+Modules\UnitFrame\Templates.xml
+Modules\UnitFrame\PlayerFrame.xml
+Modules\UnitFrame\TargetFrame.xml
+Modules\UnitFrame\FocusFrame.xml
+Modules\UnitFrame\PartyFrames.xml
+Modules\UnitFrame\PetFrame.xml
+Modules\UnitFrame\BossFrames.xml
+
+Modules\MicroMenu\MicroMenu.lua
+Modules\Chat\Chat.lua
+Modules\AutoSell\AutoSell.lua
