@@ -4,7 +4,7 @@ addon:SetDefaultModuleLibraries("AceEvent-3.0", "AceHook-3.0")
 addon:SetDefaultModuleState(false)
 -- _G[addonName] = addon -- uncomment for debugging purposes
 
-local LDB = LibStub("LibDataBroker-1.1", true)
+-- local LDB = LibStub("LibDataBroker-1.1", true)
 local LDBIcon = LibStub("LibDBIcon-1.0", true)
 
 local defaults = {
@@ -12,73 +12,6 @@ local defaults = {
 		minimapIcon = {},
 	}
 }
-
-function addon:OnInitialize()
-	self.db = LibStub("AceDB-3.0"):New(addonName.."DB", defaults)
-	self.db.RegisterCallback(self, "OnProfileChanged", "UpdateConfigs")
-	self.db.RegisterCallback(self, "OnProfileCopied", "UpdateConfigs")
-	self.db.RegisterCallback(self, "OnProfileReset", "UpdateConfigs")
-		
-	for name, mod in self:IterateModules() do
-		if mod.options then
-			if not self.options.args[name] then
-				self.options.args.modules.args[name] = mod.options
-			end
-		end
-	end
-	
-	if LDB then
-		self.LDBObj = LibStub("LibDataBroker-1.1"):NewDataObject(addonName, {
-			type = "launcher",
-			OnClick = function(frame, msg)
-				if msg == "RightButton" then
-					if LibStub("AceConfigDialog-3.0").OpenFrames[addonName] then
-						PlaySound("GAMEGENERICBUTTONPRESS")
-						LibStub("AceConfigDialog-3.0"):Close(addonName)
-					else
-						PlaySound("GAMEDIALOGOPEN")
-						LibStub("AceConfigDialog-3.0"):Open(addonName)
-					end
-				end
-			end,
-			icon = "Interface\\AddOns\\"..addonName.."\\Images\\locked",
-			OnTooltipShow = function(tooltip)
-				if not tooltip or not tooltip.AddLine then return end
-				tooltip:ClearLines() 
-				tooltip:AddLine(addonName, 0, 0.75, 1)
-				tooltip:AddLine("Right Click - Toggle Options", 0.75, 0.75, 0.75)				
-			end,
-		})
-
-		if LDBIcon then
-			LDBIcon:Register(addonName, self.LDBObj, self.db.profile.minimapIcon)
-		end
-	end
-	
-	self:SetupOptions()
-end
-
-function addon:OnEnable()
-	if LDB and LDBIcon then
-		LDBIcon:Refresh(addonName, addon.db.profile.minimapIcon)
-	end
-	
-	self:RegisterEvent("PLAYER_ENTERING_WORLD")
-end
-
-function addon:UpdateConfigs()
-	if LDB and LDBIcon then
-		LDBIcon:Refresh(addonName, addon.db.profile.minimapIcon)
-	end
-	LibStub("AceConfigRegistry-3.0"):NotifyChange(addonName)
-end
-
-function addon:SetupOptions()
-	self.options.plugins.profiles = { profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db) }
-	self.options.name = addonName
-	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(addonName, self.options)
-	-- LibStub("AceConfigDialog-3.0"):AddToBlizOptions(addonName, addonName)
-end
 
 addon.options = {
 	childGroups = "tree",
@@ -110,6 +43,72 @@ addon.options = {
 		},
 	},
 }
+
+function addon:SetupOptions()
+	self.options.plugins.profiles = { profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db) }
+	self.options.name = addonName
+	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(addonName, self.options)
+	
+	-- Was getting a bit of taint using the following line:
+	-- LibStub("AceConfigDialog-3.0"):AddToBlizOptions(addonName, addonName)
+end
+
+function addon:OnInitialize()
+	-- Create the DB
+	self.db = LibStub("AceDB-3.0"):New(addonName.."DB", defaults)
+	
+	-- Register callbacks
+	self.db.RegisterCallback(self, "OnProfileChanged", "UpdateConfigs")
+	self.db.RegisterCallback(self, "OnProfileCopied", "UpdateConfigs")
+	self.db.RegisterCallback(self, "OnProfileReset", "UpdateConfigs")
+	
+	-- Get the options created in the modules.
+	for name, mod in self:IterateModules() do
+		if mod.options then
+			if not self.options.args[name] then
+				self.options.args.modules.args[name] = mod.options
+			end
+		end
+	end
+	
+	-- Create the LibDataBroker object. This is used to create the minimap icon later on.
+	self.LDBObj = LibStub("LibDataBroker-1.1"):NewDataObject(addonName, {
+		type = "launcher",
+		OnClick = function(frame, msg)
+			if msg == "RightButton" then
+				if LibStub("AceConfigDialog-3.0").OpenFrames[addonName] then
+					PlaySound("GAMEGENERICBUTTONPRESS")
+					LibStub("AceConfigDialog-3.0"):Close(addonName)
+				else
+					PlaySound("GAMEDIALOGOPEN")
+					LibStub("AceConfigDialog-3.0"):Open(addonName)
+				end
+			end
+		end,
+		icon = "Interface\\AddOns\\"..addonName.."\\Images\\locked",
+		OnTooltipShow = function(tooltip)
+			if not tooltip or not tooltip.AddLine then return end
+			tooltip:ClearLines() 
+			tooltip:AddLine(addonName, 0, 0.75, 1)
+			tooltip:AddLine("Right Click - Toggle Options", 0.75, 0.75, 0.75)				
+		end,
+	})
+
+	-- Create the minimap icon
+	LDBIcon:Register(addonName, self.LDBObj, self.db.profile.minimapIcon)
+	
+	self:SetupOptions()
+end
+
+function addon:OnEnable()
+	LDBIcon:Refresh(addonName, addon.db.profile.minimapIcon)
+	self:RegisterEvent("PLAYER_ENTERING_WORLD")
+end
+
+function addon:UpdateConfigs()
+	LDBIcon:Refresh(addonName, addon.db.profile.minimapIcon)
+	LibStub("AceConfigRegistry-3.0"):NotifyChange(addonName)
+end
 
 function addon:rgbhex(r, g, b)
 	if type(r) == "table" then
@@ -208,13 +207,7 @@ function addon:PLAYER_ENTERING_WORLD()
 	PetFrame:Hide()
 	function PetFrame_Update() end
 	function PetFrame_OnEvent() end
-	
-	PlayerFrame:UnregisterAllEvents()
-	UnregisterUnitWatch(PlayerFrame)
-	PlayerFrame:Hide()
-	function PlayerFrame_Update() end
-	function PlayerFrame_OnEvent() end
-	
+		
 	for i = 1, MAX_PARTY_MEMBERS do
 		local party = _G["PartyMemberFrame"..i]
 		party:UnregisterAllEvents()

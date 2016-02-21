@@ -3,7 +3,7 @@ local moduleName = "UnitFrames"
 local displayName = moduleName
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
 local module = addon:NewModule(moduleName)
--- module:SetDefaultModuleState(false)
+module:SetDefaultModuleState(false)
 
 local defaults = {
 	profile = {
@@ -105,12 +105,15 @@ module.frames = {}
 module.OutOfCombatQueue = {}
 
 function module:OnInitialize()
+	-- Go through each module and get the options and default DB values.
 	for name, mod in self:IterateModules() do
 		if mod.options then
 			if not self.options.args[name] then
 				self.options.args[name] = mod.options
 			end
 		end
+		-- Need to do this part because we have modules to this module and 
+		-- the child-databases (created by :RegisterNamespace) only have :RegisterDefaults and :ResetProfile available.
 		if mod.defaults then
 			defaults.profile[mod:GetName()] = mod.defaults
 		end
@@ -157,6 +160,13 @@ function module:OnEnable()
 	self:RegisterEvent("PLAYER_REGEN_ENABLED")
 	
 	self.db.profile.enabled = true
+	for name, mod in self:IterateModules() do
+		if mod.disabledByParent then
+			if self.db.profile[mod:GetName()].enabled then
+				mod:Enable()
+			end
+		end
+	end
 end
 
 function module:OnDisable()
@@ -167,10 +177,10 @@ function module:OnDisable()
 	self:UnhookAll()
 	self:UnregisterAllEvents()
 	self.db.profile.enabled = false
-	-- for name, mod in self:IterateModules() do
-		-- mod.disabledByParent = true
-		-- mod:Disable()
-	-- end
+	for name, mod in self:IterateModules() do
+		mod.disabledByParent = true
+		mod:Disable()
+	end
 end
 
 function module:UpdateConfigs()
@@ -194,7 +204,7 @@ function module:UpdateConfigs()
 	-- end
 end
 
-function module:CreateFrame(modName, unit, events, oneventfunc, menufunc, isWatched, id)
+function module:CreateFrame(modName, unit, events, oneventfunc, dropdownMenu, isWatched, id)
 	if not self:GetModule(modName) then return end
 	if not type(unit) == "string" then return end
 	if not type(events) == "table" then return end
@@ -215,7 +225,10 @@ function module:CreateFrame(modName, unit, events, oneventfunc, menufunc, isWatc
 		frame.unit = unit
 	end
 
-	if isWatched then RegisterUnitWatch(frame); frame.isWatched = true end
+	if isWatched then 
+		-- RegisterUnitWatch(frame); 
+		frame.isWatched = true 
+	end
 		
 	for _, event in pairs(events) do
 		if type(event) == "string" then
@@ -242,10 +255,10 @@ function module:CreateFrame(modName, unit, events, oneventfunc, menufunc, isWatc
 	
 	frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 	
-	if type(menufunc) == "table" then
+	if type(dropdownMenu) == "table" then
 		
 		local showmenu = function()
-			ToggleDropDownMenu(1, nil, menufunc, "cursor")
+			ToggleDropDownMenu(1, nil, dropdownMenu, "cursor")
 		end
 		SecureUnitButton_OnLoad(frame, frame.unit, showmenu)
 	end
@@ -258,6 +271,32 @@ function module:CreateFrame(modName, unit, events, oneventfunc, menufunc, isWatc
 	self.frames[name] = modName
 
 	return frame
+end
+
+function module:DisableFrame(frame)
+	local name = frame:GetName()
+	if frame.isWatched then
+		UnregisterUnitWatch(frame)
+	end
+	frame.isEnabled = false
+	frame:Hide()
+end
+
+function module:EnableFrame(frame)
+	local name = frame:GetName()
+	if frame.isWatched then
+		RegisterUnitWatch(frame)
+	end
+	frame.isEnabled = true
+	frame:Show()
+end
+
+function module:ShowHideHighlight(frame)
+	if UnitExists("target") and UnitIsUnit("target", frame.unit) then
+		frame:LockHighlight()
+	else
+		frame:UnlockHighlight()
+	end
 end
 
 function module:Lock()
@@ -274,12 +313,14 @@ function module:Lock()
 		PlaySound("gsTitleOptionExit")
 		for f in pairs(module.frames) do
 			local frame = _G[f]
-			frame.overlay:Show()
-			if frame.isWatched then
-				UnregisterUnitWatch(frame)
+			if frame.isEnabled then
+				frame.overlay:Show()
+				if frame.isWatched then
+					UnregisterUnitWatch(frame)
+				end
+				frame:Show()
+				if frame.model then module:UpdateModel(frame.model, frame.unit) end
 			end
-			frame:Show()
-			if frame.model then module:UpdateModel(frame.model, frame.unit) end
 		end
 	elseif not module.locked then
 		module.locked = true
@@ -287,12 +328,14 @@ function module:Lock()
 		PlaySound("igMainMenuOption")
 		for f in pairs(module.frames) do
 			local frame = _G[f]
-			frame.overlay:Hide()
-			if frame.model then module:UpdateModel(frame.model, frame.unit) end
-			if frame.isWatched then
-				RegisterUnitWatch(frame)
-			elseif frame.hidden then
-				frame:Hide()
+			if frame.isEnabled then
+				frame.overlay:Hide()
+				if frame.model then module:UpdateModel(frame.model, frame.unit) end
+				if frame.isWatched then
+					RegisterUnitWatch(frame)
+				elseif frame.hidden then
+					frame:Hide()
+				end
 			end
 		end
 	end
@@ -1215,9 +1258,9 @@ local function PowerBar_OnEvent(frame, event, ...)
 	local arg1 = ...
 	local unit = frame:GetParent().unit or frame:GetParent():GetParent().unit
 	
-	if event == "PLAYER_ENTERING_WORLD" then
-		module:PowerBar_Update(frame, unit)
-	end
+	-- if event == "PLAYER_ENTERING_WORLD" then
+		-- module:PowerBar_Update(frame, unit)
+	-- end
 	
 	if ( arg1 ~= unit ) then
          return
@@ -1283,6 +1326,7 @@ local function AdditionalPowerBar_ShowHide(frame)
 end
 
 function module:PowerBar_Update(frame)
+
 	local unit = frame:GetParent().unit or frame:GetParent():GetParent().unit
 	 -- if unit == frame.unit then
 		local powerType
@@ -1343,7 +1387,7 @@ function module:PowerBar_OnLoad(frame, unit)
 		-- AdditionalPowerBar_ShowHide(frame)
 	-- end
 	
-	frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+	-- frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 	frame:RegisterEvent("UNIT_DISPLAYPOWER")
 	
 	frame:SetScript("OnEvent", PowerBar_OnEvent)
