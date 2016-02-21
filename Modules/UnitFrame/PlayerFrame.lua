@@ -5,7 +5,7 @@ local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
 local UnitFrames = addon:GetModule("UnitFrames")
 local module = UnitFrames:NewModule(moduleName)
 local unit = "player"
-mongis = module
+
 module.defaults = {
 	enabled = true,
 	formats = {
@@ -48,7 +48,7 @@ local events = {
 	"UNIT_MODEL_CHANGED",
 	"UNIT_NAME_UPDATE",
 	"DISPLAY_SIZE_CHANGED",
-	-- "PLAYER_ENTERING_WORLD",
+	"PLAYER_ENTERING_WORLD",
 	-- "PLAYER_FLAGS_CHANGED",
 	"PLAYER_ROLES_ASSIGNED",
 	"PLAYER_ENTER_COMBAT",
@@ -115,9 +115,11 @@ local function Update(frame)
 	UnitFrames:PowerBar_Update(frame.powerBar)
 	UnitFrames:HealthBar_Update(frame.health)
 	UnitFrames:ShowHideHighlight(frame)
+	if frame.model then UnitFrames:UpdateModel(frame.model, frame.unit) end
 	if UnitExists(frame.unit) then
-		if frame.model then frame.model:SetUnit(frame.unit) end
-		if frame.model then frame.model:SetPortraitZoom(1) end
+		-- if frame.model then frame.model:SetUnit(frame.unit) end
+		-- if frame.model then frame.model:SetPortraitZoom(1) end
+		
 		UpdateStatus(frame)
 		UpdatePlaytime(frame.playTime)
 		UnitFrames:UpdateInfo(frame)
@@ -146,7 +148,8 @@ local function OnEvent(frame, event, ...)
 		Update(frame)
 	elseif event == "UNIT_MODEL_CHANGED" then
 		if arg1 == frame.unit then
-			if frame.model then frame.model:RefreshUnit() end
+			-- if frame.model then frame.model:RefreshUnit() end
+			if frame.model then UnitFrames:UpdateModel(frame.model, frame.unit) end
 		end
 	elseif event == "UNIT_FACTION" then
 		if arg1 == frame.unit then
@@ -192,6 +195,7 @@ local function OnEvent(frame, event, ...)
 end
 
 local function XPbar_Update(frame)
+
 	local unit = frame.unit
 	local currValue, maxValue, rest, r, g, b
 	local text, perc = ""
@@ -264,7 +268,7 @@ local function XPbar_Update(frame)
 end
 
 local function XPbar_OnEvent(frame,event,...)
-	if not frame.isEnabled then return end
+	if not frame:GetParent().isEnabled then return end
 	XPbar_Update(frame)
 end
 
@@ -296,6 +300,8 @@ end
 local function EnableBlizz()
 	PlayerFrame:SetScript("OnEvent", PlayerFrame_OnEvent)
 	PlayerFrame:SetScript("OnUpdate", PlayerFrame_OnUpdate)
+	PlayerFrame_Update()
+	UnitFrame_Update(PlayerFrame)
 	PlayerFrame:Show()
 end
 
@@ -309,16 +315,13 @@ function module:OnInitialize()
 end
 
 function module:OnEnable()
-	self.db.enabled = true
+	self.db.enabled = true	
 
 	DisableBlizz()
 	
 	if not self.frame then
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PlayerFrameDropDown)
-		if self.frame.xp then 
-			XPbar_OnLoad(self.frame.xp, unit)
-		end
-		
+		if self.frame.xp then XPbar_OnLoad(self.frame.xp, unit) end
 		self.frame.inCombat = nil
         self.frame.onHateList = nil
 	end
@@ -326,7 +329,7 @@ function module:OnEnable()
 	if self.frame then
 		UnitFrames:EnableFrame(self.frame)
 		Update(self.frame)
-		
+
 		if self.frame.xp then
 			XPbar_Update(self.frame.xp)
 		end
@@ -335,15 +338,7 @@ function module:OnEnable()
 end
 
 function module:OnDisable()
-
-	if not self.disabledByParent then
-		print("yo")
-		self.db.enabled = false
-	end
-	
+	self.db.enabled = false
 	EnableBlizz()
-
-	if self.frame then
-		UnitFrames:DisableFrame(self.frame)
-	end
+	UnitFrames:DisableFrame(self.frame)
 end

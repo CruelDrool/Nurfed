@@ -160,13 +160,13 @@ function module:OnEnable()
 	self:RegisterEvent("PLAYER_REGEN_ENABLED")
 	
 	self.db.profile.enabled = true
-	for name, mod in self:IterateModules() do
-		if mod.disabledByParent then
-			if self.db.profile[mod:GetName()].enabled then
-				mod:Enable()
-			end
-		end
-	end
+	-- for name, mod in self:IterateModules() do
+		-- if mod.disabledByParent then
+			-- if self.db.profile[mod:GetName()].enabled then
+				-- mod:Enable()
+			-- end
+		-- end
+	-- end
 end
 
 function module:OnDisable()
@@ -286,9 +286,10 @@ function module:EnableFrame(frame)
 	local name = frame:GetName()
 	if frame.isWatched then
 		RegisterUnitWatch(frame)
+	else
+		frame:Show()
 	end
 	frame.isEnabled = true
-	frame:Show()
 end
 
 function module:ShowHideHighlight(frame)
