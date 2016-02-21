@@ -406,10 +406,10 @@ local function RaidInfo(unit)
 	return group, role
 end
 
-function module:Replace(self, textFormat)
+function module:Replace(unit, textFormat)
 	if textFormat == nil then return "" end
-	if not UnitExists(self.unit) then return "" end
-	local unit = self.unit
+	if not UnitExists(unit) then return "" end
+	-- local unit = frame.unit
 	out = textFormat
 	if string.find(textFormat,"$name") then
 		local name = UnitName(unit)
@@ -706,7 +706,7 @@ function module:UpdateName(frame)
 	local textFormat = self:GetTextFormat(frame, "name")
 	local name
 	if textFormat ~= nil then
-		name = self:Replace(frame, textFormat)
+		name = self:Replace(frame.unit, textFormat)
 	end
 	frame.name:SetText(name)
 end
@@ -716,7 +716,7 @@ function module:UpdateLevel(frame)
 	local textFormat = self:GetTextFormat(frame, "level")
 	local level
 	if textFormat ~= nil then
-		level = self:Replace(frame, textFormat)
+		level = self:Replace(frame.unit, textFormat)
 	end
 	
 	frame.level:SetText(level)
@@ -727,7 +727,7 @@ function module:UpdateGroupIndicator(frame)
 	local textFormat = self:GetTextFormat(frame, "group")
 	local text
 	if textFormat ~= nil then
-		text = self:Replace(frame, textFormat)
+		text = self:Replace(frame.unit, textFormat)
 	end
 	frame.group:SetText(text)
 	if text ~= "" then
@@ -745,7 +745,7 @@ function module:UpdateInfo(frame)
 		local textFormat = self:GetTextFormat(frame, "infoline")
 		local infoline
 		if textFormat ~= nil then
-			infoline = self:Replace(frame, textFormat)
+			infoline = self:Replace(frame.unit, textFormat)
 		end
 		frame.infoline:SetText(infoline)
 	end
