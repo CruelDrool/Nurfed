@@ -26,6 +26,22 @@ module.options = {
 		},
 	},
 }
+--[[
+-- This is a good place as any to make your module do stuff!
+
+local function Foo()
+	print("Fus Ro Dah")
+end
+
+local function FooHook(frame, delta)
+	Foo()
+end
+
+function module:PLAYER_ENTERING_WORLD()
+	Foo()
+end
+
+]]--
 
 function module:OnInitialize()
 	-- Register DB namespace

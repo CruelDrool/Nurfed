@@ -9,10 +9,15 @@ This whole project is somewhat of an on and off thing, so the likelihood of it g
 
 # What's new
 * XML based.
-* Uses Ace3.
+* Uses [Ace3](http://www.wowace.com/addons/ace3/) libraries.
 * Modular design - many features have been separated to be their own modules:
 	* Unitframes:
 		* Boss frames added.
+		* Healthbars have now got:
+			* Healing prediction.
+			* Bars for showing absorbs.
+				* The amount of damage the unit can absorb before losing health.
+				* The amount of healing the unit can absorb without gaining health.
 		* Pet frame shows the model of the pet.
 		* The threatbar's calculation of the your threat percentage has changed and will match what Omen shows. However, currently, it will stop at 250%.
 		* Focus frame has now got a threatbar.
