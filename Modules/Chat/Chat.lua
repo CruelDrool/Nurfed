@@ -27,7 +27,7 @@ local defaults = {
 			["6"] = "%%I:%%M:%%S.%.3i %%p",
 			
 		},
-		enclosures = {
+		outputformats = {
 			selected = "2",
 			keys = {
 				["1"] = "None",
@@ -106,11 +106,11 @@ module.options = {
 				},
 				enclosure = {
 					type = "select",
-					name = "Enclosure",
+					name = "Output format",
 					order = 4,
-					values = function() return module.db.profile.enclosures.keys end,
-					get = function() return module.db.profile.enclosures.selected end,
-					set = function(info, value)	module.db.profile.enclosures.selected = tostring(value) end,
+					values = function() return module.db.profile.outputformats.keys end,
+					get = function() return module.db.profile.outputformats.selected end,
+					set = function(info, value)	module.db.profile.outputformats.selected = tostring(value) end,
 				},
 			},
 		},
@@ -157,7 +157,7 @@ local function TimeStamp(self, elapsed)
 	local time = GetTime()
 	-- local ms = (time-math.floor(time))*1000
 	local timestampformat = tostring(module.db.profile.timestampformats[module.db.profile.timestampformats.selected])
-	module.timestamp = string.format(tostring(module.db.profile.enclosures[module.db.profile.enclosures.selected]), date(string.format(timestampformat, (time-math.floor(time))*1000)))
+	module.timestamp = string.format(tostring(module.db.profile.outputformats[module.db.profile.outputformats.selected]), date(string.format(timestampformat, (time-math.floor(time))*1000)))
 end
 
 local function AddMessage(self, msg, ...)

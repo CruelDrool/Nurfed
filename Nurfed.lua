@@ -2,7 +2,7 @@ local addonName = ...
 local addon = LibStub("AceAddon-3.0"):NewAddon(addonName, "AceConsole-3.0", "AceEvent-3.0", "AceHook-3.0")
 addon:SetDefaultModuleLibraries("AceEvent-3.0", "AceHook-3.0")
 addon:SetDefaultModuleState(false)
-_G[addonName] = addon -- debugging purposes
+-- _G[addonName] = addon -- uncomment for debugging purposes
 
 local LDB = LibStub("LibDataBroker-1.1", true)
 local LDBIcon = LibStub("LibDBIcon-1.0", true)
@@ -175,6 +175,7 @@ function addon:Binding(bind)
 end
 
 ----------------------------------------------------------------------
+-- This should eventually be moved over to the individual unitframe and create enable/disable-functions. This is not the place for this.
 function addon:PLAYER_ENTERING_WORLD()
 	CompactRaidFrameManager:SetFrameLevel(4)
 	UIErrorsFrame:SetPoint("TOP", UIParent,0,-140)
