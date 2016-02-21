@@ -1,18 +1,19 @@
 # Nurfed
 The original addon was made by Tivoli from the guild [Nurfed](http://www.nurfed.com).
 
-# Background story
+## Background story
 Tivoli stopped making updates to the addon many years ago. However, a fellow that went by the name Apoco did continue for some time. Eventually the whole project was discontinued all the together. For some time I was making local changes to the original addon, but decided to try and rewrite the whole thing using XML and Ace3 to fix bugs and add new features, etc. That was in late September, 2012. However, it was done without any version control; something I have been postponing ever since. Now the the whole thing is publically available for everyone's viewing pleasure (or displeasure).
 
-# Further development
+## Further development
 This whole project is somewhat of an on and off thing, so the likelihood of it getting a release version is low. I just do it for fun and to challenge myself a bit. I do, however, use this addon on a daily basis so I do try to fix any bugs I come across.
 
-# What's new
+### What's new
 * XML based.
 * Uses [Ace3](http://www.wowace.com/addons/ace3/) libraries.
 * Modular design - many features have been separated to be their own modules:
 	* Unitframes:
 		* Boss frames added.
+		* 40 yards ranged checking on Party frames.
 		* Healthbars have now got:
 			* Healing prediction.
 			* Bars for showing absorbs.
@@ -49,7 +50,7 @@ This whole project is somewhat of an on and off thing, so the likelihood of it g
 		* Keybindings displayed.
 		* Some buttons greyed out if the Player is too low level or is on a Starter Edition account.
 
-# What's missing/incomplete
+### What's missing/incomplete
 * Options are severely incomplete.
 * Skins.
 * Missing features (that I can think of):
