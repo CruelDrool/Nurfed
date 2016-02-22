@@ -1149,6 +1149,8 @@ local function HealPredictionBar_Update(frame)
 end
 
 local function HealthBar_OnUpdate(frame, e)
+	if not frame:GetParent().isEnabled then return end
+	
 	local unit = frame:GetParent().unit
     if UnitExists(unit) then
 		--if not frame.pauseUpdates then
@@ -1256,6 +1258,8 @@ local function PowerBar_Text(frame)
 end
 
 local function PowerBar_OnEvent(frame, event, ...)
+	if not (frame:GetParent().isEnabled or frame:GetParent():GetParent().isEnabled) then return end
+	print ("on")
 	local arg1 = ...
 	local unit = frame:GetParent().unit or frame:GetParent():GetParent().unit
 	
@@ -1273,6 +1277,8 @@ local function PowerBar_OnEvent(frame, event, ...)
 end
 
 local function PowerBar_OnUpdate(frame, e)
+	if not (frame:GetParent().isEnabled or frame:GetParent():GetParent().isEnabled) then return end
+
 	local unit = frame:GetParent().unit or frame:GetParent():GetParent().unit
     if UnitExists(unit) then
 		if not frame.pauseUpdates then
@@ -1307,6 +1313,7 @@ local function PowerBar_OnUpdate(frame, e)
 end
 
 local function AdditionalPowerBar_ShowHide(frame)
+
 	local unit = frame:GetParent().unit or frame:GetParent():GetParent().unit
 	if UnitPowerType(unit) ~= ADDITIONAL_POWER_BAR_INDEX and UnitPowerMax(unit, ADDITIONAL_POWER_BAR_INDEX) ~= 0 and (not frame.specRestriction or frame.specRestriction == GetSpecialization()) and not UnitHasVehiclePlayerFrameUI("player") then
 		frame.pauseUpdates = false
