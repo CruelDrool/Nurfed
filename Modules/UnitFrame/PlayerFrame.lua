@@ -115,11 +115,19 @@ local function Update(frame)
 	UnitFrames:PowerBar_Update(frame.powerBar)
 	UnitFrames:HealthBar_Update(frame.health)
 	UnitFrames:ShowHideHighlight(frame)
+	
+	if frame.additionalPowerBar then
+		local statusbar
+		if frame.additionalPowerBar.statusbar then
+			statusbar = frame.additionalPowerBar.statusbar
+		else
+			statusbar = frame.additionalPowerBar
+		end
+		UnitFrames:PowerBar_Update(statusbar)
+	end
+	
 	if frame.model then UnitFrames:UpdateModel(frame.model, frame.unit) end
 	if UnitExists(frame.unit) then
-		-- if frame.model then frame.model:SetUnit(frame.unit) end
-		-- if frame.model then frame.model:SetPortraitZoom(1) end
-		
 		UpdateStatus(frame)
 		UpdatePlaytime(frame.playTime)
 		UnitFrames:UpdateInfo(frame)

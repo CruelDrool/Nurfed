@@ -1259,7 +1259,7 @@ end
 
 local function PowerBar_OnEvent(frame, event, ...)
 	if not (frame:GetParent().isEnabled or frame:GetParent():GetParent().isEnabled) then return end
-	print ("on")
+
 	local arg1 = ...
 	local unit = frame:GetParent().unit or frame:GetParent():GetParent().unit
 	
@@ -1382,7 +1382,7 @@ function module:PowerBar_OnLoad(frame, unit)
 	
 	if frame.glide then
 		local glideFade = frame:GetAttribute("glideFade")
-		-- TODO: Override fadetime from in-game.
+		-- TODO: Put this in the options!
 		if glideFade then
 			frame.glideFade = glideFade
 		else
