@@ -419,10 +419,16 @@ function module:Replace(unit, textFormat)
 			color = RAID_CLASS_COLORS[englishClass]
 			if color ~= nil then color = addon:rgbhex(color) else color = addon:rgbhex(UnitSelectionColor(unit)) end
 		else
-			if not UnitPlayerControlled(unit) and UnitIsTapped(unit) then
-				if not UnitIsTappedByPlayer(unit) and not UnitIsTappedByAllThreatList(unit) then
+			-- if not UnitPlayerControlled(unit) and UnitIsTapped(unit) then
+				-- if not UnitIsTappedByPlayer(unit) and not UnitIsTappedByAllThreatList(unit) then
+					-- color = "|cff7f7f7f"
+				-- elseif UnitIsTappedByPlayer(unit) or UnitIsTappedByAllThreatList(unit) then
+					-- color = addon:rgbhex(UnitSelectionColor(unit))
+				-- end
+			if not UnitPlayerControlled(unit) then
+				if UnitIsTapDenied(unit) then
 					color = "|cff7f7f7f"
-				elseif UnitIsTappedByPlayer(unit) or UnitIsTappedByAllThreatList(unit) then
+				else
 					color = addon:rgbhex(UnitSelectionColor(unit))
 				end
 			else
@@ -1841,7 +1847,7 @@ local PLAYER_UNITS = {
 	pet = true,
 }
 
-local ShouldShowDebuff = TargetFrame_ShouldShowDebuff
+local ShouldShowDebuffs = TargetFrame_ShouldShowDebuffs
 
 local function UpdateAuraAnchor(auraFrame, index, size)
 	local aura = auraFrame["aura"..index]
@@ -1855,7 +1861,7 @@ end
 function module:UpdateAuras(frame)
 	local normalSize, largeSize = 17, 21
 	local aura, auraFrame, auraFrameHeight
-	local name, rank, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, spellId, _
+	-- local name, rank, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, spellId, _
 	local playerIsTarget = UnitIsUnit("player", frame.unit)
 	local canAssist = UnitCanAssist("player", frame.unit)
 	
@@ -1868,7 +1874,7 @@ function module:UpdateAuras(frame)
 	auraFrame = frame.buffs
 	auraFrameHeight = normalSize
 	for i = 1, maxBuffs do
-		name, rank, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, _ , spellId = UnitBuff(frame.unit, i, filter)
+		local name, rank, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, _ , spellId, _, _, casterIsPlayer, nameplateShowAll = UnitBuff(frame.unit, i, nil);
 		if icon then
 			if not auraFrame["aura"..i] then
 				auraFrame["aura"..i] = CreateFrame("Button", _, auraFrame, self.db.profile.templatePrefix.."Buff")
@@ -1893,7 +1899,7 @@ function module:UpdateAuras(frame)
 			-- Handle cooldowns
 			if ( duration > 0 ) then
 				aura.cooldown:Show()
-				CooldownFrame_SetTimer(aura.cooldown, expirationTime - duration, duration, 1)
+				CooldownFrame_Set(aura.cooldown, expirationTime - duration, duration, duration > 0, true)
 			else
 				aura.cooldown:Hide()
 			end
@@ -1943,10 +1949,12 @@ function module:UpdateAuras(frame)
 	auraFrameHeight = normalSize
 	
 	while frameNum <= maxDebuffs do
-		local debuffName = UnitDebuff(frame.unit, index, filter)
+		-- local debuffName = UnitDebuff(frame.unit, index, filter)
+		local debuffName, rank, icon, count, debuffType, duration, expirationTime, caster, _, _, _, _, _, casterIsPlayer, nameplateShowAll = UnitDebuff(frame.unit, index, "INCLUDE_NAME_PLATE_ONLY");
 		if debuffName then
-			if ShouldShowDebuff(frame.unit, index, filter) then
-				name, rank, icon, count, debuffType, duration, expirationTime, caster = UnitDebuff(frame.unit, index, filter)
+			if ShouldShowDebuffs(frame.unit, caster, nameplateShowAll, casterIsPlayer) then
+				-- name, rank, icon, count, debuffType, duration, expirationTime, caster = UnitDebuff(frame.unit, index, filter)
+				
 				if icon then
 					if not auraFrame["aura"..frameNum] then
 						auraFrame["aura"..frameNum] = CreateFrame("Button", _, auraFrame, self.db.profile.templatePrefix.."Debuff")
@@ -1971,7 +1979,7 @@ function module:UpdateAuras(frame)
 					-- Handle cooldowns
 					if duration > 0 then
 						aura.cooldown:Show();
-						CooldownFrame_SetTimer(aura.cooldown, expirationTime - duration, duration, 1)
+						CooldownFrame_Set(aura.cooldown, expirationTime - duration, duration, duration > 0, true)
 					else
 						aura.cooldown:Hide()
 					end

@@ -174,8 +174,8 @@ local function ButtonsArray()
 	end
 	buttons["DUNGEONS"] = temp
 	
-	if level < SHOW_EJ_LEVEL then
-		temp = { text = GetMenuButtonText("|cff8d8d8d"..ADVENTURE_JOURNAL.." (level "..SHOW_EJ_LEVEL..")|r", "TOGGLEENCOUNTERJOURNAL"), notClickable = true }
+	if not C_AdventureJournal.CanBeShown() then
+		temp = { text = GetMenuButtonText("|cff8d8d8d"..ADVENTURE_JOURNAL..")|r", "TOGGLEENCOUNTERJOURNAL"), notClickable = true }
 	else
 		temp = { text = GetMenuButtonText(ADVENTURE_JOURNAL, "TOGGLEENCOUNTERJOURNAL"), func = function() EJMicroButton:Click() end }
 	end
