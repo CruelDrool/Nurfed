@@ -141,7 +141,7 @@ function module:Scrolling()
 		if not self:IsHooked("FloatingChatFrame_OnMouseScroll", ScrollingHook) then
 			self:SecureHook("FloatingChatFrame_OnMouseScroll", ScrollingHook)
 		end
-		InterfaceOptionsSocialPanelChatMouseScroll_SetScrolling("1")
+		-- InterfaceOptionsSocialPanelChatMouseScroll_SetScrolling("1")
 	end
 	
 	if not enabled then
@@ -149,7 +149,7 @@ function module:Scrolling()
 		if self:IsHooked("FloatingChatFrame_OnMouseScroll", ScrollingHook) then
 			self:Unhook("FloatingChatFrame_OnMouseScroll", ScrollingHook)
 		end
-		InterfaceOptionsSocialPanelChatMouseScroll_SetScrolling("0")
+		-- InterfaceOptionsSocialPanelChatMouseScroll_SetScrolling("0")
 	end
 end
 
