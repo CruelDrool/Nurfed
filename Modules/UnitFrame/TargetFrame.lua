@@ -40,7 +40,7 @@ module.options = {
 }
 
 local events = {
-	"UNIT_COMBO_POINTS",
+	"UNIT_POWER_FREQUENT",
 	"PLAYER_ENTERING_WORLD",
 	"PARTY_LOOT_METHOD_CHANGED",
 	"PLAYER_ROLES_ASSIGNED",
@@ -66,21 +66,43 @@ local events = {
 
 
 local function UpdateCombo(frame, unit)
+	-- local comboPoints = UnitPower("player", SPELL_POWER_COMBO_POINTS) -- for later, perhaps.
+	
 	local comboPoints = GetComboPoints("player", unit)
+	local maxComboPoints = UnitPowerMax("player", SPELL_POWER_COMBO_POINTS)
 	local r, g, b
 	local parent = frame:GetParent()
 	if comboPoints > 0 then
-		if comboPoints == 5 then
-			r, g, b = 1, 0, 0
-		elseif comboPoints == 4 then
-			r, g, b = 1, 0.5, 0
-		elseif comboPoints == 3 then
-			r, g, b = 1, 1, 0
-		elseif comboPoints == 2 then
-			r, g, b = 0.5, 1, 0
-		elseif comboPoints == 1 then
-			r, g, b = 0, 0.5, 0
+		-- if comboPoints == 5 then
+			-- r, g, b = 1, 0, 0
+		-- elseif comboPoints == 4 then
+			-- r, g, b = 1, 0.5, 0
+		-- elseif comboPoints == 3 then
+			-- r, g, b = 1, 1, 0
+		-- elseif comboPoints == 2 then
+			-- r, g, b = 0.5, 1, 0
+		-- elseif comboPoints == 1 then
+			-- r, g, b = 0, 0.5, 0
+		-- end
+		
+		local perc = comboPoints / maxComboPoints
+		local r1, g1, b1
+		local r2, g2, b2
+		if perc <= 0.5 then
+			perc = perc * 2
+			r1, g1, b1 = 0, 0.5, 0
+			r2, g2, b2 = 1, 1, 0
+		else
+			perc = perc * 2 - 1
+			r1, g1, b1 = 1, 1, 0
+			r2, g2, b2 = 1, 0, 0
 		end
+
+		local r, g, b = r1 + (r2-r1)*perc, g1 + (g2-g1)*perc, b1 + (b2-b1)*perc
+		
+		
+		
+		
 		frame:SetTextColor(r, g, b)
 		frame:SetText(comboPoints)
 		frame:Show()
@@ -125,7 +147,7 @@ local function OnEvent(frame, event, ...)
 					PlaySound("igCreatureNeutralSelect");
 				end
 			end		
-	elseif event == "UNIT_COMBO_POINTS" then
+	elseif event == "UNIT_POWER_FREQUENT" then
 		if arg1 == "player" then
 			UpdateCombo(frame.combo, frame.unit)
 		end
