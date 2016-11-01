@@ -1,4 +1,4 @@
-## Interface: 70000
+## Interface: 70100
 ## Version: 1.0
 ## Title: Nurfed UI
 ## Notes: Inspired by Tivoli and Apoco.

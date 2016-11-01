@@ -9,7 +9,7 @@ local unit = "target"
 module.defaults = {
 	enabled = true,
 	formats = {
-		-- name = "$name $guild",
+		name = "$name $guild",
 		-- infoline = "$level $class ($group)",
 	},
 	frames = {
