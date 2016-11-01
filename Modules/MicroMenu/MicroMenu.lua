@@ -108,7 +108,7 @@ local subMenus = {
 local function ButtonsArray()
 	
 	local buttons = {
-		SEPARATOR = UnitPopupButtons["SUBSECTION_SEPARATOR"],
+		SEPARATOR = { dist = 0, isTitle = true, isUninteractable = true, iconOnly = true, icon = "Interface\\Common\\UI-TooltipDivider-Transparent", tCoordLeft = 0, tCoordRight = 1, tCoordTop = 0, tCoordBottom = 1, tSizeX = 0, tFitDropDownSizeX = true, tSizeY = 8, },
 		BLANK = { isTitle = 1, notClickable = 1},
 		CANCEL = { text = CANCEL },
 		TITLE = { text = displayName, isTitle = 1, notClickable = 1 },
