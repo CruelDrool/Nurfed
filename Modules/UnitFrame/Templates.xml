@@ -129,7 +129,7 @@
 				<FontString parentKey="text" inherits="Nurfed_UnitFont" justifyH="LEFT">
 					<Shadow>
 						<Color r="0" g="0" b="0" a="0.75"/>
-						<Offset x="-1" y="-2"/>
+						<Offset x="-1" y="-1"/>
 					</Shadow>
 				</FontString>
 				<FontString parentKey="miss" inherits="Nurfed_UnitFontOutline" justifyH="RIGHT">
@@ -151,7 +151,7 @@
 				<FontString parentKey="text" inherits="Nurfed_UnitFont" justifyH="LEFT">
 					<Shadow>
 						<Color r="0" g="0" b="0" a="0.75"/>
-						<Offset x="-1" y="-2"/>
+						<Offset x="-1" y="-1"/>
 					</Shadow>
 				</FontString>
 			</Layer>
@@ -171,13 +171,13 @@
 				<FontString parentKey="text" inherits="Nurfed_UnitFontSmall" justifyH="CENTER">
 					<Shadow>
 						<Color r="0" g="0" b="0" a="0.75"/>
-						<Offset x="-1" y="-2"/>
+						<Offset x="-1" y="-1"/>
 					</Shadow>
 				</FontString>
 				<FontString parentKey="perc" inherits="Nurfed_UnitFontSmall" justifyH="RIGHT">
 					<Shadow>
 						<Color r="0" g="0" b="0" a="0.75"/>
-						<Offset x="-1" y="-2"/>
+						<Offset x="-1" y="-1"/>
 					</Shadow>
 				</FontString>
 			</Layer>
@@ -202,7 +202,7 @@
 				<FontString parentKey="text" inherits="Nurfed_UnitFontSmall" justifyH="CENTER" text="!">
 					<Shadow>
 						<Color r="0" g="0" b="0" a="0.75"/>
-						<Offset x="-1" y="-2"/>
+						<Offset x="-1" y="-1"/>
 					</Shadow>
 				</FontString>
 			</Layer>
@@ -233,7 +233,7 @@
 							</Anchors>
 							<Shadow>
 								<Color r="0" g="0" b="0" a="0.75"/>
-								<Offset x="-1" y="-2"/>
+								<Offset x="-1" y="-1"/>
 							</Shadow>
 						</FontString>
 						<FontString parentKey="time" inherits="Nurfed_UnitFontSmall" justifyH="LEFT">
@@ -242,7 +242,7 @@
 							</Anchors>
 							<Shadow>
 								<Color r="0" g="0" b="0" a="0.75"/>
-								<Offset x="-1" y="-2"/>
+								<Offset x="-1" y="-1"/>
 							</Shadow>
 						</FontString>
 						<Texture parentKey="icon">
@@ -286,7 +286,7 @@
 					</Anchors>
 					<Shadow>
 						<Color r="0" g="0" b="0" a="0.75"/>
-						<Offset x="-1" y="-2"/>
+						<Offset x="-1" y="-1"/>
 					</Shadow>
 				</FontString>
 			</Layer>
