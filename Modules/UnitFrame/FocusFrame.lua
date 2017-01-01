@@ -132,13 +132,13 @@ local function OnEvent(frame, event, ...)
     elseif ( event == "READY_CHECK_FINISHED" ) then
         ReadyCheck_Finish(frame.readyCheck, DEFAULT_READY_CHECK_STAY_TIME)
 	elseif event == "CVAR_UPDATE" then
-		if arg1 == "SHOW_ALL_ENEMY_DEBUFFS_TEXT" then
-			-- have to set uvar manually or it will be the previous value
-			SHOW_ALL_ENEMY_DEBUFFS = GetCVar("showAllEnemyDebuffs")
-			if ( frame:IsShown() ) then
-				UnitFrames:UpdateAuras(frame)
-			end
-		end
+		-- if arg1 == "SHOW_ALL_ENEMY_DEBUFFS_TEXT" then
+			-- -- have to set uvar manually or it will be the previous value
+			-- SHOW_ALL_ENEMY_DEBUFFS = GetCVar("showAllEnemyDebuffs")
+			-- if ( frame:IsShown() ) then
+				-- UnitFrames:UpdateAuras(frame)
+			-- end
+		-- end
 	elseif event == "UI_SCALE_CHANGED" then
 		if frame.model then frame.model:RefreshUnit() end
 	end

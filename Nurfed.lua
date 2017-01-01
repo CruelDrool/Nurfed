@@ -249,12 +249,13 @@ function addon:PLAYER_ENTERING_WORLD()
 	function FocusFrame_OnEvent() end
 	
 	CastingBarFrame:UnregisterAllEvents()
+	CastingBarFrame:SetScript("OnLoad", nil)
 	CastingBarFrame:SetScript("OnEvent", nil)
 	CastingBarFrame:SetScript("OnUpdate", nil)
 	CastingBarFrame:SetScript("OnShow", nil)
 	CastingBarFrame:Hide()
-	function CastingBarFrame_OnShow() end
-	function CastingBarFrame_OnEvent() end
-	function CastingBarFrame_OnUpdate() end
+	-- function CastingBarFrame_OnShow() end
+	-- function CastingBarFrame_OnEvent() end
+	-- function CastingBarFrame_OnUpdate() end
 	
 end
