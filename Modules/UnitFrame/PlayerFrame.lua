@@ -142,7 +142,8 @@ local function OnEvent(frame, event, ...)
 		Update(frame)
 	elseif event == "UNIT_MODEL_CHANGED" then
 		if arg1 == frame.unit then
-			if frame.model then frame.model:RefreshUnit() end
+			-- if frame.model then frame.model:RefreshUnit() end
+			if frame.model then UnitFrames:UpdateModel(frame.model, frame.unit) end
 		end
 	elseif event == "UNIT_FACTION" then
 		if arg1 == frame.unit then
