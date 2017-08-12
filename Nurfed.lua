@@ -180,7 +180,7 @@ function addon:PLAYER_ENTERING_WORLD()
 	CompactRaidFrameManager:SetFrameLevel(4)
 	UIErrorsFrame:SetPoint("TOP", UIParent,0,-140)
 	-- CameraPanelOptions.cameraDistanceMaxFactor.maxValue = 4
-	ConsoleExec("cameraDistanceMaxFactor 2")
+	ConsoleExec("cameraDistanceMaxFactor 2.6")
 	ConsoleExec("cameraDistanceMax 50")
 	
 	TargetFrame:UnregisterAllEvents()
