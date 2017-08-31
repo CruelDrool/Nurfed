@@ -140,11 +140,11 @@ local function OnEvent(frame, event, ...)
 			Update(frame)
 			if ( UnitExists(frame.unit) ) then
 				if ( UnitIsEnemy(frame.unit, "player") ) then
-					PlaySound("igCreatureAggroSelect");
+					PlaySound(SOUNDKIT.IG_CREATURE_AGGRO_SELECT)
 				elseif ( UnitIsFriend("player", frame.unit) ) then
-					PlaySound("igCharacterNPCSelect");
+					PlaySound(SOUNDKIT.IG_CHARACTER_NPC_SELECT)
 				else
-					PlaySound("igCreatureNeutralSelect");
+					PlaySound(SOUNDKIT.IG_CREATURE_NEUTRAL_SELECT)
 				end
 			end		
 	elseif event == "UNIT_POWER_FREQUENT" then

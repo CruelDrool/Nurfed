@@ -77,10 +77,12 @@ function addon:OnInitialize()
 		OnClick = function(frame, msg)
 			if msg == "RightButton" then
 				if LibStub("AceConfigDialog-3.0").OpenFrames[addonName] then
-					PlaySound("GAMEGENERICBUTTONPRESS")
+					-- PlaySound("GAMEGENERICBUTTONPRESS")
+					PlaySound(624)
 					LibStub("AceConfigDialog-3.0"):Close(addonName)
 				else
-					PlaySound("GAMEDIALOGOPEN")
+					-- PlaySound("GAMEDIALOGOPEN")
+					PlaySound(88)
 					LibStub("AceConfigDialog-3.0"):Open(addonName)
 				end
 			end
