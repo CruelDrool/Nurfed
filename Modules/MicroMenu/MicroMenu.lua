@@ -253,7 +253,7 @@ end
 function module:OnEnable()
 	self:SecureHook(addon.LDBObj,"OnClick", function(frame, msg)
 		if msg == "MiddleButton" then
-				PlaySound("gsTitleOptionExit")
+				PlaySound(SOUNDKIT.GS_TITLE_OPTION_EXIT)
 					if not frame.initialize then
 						frame.displayMode = "MENU"
 						frame.initialize = MenuInit

@@ -271,7 +271,7 @@ function module:Lock()
 	if module.locked then
 		module.locked = false
 		addon.LDBObj.icon = "Interface\\AddOns\\"..addonName.."\\Images\\unlocked"
-		PlaySound("gsTitleOptionExit")
+		PlaySound(SOUNDKIT.GS_TITLE_OPTION_EXIT)
 		for f in pairs(module.frames) do
 			local frame = _G[f]
 			frame.overlay:Show()
@@ -284,7 +284,7 @@ function module:Lock()
 	elseif not module.locked then
 		module.locked = true
 		addon.LDBObj.icon = "Interface\\AddOns\\"..addonName.."\\Images\\locked"
-		PlaySound("igMainMenuOption")
+		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION)
 		for f in pairs(module.frames) do
 			local frame = _G[f]
 			frame.overlay:Hide()
