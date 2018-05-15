@@ -177,18 +177,18 @@ local function ButtonsArray()
 		
 	if level < SHOW_SPEC_LEVEL then
 		buttons["TALENTS"]["disabled"] = true
-		buttons["TALENTS"]["text"] = GetMenuButtonText("|cff8d8d8d"..TALENTS_BUTTON.." ("..string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, SHOW_SPEC_LEVEL)..")|r", "TOGGLETALENTS")
+		buttons["TALENTS"]["text"] = GetMenuButtonText(TALENTS_BUTTON.." ("..string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, SHOW_SPEC_LEVEL)..")", "TOGGLETALENTS")
 	end
 	
 	if IsTrialAccount() then
 		buttons["BLIZZARD_STORE"]["disabled"] = true
-		buttons["BLIZZARD_STORE"]["text"] = "|cff8d8d8d"..BLIZZARD_STORE.." ("..ERR_RESTRICTED_ACCOUNT_TRIAL..")|r"
+		buttons["BLIZZARD_STORE"]["text"] = BLIZZARD_STORE.." ("..ERR_RESTRICTED_ACCOUNT_TRIAL..")"
 	end
 	
 	if UnitFactionGroup("player") ~= "Neutral" then
 		if IsTrialAccount() then
 			buttons["GUILD"]["disabled"] = true
-			buttons["GUILD"]["text"] = GetMenuButtonText("|cff8d8d8d"..LOOKINGFORGUILD.." ("..ERR_RESTRICTED_ACCOUNT_TRIAL..")|r", "TOGGLEGUILDTAB")
+			buttons["GUILD"]["text"] = GetMenuButtonText(LOOKINGFORGUILD.." ("..ERR_RESTRICTED_ACCOUNT_TRIAL..")", "TOGGLEGUILDTAB")
 		elseif IsInGuild() then
 			buttons["GUILD"]["text"] = GetMenuButtonText(GUILD, "TOGGLEGUILDTAB")
 		else
@@ -197,19 +197,19 @@ local function ButtonsArray()
 		
 		if level < SHOW_LFD_LEVEL then
 			buttons["DUNGEONS"]["disabled"] = true
-			buttons["DUNGEONS"]["text"] = GetMenuButtonText("|cff8d8d8d"..DUNGEONS_BUTTON.." ("..string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, SHOW_LFD_LEVEL)..")|r", "TOGGLEGROUPFINDER")
+			buttons["DUNGEONS"]["text"] = GetMenuButtonText(DUNGEONS_BUTTON.." ("..string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, SHOW_LFD_LEVEL)..")", "TOGGLEGROUPFINDER")
 		end
 	else
 		buttons["GUILD"]["disabled"] = true
-		buttons["GUILD"]["text"] = GetMenuButtonText("|cff8d8d8d"..LOOKINGFORGUILD.." ("..FEATURE_NOT_AVAILBLE_PANDAREN..")|r", "TOGGLEGUILDTAB")
+		buttons["GUILD"]["text"] = GetMenuButtonText(LOOKINGFORGUILD.." ("..FEATURE_NOT_AVAILBLE_PANDAREN..")", "TOGGLEGUILDTAB")
 		
 		buttons["DUNGEONS"]["disabled"] = true
-		buttons["DUNGEONS"]["text"] = GetMenuButtonText("|cff8d8d8d"..DUNGEONS_BUTTON.." ("..FEATURE_NOT_AVAILBLE_PANDAREN..")|r", "TOGGLEGROUPFINDER")		
+		buttons["DUNGEONS"]["text"] = GetMenuButtonText(DUNGEONS_BUTTON.." ("..FEATURE_NOT_AVAILBLE_PANDAREN..")", "TOGGLEGROUPFINDER")		
 	end
 	
 	if not C_AdventureJournal.CanBeShown() then
 		buttons["ADVENTURE_JOURNAL"]["disabled"] = true
-		buttons["ADVENTURE_JOURNAL"]["text"] = GetMenuButtonText("|cff8d8d8d"..ADVENTURE_JOURNAL.." ("..FEATURE_NOT_YET_AVAILABLE ..")|r", "TOGGLEENCOUNTERJOURNAL")
+		buttons["ADVENTURE_JOURNAL"]["text"] = GetMenuButtonText(ADVENTURE_JOURNAL.." ("..FEATURE_NOT_YET_AVAILABLE ..")", "TOGGLEENCOUNTERJOURNAL")
 	end
 	
 	if HasPetSpells() or PetHasSpellbook() then
