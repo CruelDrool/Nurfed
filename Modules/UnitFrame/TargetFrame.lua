@@ -66,10 +66,10 @@ local events = {
 
 
 local function UpdateCombo(frame, unit)
-	-- local comboPoints = UnitPower("player", SPELL_POWER_COMBO_POINTS) -- for later, perhaps.
+	-- local comboPoints = UnitPower("player", Enum.PowerType.ComboPoints) -- for later, perhaps.
 	
 	local comboPoints = GetComboPoints("player", unit)
-	local maxComboPoints = UnitPowerMax("player", SPELL_POWER_COMBO_POINTS)
+	local maxComboPoints = UnitPowerMax("player", Enum.PowerType.ComboPoints)
 	local r, g, b
 	local parent = frame:GetParent()
 	if comboPoints > 0 then

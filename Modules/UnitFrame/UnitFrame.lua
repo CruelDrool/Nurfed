@@ -1436,7 +1436,7 @@ local function CastBar_OnEvent(frame, event, unit,...)
 		-- frame:Clear() will be called everytime the player changes target. Hmmmm...
 		frame:Clear()
 		if event == "UNIT_SPELLCAST_START" then
-			name, _, _, texture, startTime, endTime, _, castID, notInterruptible = UnitCastingInfo(unit)
+			name, _, texture, startTime, endTime, _, castID, notInterruptible = UnitCastingInfo(unit)
 			if not endTime then frame:Hide(); frame:Clear(); return end
 			frame.castID = castID
 			frame.startTime = GetTime() - (startTime / 1000)
@@ -1446,7 +1446,7 @@ local function CastBar_OnEvent(frame, event, unit,...)
 			frame.channeling = false
 			frame.casting = true
 		elseif event == "UNIT_SPELLCAST_CHANNEL_START" then
-			name, _, _, texture, startTime, endTime, _, notInterruptible = UnitChannelInfo(unit)
+			name, _, texture, startTime, endTime, _, notInterruptible = UnitChannelInfo(unit)
 			if not endTime then frame:Hide(); frame:Clear(); return end
 			frame.startTime = (endTime / 1000) - GetTime()
 			-- frame.maxValue = (endTime - startTime) / 1000
@@ -1480,7 +1480,7 @@ local function CastBar_OnEvent(frame, event, unit,...)
 	elseif event == "UNIT_SPELLCAST_NOT_INTERRUPTIBLE" then
 		frame.statusbar:SetStatusBarColor(1.0, 0.0, 0.0)
 	elseif event  == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP" then
-		if ( frame.casting and select(3,...) == frame.castID ) or frame.channeling then
+		if ( frame.casting and select(1,...) == frame.castID ) or frame.channeling then
 			if frame.casting then
 				frame.statusbar:SetValue(frame.maxValue)
 				frame.statusbar:SetStatusBarColor(0.0, 1.0, 0.0)
@@ -1496,7 +1496,7 @@ local function CastBar_OnEvent(frame, event, unit,...)
 			frame.holdTime =  0
 		end
 	elseif event == "UNIT_SPELLCAST_FAILED" or event == "UNIT_SPELLCAST_INTERRUPTED" then
-		if frame.casting and select(3,...) == frame.castID then
+		if frame.casting and select(1,...) == frame.castID then
 			frame.statusbar:SetValue(frame.maxValue)
 			frame.statusbar:SetStatusBarColor(1.0, 0.0, 0.0)
 			frame.casting = false
@@ -1514,15 +1514,14 @@ local function CastBar_OnEvent(frame, event, unit,...)
 		if frame.casting or frame.channeling then
 			local startTime, endTime
 			if event == "UNIT_SPELLCAST_DELAYED" then
-				_, _, _, _, startTime, endTime = UnitCastingInfo(unit)
+				_, _, _, startTime, endTime = UnitCastingInfo(unit)
 				if not endTime then frame:Hide(); frame:Clear(); return end
 				frame.startTime = GetTime() - (startTime / 1000)
 				-- frame.maxValue = (endTime - startTime) / 1000
 				frame.channeling = false
 				frame.casting = true
-			elseif event == "UNIT_SPELLCAST_CHANNEL_UPDATE" then
-							
-				_, _, _, _, startTime, endTime = UnitChannelInfo(unit)
+			elseif event == "UNIT_SPELLCAST_CHANNEL_UPDATE" then		
+				_, _, _, startTime, endTime = UnitChannelInfo(unit)
 				if not endTime then frame:Hide(); frame:Clear(); return end
 				frame.startTime = (endTime / 1000) - GetTime()
 				-- frame.maxValue = (endTime - startTime) / 1000
@@ -1874,7 +1873,7 @@ function module:UpdateAuras(frame)
 	auraFrame = frame.buffs
 	auraFrameHeight = normalSize
 	for i = 1, maxBuffs do
-		local name, rank, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, _ , spellId, _, _, casterIsPlayer, nameplateShowAll = UnitBuff(frame.unit, i, nil);
+		local buffName, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, _ , spellId, _, _, casterIsPlayer, nameplateShowAll = UnitBuff(frame.unit, i, nil);
 		if icon then
 			if not auraFrame["aura"..i] then
 				auraFrame["aura"..i] = CreateFrame("Button", _, auraFrame, self.db.profile.templatePrefix.."Buff")
@@ -1950,7 +1949,7 @@ function module:UpdateAuras(frame)
 	
 	while frameNum <= maxDebuffs do
 		-- local debuffName = UnitDebuff(frame.unit, index, filter)
-		local debuffName, rank, icon, count, debuffType, duration, expirationTime, caster, _, _, _, _, _, casterIsPlayer, nameplateShowAll = UnitDebuff(frame.unit, index, "INCLUDE_NAME_PLATE_ONLY");
+		local debuffName, icon, count, debuffType, duration, expirationTime, caster, _, _, _, _, _, casterIsPlayer, nameplateShowAll = UnitDebuff(frame.unit, index, "INCLUDE_NAME_PLATE_ONLY");
 		if debuffName then
 			if ShouldShowDebuffs(frame.unit, caster, nameplateShowAll, casterIsPlayer) then
 				-- name, rank, icon, count, debuffType, duration, expirationTime, caster = UnitDebuff(frame.unit, index, filter)
