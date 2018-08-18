@@ -49,7 +49,7 @@ local events = {
 	"PET_ATTACK_START",
 	"PET_ATTACK_STOP",
 	"PET_UI_UPDATE",
-	"PET_RENAMEABLE",
+	-- "PET_RENAMEABLE",
 	"DISPLAY_SIZE_CHANGED",
 	"UNIT_ENTERED_VEHICLE",
 	"UNIT_EXITED_VEHICLE",
@@ -105,8 +105,8 @@ local function OnEvent(frame, event, ...)
 		end
 	elseif event == "RAID_TARGET_UPDATE" then
 		UnitFrames:UpdateRaidIcon(frame)
-	elseif event == "PET_RENAMEABLE" then
-		StaticPopup_Show("RENAME_PET")
+	-- elseif event == "PET_RENAMEABLE" then
+		-- StaticPopup_Show("RENAME_PET")
 	elseif event == "PLAYER_TARGET_CHANGED" then
 		if UnitExists("target") and UnitIsUnit("target", frame.unit) then
 			frame:LockHighlight()
