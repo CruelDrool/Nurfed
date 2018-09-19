@@ -3,11 +3,12 @@
 
 	<Script file="PlayerFrame.lua"/>
 	 <Button name="Nurfed_Unit_Player" inherits="Nurfed_UnitFrame" virtual="true">
+		<Size x="180" y="68"/>
 		<Frames>
 			<StatusBar name="$parentHealth" parentKey="health" inherits="Nurfed_Unit_hp">
 				<Size x="130" y="13"/>
 				<Anchors>
-					<Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-5" y="25" />
+					<Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-5" y="34" />
 				</Anchors>
 				<Layers>
 					<Layer level="OVERLAY">
@@ -31,13 +32,42 @@
 			<StatusBar parentKey="powerBar" inherits="Nurfed_Unit_mp">
 				<Size x="130" y="10"/>
 				<Anchors>
-					<Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-5" y="14" />
+					<Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-5" y="23" />
 				</Anchors>
 				<Attributes>
 					<Attribute name="textFormat" type="string" value="$cur ($max)"/>
 					<Attribute name="glide" type="boolean" value="true"/>
 					<Attribute name="glideFade" type="number" value="0.35"/>
 				</Attributes>
+			</StatusBar>
+
+			<StatusBar parentKey="azerite" frameStrata="LOW">
+				<Size x="170" y="8"/>
+				<Anchors>
+					<Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-5" y="14" />
+				</Anchors>
+				<Layers>
+					<Layer level="BACKGROUND">
+						<Texture parentKey="bg" file="Interface\AddOns\Nurfed\Images\statusbar5">
+							<Color r="0" g="0" b="1" a="0.25"/>
+						</Texture>
+					</Layer>
+					<Layer level="OVERLAY">
+						<FontString parentKey="text" inherits="Nurfed_UnitFontSmall" justifyH="CENTER">
+							<Shadow>
+								<Color r="0" g="0" b="0" a="0.75"/>
+								<Offset x="-1" y="-1"/>
+							</Shadow>
+						</FontString>
+						<FontString parentKey="perc" inherits="Nurfed_UnitFontSmall" justifyH="RIGHT">
+							<Shadow>
+								<Color r="0" g="0" b="0" a="0.75"/>
+								<Offset x="-1" y="-1"/>
+							</Shadow>
+						</FontString>
+					</Layer>
+				</Layers>
+				<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5"/>
 			</StatusBar>
 			
 			<StatusBar parentKey="xp" frameStrata="LOW">
@@ -311,7 +341,7 @@
 		</Layers>
 		<Frames>
 			<Frame inherits="Nurfed_Unit_Overlay" parentKey="overlay">
-				<Size x="204" y="90" />
+				<Size x="204" y="99" />
 				<Anchors>
 					<Anchor point="TOPRIGHT" relativeTo="$parent" x="4" y="26"/>
 				</Anchors>

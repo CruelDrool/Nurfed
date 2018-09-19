@@ -12,6 +12,7 @@ module.defaults = {
 		name = "$name",
 		infoline = "$level ($g)",
 		xp = "$cur/$max ($rest)",
+		azerite = "$cur/$max ($level)",
 	},
 	frames = {
 		[unit] = {
@@ -192,6 +193,52 @@ local function OnEvent(frame, event, ...)
 	end
 end
 
+local function AzeriteBar_Update(frame)
+	local currValue, maxValue, currLevel, r, g, b
+	local text, perc = ""
+	
+	text = UnitFrames:GetTextFormat(frame:GetParent(), "azerite")
+	perc = UnitFrames:GetTextFormat(frame:GetParent(), "perc")
+	
+	local azeriteItemLocation = C_AzeriteItem.FindActiveAzeriteItem()
+ 
+	if not azeriteItemLocation then
+		frame:Hide()
+		return
+	end
+	
+	currValue, maxValue = C_AzeriteItem.GetAzeriteItemXPInfo(azeriteItemLocation)
+	currLevel = C_AzeriteItem.GetPowerLevel(azeriteItemLocation)
+	
+	r, g, b = ARTIFACT_BAR_COLOR:GetRGB()
+	
+	frame:SetMinMaxValues(0, maxValue)
+	frame:SetStatusBarColor(r, g, b)
+	frame.bg:SetVertexColor(r, g, b, frame.bg:GetAlpha())
+	frame:SetValue(currValue)
+
+	text = text:gsub("$cur", addon:CommaNumber(currValue))
+	text = text:gsub("$max", addon:FormatNumber(maxValue))
+	text = text:gsub("$level", LEVEL.." "..currLevel)
+	
+	perc = perc:gsub("$perc", format("%."..tostring(UnitFrames.db.profile.decimalpoints).."f", currValue / maxValue*100).."%%")
+	
+	frame.text:SetText(text)
+	frame.perc:SetText(perc)
+	frame:Show()
+end
+
+local function AzeriteBar_OnEvent(frame)
+	AzeriteBar_Update(frame)
+end
+
+local function AzeriteBar_OnLoad(frame)
+	frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+	frame:RegisterEvent("AZERITE_ITEM_EXPERIENCE_CHANGED")
+	
+	frame:SetScript("OnEvent", AzeriteBar_OnEvent)
+end
+
 local function XPbar_Update(frame)
 	local unit = frame.unit
 	local currValue, maxValue, rest, r, g, b
@@ -297,6 +344,7 @@ function module:OnEnable()
 	if not self.frame then
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PlayerFrameDropDown)
 		if self.frame.xp then XPbar_OnLoad(self.frame.xp, unit) end
+		if self.frame.azerite then AzeriteBar_OnLoad(self.frame.azerite) end
 	end
 	
 end

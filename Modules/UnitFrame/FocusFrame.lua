@@ -16,7 +16,7 @@ module.defaults = {
 	frames = {
 		[unit] = {
 			["x"] = -88,
-			["y"] = -121,
+			["y"] = -130,
 			["point"] = "TOP",
 			["scale"] = 1,
 		},
