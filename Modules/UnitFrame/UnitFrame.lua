@@ -332,6 +332,10 @@ function module:GetTextFormat(frame, f)
 	end
 end
 
+function module:FormatPercentage(number)
+	return format("%."..tostring(self.db.profile.decimalpoints).."f", number).."%%"
+end
+
 local Colour_Gradients = {
 	[0] = {
 		minHP = {1.0, 0.0, 0.0},
@@ -892,7 +896,7 @@ local function HealthBar_Text(frame)
 			else
 				percent = 0
 			end
-			perc = perc:gsub("$perc", format("%."..tostring(module.db.profile.decimalpoints).."f", percent).."%%")
+			perc = perc:gsub("$perc", module:FormatPercentage(percent))
 		end
 	end
 	

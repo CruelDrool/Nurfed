@@ -221,7 +221,7 @@ local function AzeriteBar_Update(frame)
 	text = text:gsub("$max", addon:FormatNumber(maxValue))
 	text = text:gsub("$level", LEVEL.." "..currLevel)
 	
-	perc = perc:gsub("$perc", format("%."..tostring(UnitFrames.db.profile.decimalpoints).."f", currValue / maxValue*100).."%%")
+	perc = perc:gsub("$perc", UnitFrames:FormatPercentage(currValue / maxValue*100))
 	
 	frame.text:SetText(text)
 	frame.perc:SetText(perc)
@@ -304,7 +304,7 @@ local function XPbar_Update(frame)
 	else
 		text = text:gsub("%S*$rest%S*%s?", "")
 	end
-	perc = perc:gsub("$perc", format("%."..tostring(UnitFrames.db.profile.decimalpoints).."f", currValue / maxValue*100).."%%")
+	perc = perc:gsub("$perc", UnitFrames:FormatPercentage(currValue / maxValue*100))
 	
 	frame.text:SetText(text)
 	frame.perc:SetText(perc)

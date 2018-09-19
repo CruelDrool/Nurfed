@@ -97,7 +97,6 @@ local subMenus = {
 	SOCIAL_MENU = { 
 		"FRIENDS_MENU",
 		"WHO",
-		"CHAT",
 		"RAID",
 	},
 	FRIENDS_MENU = {
@@ -131,8 +130,7 @@ local function ButtonsArray()
 		IGNORE_LIST = {text = IGNORE_LIST, func = function() FriendsTabHeaderTab3:Click(); if FriendsFrame:IsShown() then FriendsFrameTab1:Click() else ToggleFriendsFrame(1) end end, },
 		
 		WHO = { text = GetMenuButtonText(WHO, "TOGGLEWHOTAB"), func = function() ToggleFriendsFrame(2) end, },
-		CHAT = { text = GetMenuButtonText(CHAT, "TOGGLECHATTAB"), func = function() ToggleFriendsFrame(3) end, },
-		RAID = { text = GetMenuButtonText(RAID, "TOGGLERAIDTAB"), func = function() ToggleFriendsFrame(4) end, },
+		RAID = { text = GetMenuButtonText(RAID, "TOGGLERAIDTAB"), func = function() ToggleFriendsFrame(3) end, },
 		
 		CHARACTER = { text = GetMenuButtonText(CHARACTER_BUTTON, "TOGGLECHARACTER0"), func = function() ToggleCharacter("PaperDollFrame"); end, },
 		
