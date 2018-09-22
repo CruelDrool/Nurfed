@@ -235,6 +235,7 @@ end
 local function AzeriteBar_OnLoad(frame)
 	frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 	frame:RegisterEvent("AZERITE_ITEM_EXPERIENCE_CHANGED")
+	frame:RegisterEvent("AZERITE_ITEM_POWER_LEVEL_CHANGED")
 	
 	frame:SetScript("OnEvent", AzeriteBar_OnEvent)
 end
@@ -263,6 +264,15 @@ local function XPbar_Update(frame)
 
 		currValue = barValue  - barMin
 		maxValue = barMax - barMin
+		
+		if currValue == 0 then
+			currValue = 1
+		end
+		
+		if maxValue == 0 then
+			maxValue = 1
+		end
+		
 		if FACTION_BAR_COLORS[standingID] then
 			r, g, b = FACTION_BAR_COLORS[standingID].r, FACTION_BAR_COLORS[standingID].g, FACTION_BAR_COLORS[standingID].b
 		-- else

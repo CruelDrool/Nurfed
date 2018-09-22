@@ -1697,7 +1697,7 @@ local function ThreatBar_Text(frame)
 		else
 			percent = 0
 		end
-		perc = perc:gsub("$perc", format("%.2f", percent).."%%")
+		perc = perc:gsub("$perc", module:FormatPercentage(percent))
 	end
 	
 	if frame.text then frame.text:SetText(text) end
