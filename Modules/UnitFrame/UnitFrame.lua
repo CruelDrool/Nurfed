@@ -106,16 +106,16 @@ module.OutOfCombatQueue = {}
 
 function module:OnInitialize()
 	-- Go through each module and get the options and default DB values.
-	for name, mod in self:IterateModules() do
-		if mod.options then
+	for name, m in self:IterateModules() do
+		if m.options then
 			if not self.options.args[name] then
-				self.options.args[name] = mod.options
+				self.options.args[name] = m.options
 			end
 		end
 		-- Need to do this part because we have modules to this module and 
 		-- the child-databases (created by :RegisterNamespace) only have :RegisterDefaults and :ResetProfile available.
-		if mod.defaults then
-			defaults.profile[mod:GetName()] = mod.defaults
+		if m.defaults then
+			defaults.profile[name] = m.defaults
 		end
 	end
 	
@@ -132,6 +132,20 @@ function module:OnInitialize()
 	-- Enable if we're supposed to be enabled
 	if self.db.profile.enabled then
 		self:Enable()
+	end
+end
+
+-- Go through modules and enable/disable those that should be.
+function module:ToggleModules()
+	for name, m in self:IterateModules() do
+		-- Give the module access to its database.
+		m.db = self.db.profile[name]
+		
+		if m.db.enabled then
+			m:Enable()
+		else
+			m:Disable()
+		end
 	end
 end
 
@@ -160,13 +174,7 @@ function module:OnEnable()
 	self:RegisterEvent("PLAYER_REGEN_ENABLED")
 	
 	self.db.profile.enabled = true
-	-- for name, mod in self:IterateModules() do
-		-- if mod.disabledByParent then
-			-- if self.db.profile[mod:GetName()].enabled then
-				-- mod:Enable()
-			-- end
-		-- end
-	-- end
+	self:ToggleModules()
 end
 
 function module:OnDisable()
@@ -177,13 +185,27 @@ function module:OnDisable()
 	self:UnhookAll()
 	self:UnregisterAllEvents()
 	self.db.profile.enabled = false
-	for name, mod in self:IterateModules() do
-		mod.disabledByParent = true
-		mod:Disable()
+	for name, m in self:IterateModules() do
+		m:Disable()
 	end
 end
 
 function module:UpdateConfigs()
+	if self.db.profile.enabled then 
+		-- If profile says that the module is supposed to enabled, but it isn't already, then go ahead and enable it.
+		if not self:IsEnabled() then
+			self:Enable()
+		else
+		-- Already enabled. Go through modules and enable/disable those that should be.
+			self:ToggleModules()
+		end
+	else
+		-- If the module is currently enabled, but isn't supposed to, then disable it.
+		if self:IsEnabled() then
+			self:Disable()
+		end
+	end
+	
 	for f, modName in pairs(self.frames) do
 		if f then
 			local frame = _G[f]
@@ -197,11 +219,6 @@ function module:UpdateConfigs()
 			end
 		end
 	end
-	-- for name, mod in self:IterateModules() do
-		-- if self.db.profile[mod:GetName()].enabled then
-			-- mod:Enable()
-		-- end
-	-- end
 end
 
 function module:CreateFrame(modName, unit, events, oneventfunc, dropdownMenu, isWatched, id)
@@ -1159,8 +1176,6 @@ local function HealPredictionBar_Update(frame)
 end
 
 local function HealthBar_OnUpdate(frame, e)
-	if not frame:GetParent().isEnabled then return end
-	
 	local unit = frame:GetParent().unit
     if UnitExists(unit) then
 		--if not frame.pauseUpdates then
@@ -1268,7 +1283,7 @@ local function PowerBar_Text(frame)
 end
 
 local function PowerBar_OnEvent(frame, event, ...)
-	if not (frame:GetParent().isEnabled or frame:GetParent():GetParent().isEnabled) then return end
+	-- if not (frame:GetParent().isEnabled or frame:GetParent():GetParent().isEnabled) then return end
 
 	local arg1 = ...
 	local unit = frame:GetParent().unit or frame:GetParent():GetParent().unit
@@ -1287,7 +1302,7 @@ local function PowerBar_OnEvent(frame, event, ...)
 end
 
 local function PowerBar_OnUpdate(frame, e)
-	if not (frame:GetParent().isEnabled or frame:GetParent():GetParent().isEnabled) then return end
+	-- if not (frame:GetParent().isEnabled or frame:GetParent():GetParent().isEnabled) then return end
 
 	local unit = frame:GetParent().unit or frame:GetParent():GetParent().unit
     if UnitExists(unit) then

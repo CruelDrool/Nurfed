@@ -37,7 +37,7 @@ module.options = {
 			name = "Enabled",
 			-- desc = "",
 			get = function() return module.db.enabled end,
-			set = function() if module:IsEnabled() then module:Disable() else module:Enable() end end,
+			set = function() if UnitFrames:IsEnabled() then if module.db.enabled then module:Disable() else module:Enable() end end; if module.db.enabled then module.db.enabled = false else module.db.enabled = true end end,
 		},
 	},
 }
@@ -371,26 +371,21 @@ local function EnableBlizz()
 end
 
 function module:OnInitialize()
-	self.db = UnitFrames.db.profile[moduleName]
-	
-	-- Enable if we're supposed to be enabled and the parent module is also enabled
+	-- Enable if we're supposed to be enabled
 	if self.db.enabled and UnitFrames:IsEnabled() then
 		self:Enable()
 	end
 end
 
 function module:OnEnable()
-	self.db.enabled = true	
-
 	DisableBlizz()
-	
 	if not self.frame then
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PlayerFrameDropDown)
 		if self.frame.xp then XPbar_OnLoad(self.frame.xp, unit) end
 		if self.frame.azerite then AzeriteBar_OnLoad(self.frame.azerite) end
 
 		self.frame.inCombat = nil
-        self.frame.onHateList = nil
+		self.frame.onHateList = nil
 	end
 	
 	if self.frame then
@@ -405,11 +400,9 @@ function module:OnEnable()
 			AzeriteBar_Update(self.frame.azerite)
 		end
 	end
-	
 end
 
 function module:OnDisable()
-	self.db.enabled = false
 	EnableBlizz()
 	UnitFrames:DisableFrame(self.frame)
 end

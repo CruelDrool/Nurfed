@@ -183,22 +183,7 @@ function addon:PLAYER_ENTERING_WORLD()
 	-- CameraPanelOptions.cameraDistanceMaxFactor.maxValue = 4
 	ConsoleExec("cameraDistanceMaxFactor 2.6")
 	ConsoleExec("cameraDistanceMax 50")
-	
-	TargetFrame:UnregisterAllEvents()
-	TargetFrame:SetScript("OnEvent", nil)
-	UnregisterUnitWatch(TargetFrame)
-	TargetFrame:Hide()
-	function TargetFrame_Update() end
-	function TargetFrame_OnEvent() end
-	
-	TargetFrameNumericalThreat:UnregisterAllEvents()
-	TargetFrameNumericalThreat:SetScript("OnShow", nil)
-	TargetFrameNumericalThreat:SetScript("OnHide", nil)
-	TargetFrameNumericalThreat:SetScript("OnEvent", nil)
-	TargetFrameNumericalThreat:Hide()
-	function UnitFrameThreatIndicator_Initialize() end
-	function UnitFrameThreatIndicator_OnEvent() end
-	
+		
 	ComboFrame:UnregisterAllEvents()
 	ComboFrame:SetScript("OnEvent", nil)
 	ComboFrame:Hide()
