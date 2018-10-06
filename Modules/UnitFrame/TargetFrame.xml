@@ -177,6 +177,12 @@
 						<Anchor point="TOPLEFT" relativeKey="$parent.name" relativePoint="BOTTOMLEFT" x="0" y="0"/>
 					</Anchors>
 				</FontString>
+				<Texture parentKey="questicon" file="Interface\TargetingFrame\PortraitQuestBadge" hidden="true">
+					<Size x="10" y="10"/>
+					<Anchors>
+						<Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPRIGHT" x="-87" y="-4"/>
+					</Anchors>
+				</Texture>
 				<Texture parentKey="pvp">
 					<Size x="20" y="20"/>
 					<Anchors>

@@ -153,7 +153,7 @@ function module:OnEnable()
 	self:SecureHook(addon.LDBObj,"OnClick", function(frame, msg)
 		if msg == "LeftButton" then
 			module:Lock()
-			addon.LDBObj.OnTooltipShow(GameTooltip)
+			addon.LDBObj.OnTooltipShow(LibDBIconTooltip)
 		end
 	end)
 	

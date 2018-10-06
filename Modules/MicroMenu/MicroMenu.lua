@@ -36,21 +36,21 @@ local function GetMenuButtonText(text, binding, textFormat, abbr)
 	textFormat = textFormat:gsub("$t", text, 1)
 	textFormat = textFormat:gsub("$b", "%%s", 1)
 	
-	if GetBindingKey(binding) then
-		-- binding = GetBindingText(GetBindingKey(binding), false)
-		binding = GetBindingKey(binding)
+	local bindingKey = GetBindingKey(binding)
+	
+	if bindingKey then
 		if abbr then
-			binding = addon:Binding(binding)
+			bindingKey = addon:Binding(bindingKey)
 		else
 			-- SHIFT-J becomes Shift-J, and ESCAPE becomes Escape.
-			binding = binding:gsub("%w+", function(w) 
+			bindingKey = bindingKey:gsub("%w+", function(w) 
 				w = string.lower(w)
 				w = w:gsub("^%l", function(l) return string.upper(l) end)
 				return w
 			end)
 		end
 		
-		text = string.format(textFormat, binding)
+		text = string.format(textFormat, bindingKey)
 	end
 
 	return text
@@ -62,6 +62,8 @@ local mainMenu = {
 	"TITLE",
 	"BLANK",
 	"SOCIAL_MENU", -- Submenu
+	-- "SEPARATOR",
+	"CHAT_CHANNELS",
 	"SEPARATOR",
 	"CHARACTER",
 	"SPELLBOOK_ABILITIES_MENU", -- Submenu
@@ -123,6 +125,7 @@ local function ButtonsArray()
 		TITLE = { text = displayName, isTitle = 1, notClickable = 1 },
 		
 		SOCIAL_MENU = { text = GetMenuButtonText(SOCIAL_BUTTON, "TOGGLESOCIAL"), func = function() ToggleFriendsFrame() end, nested = 1, },
+		CHAT_CHANNELS = { text = GetMenuButtonText(CHAT_CHANNELS, "TOGGLECHATTAB"), func = function() ToggleChannelFrame() end, },
 
 		FRIENDS_MENU = { text = GetMenuButtonText(FRIENDS, "TOGGLEFRIENDSTAB"), func = function() ToggleFriendsFrame(1) end, nested = 1, },
 		FRIENDS_LIST = { text = FRIENDS_LIST, func = function() FriendsTabHeaderTab1:Click(); if FriendsFrame:IsShown() then FriendsFrameTab1:Click() else ToggleFriendsFrame(1) end end, },
