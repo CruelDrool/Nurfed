@@ -109,13 +109,18 @@
 				</Anchors>
 				<Layers>
 					<Layer level="ARTWORK">
-						<Texture file="Interface\TargetingFrame\UI-PhasingIcon"/>
+						<!-- <Texture file="Interface\TargetingFrame\UI-PhasingIcon"/> -->
+						<Texture parentKey="texture" setAllPoints="true"/>
+					</Layer>
+					<Layer level="OVERLAY">
+						<Texture parentKey="border" file="Interface\Common\RingBorder" setAllPoints="true"/>
 					</Layer>
 				</Layers>
 				<Scripts>
 					<OnEnter>
 						GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-						GameTooltip:SetText(PARTY_PHASED_MESSAGE, nil, nil, nil, nil, true);
+						-- GameTooltip:SetText(PARTY_PHASED_MESSAGE, nil, nil, nil, nil, true);
+						GameTooltip:SetText(self.tooltip, nil, nil, nil, nil, true);
 						GameTooltip:Show();
 					</OnEnter>
 					<OnLeave function="GameTooltip_Hide"/>
