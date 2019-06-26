@@ -1445,7 +1445,8 @@ local function CastBar_OnEvent(frame, event, unit,...)
 			frame.castID = castID
 			frame.startTime = GetTime() - (startTime / 1000)
 			-- frame.maxValue = (endTime - startTime) / 1000
-			r, g, b = 1.0, 0.7, 0.0
+			-- r, g, b = 1.0, 0.7, 0.0
+			r, g, b = CastingBarFrame.startCastColor:GetRGB()
 			-- frame.statusbar:SetMinMaxValues(0,frame.maxValue)
 			frame.channeling = false
 			frame.casting = true
@@ -1454,13 +1455,15 @@ local function CastBar_OnEvent(frame, event, unit,...)
 			if not endTime then frame:Hide(); frame:Clear(); return end
 			frame.startTime = (endTime / 1000) - GetTime()
 			-- frame.maxValue = (endTime - startTime) / 1000
-			r, g, b = 0.0, 1.0, 0.0
+			-- r, g, b = 0.0, 1.0, 0.0
+			r, g, b = CastingBarFrame.startChannelColor:GetRGB()
 			-- frame.statusbar:SetMinMaxValues(0,frame.maxValue)
 			frame.channeling = true
 			frame.casting = false
 		end
 		if notInterruptible then
-			r, g, b = 1.0, 0.0, 0.0
+			-- r, g, b = 1.0, 0.0, 0.0
+			r, g, b = CastingBarFrame.nonInterruptibleColor:GetRGB()
 		end
 		frame.statusbar:SetStatusBarColor(r, g, b)
 		frame.maxValue = (endTime - startTime) / 1000
@@ -1476,18 +1479,22 @@ local function CastBar_OnEvent(frame, event, unit,...)
 	elseif event  == "UNIT_SPELLCAST_INTERRUPTIBLE" then
 		local r, g, b
 		if frame.casting then
-			r, g, b = 1.0, 0.7, 0.0
+			-- r, g, b = 1.0, 0.7, 0.0
+			r, g, b = CastingBarFrame.startCastColor:GetRGB()
 		else -- Channeling
-			r, g, b = 0.0, 1.0, 0.0
+			-- r, g, b = 0.0, 1.0, 0.0
+			r, g, b = CastingBarFrame.startChannelColor:GetRGB()
 		end
 		frame.statusbar:SetStatusBarColor(r, g, b)
 	elseif event == "UNIT_SPELLCAST_NOT_INTERRUPTIBLE" then
-		frame.statusbar:SetStatusBarColor(1.0, 0.0, 0.0)
+		-- frame.statusbar:SetStatusBarColor(1.0, 0.0, 0.0)
+		frame.statusbar:SetStatusBarColor(CastingBarFrame.nonInterruptibleColor:GetRGB())
 	elseif event  == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP" then
 		if ( frame.casting and select(1,...) == frame.castID ) or frame.channeling then
 			if frame.casting then
 				frame.statusbar:SetValue(frame.maxValue)
-				frame.statusbar:SetStatusBarColor(0.0, 1.0, 0.0)
+				-- frame.statusbar:SetStatusBarColor(0.0, 1.0, 0.0)
+				frame.statusbar:SetStatusBarColor(CastingBarFrame.finishedCastColor:GetRGB())
 				frame.casting = false
 			end
 
@@ -1502,7 +1509,8 @@ local function CastBar_OnEvent(frame, event, unit,...)
 	elseif event == "UNIT_SPELLCAST_FAILED" or event == "UNIT_SPELLCAST_INTERRUPTED" then
 		if frame.casting and select(1,...) == frame.castID then
 			frame.statusbar:SetValue(frame.maxValue)
-			frame.statusbar:SetStatusBarColor(1.0, 0.0, 0.0)
+			-- frame.statusbar:SetStatusBarColor(1.0, 0.0, 0.0)
+			frame.statusbar:SetStatusBarColor(CastingBarFrame.failedCastColor:GetRGB())
 			frame.casting = false
 			local text
 			if event == "UNIT_SPELLCAST_FAILED" then
