@@ -127,9 +127,9 @@
 
 			<Layer level="OVERLAY" textureSubLevel="1">
 				<FontString parentKey="text" inherits="Nurfed_UnitFont" justifyH="LEFT">
-					<Shadow>
+					<Shadow x="-1" y="-1">
 						<Color r="0" g="0" b="0" a="0.75"/>
-						<Offset x="-1" y="-1"/>
+						<!--<Offset x="-1" y="-1"/>-->
 					</Shadow>
 				</FontString>
 				<FontString parentKey="miss" inherits="Nurfed_UnitFontOutline" justifyH="RIGHT">
@@ -149,9 +149,9 @@
 			</Layer>
 			<Layer level="OVERLAY">
 				<FontString parentKey="text" inherits="Nurfed_UnitFont" justifyH="LEFT">
-					<Shadow>
+					<Shadow x="-1" y="-1">
 						<Color r="0" g="0" b="0" a="0.75"/>
-						<Offset x="-1" y="-1"/>
+						<!--<Offset x="-1" y="-1"/>-->
 					</Shadow>
 				</FontString>
 			</Layer>
@@ -169,15 +169,15 @@
 			</Layer>
 			<Layer level="OVERLAY">
 				<FontString parentKey="text" inherits="Nurfed_UnitFontSmall" justifyH="CENTER">
-					<Shadow>
+					<Shadow x="-1" y="-1">
 						<Color r="0" g="0" b="0" a="0.75"/>
-						<Offset x="-1" y="-1"/>
+						<!--<Offset x="-1" y="-1"/>-->
 					</Shadow>
 				</FontString>
 				<FontString parentKey="perc" inherits="Nurfed_UnitFontSmall" justifyH="RIGHT">
-					<Shadow>
+					<Shadow x="-1" y="-1">
 						<Color r="0" g="0" b="0" a="0.75"/>
-						<Offset x="-1" y="-1"/>
+						<!--<Offset x="-1" y="-1"/>-->
 					</Shadow>
 				</FontString>
 			</Layer>
@@ -200,9 +200,9 @@
 			</Layer>
 			<Layer level="OVERLAY">
 				<FontString parentKey="text" inherits="Nurfed_UnitFontSmall" justifyH="CENTER" text="!">
-					<Shadow>
+					<Shadow x="-1" y="-1">
 						<Color r="0" g="0" b="0" a="0.75"/>
-						<Offset x="-1" y="-1"/>
+						<!--<Offset x="-1" y="-1"/>-->
 					</Shadow>
 				</FontString>
 			</Layer>
@@ -231,18 +231,18 @@
 							<Anchors>
 								<Anchor point="TOP"/>
 							</Anchors>
-							<Shadow>
+							<Shadow x="-1" y="-1">
 								<Color r="0" g="0" b="0" a="0.75"/>
-								<Offset x="-1" y="-1"/>
+								<!--<Offset x="-1" y="-1"/>-->
 							</Shadow>
 						</FontString>
 						<FontString parentKey="time" inherits="Nurfed_UnitFontSmall" justifyH="LEFT">
 							<Anchors>
 								<Anchor point="BOTTOM" relativePoint="TOP" x="0" y="3"/>
 							</Anchors>
-							<Shadow>
+							<Shadow x="-1" y="-1">
 								<Color r="0" g="0" b="0" a="0.75"/>
-								<Offset x="-1" y="-1"/>
+								<!--<Offset x="-1" y="-1"/>-->
 							</Shadow>
 						</FontString>
 						<Texture parentKey="icon">
@@ -284,9 +284,9 @@
 					<Anchors>
 						<Anchor point="TOPLEFT" relativePoint="TOPLEFT" x="3" y="-2"/>
 					</Anchors>
-					<Shadow>
+					<Shadow x="-1" y="-1">
 						<Color r="0" g="0" b="0" a="0.75"/>
-						<Offset x="-1" y="-1"/>
+						<!--<Offset x="-1" y="-1"/>-->
 					</Shadow>
 				</FontString>
 			</Layer>
