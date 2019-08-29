@@ -192,13 +192,13 @@ function addon:PLAYER_ENTERING_WORLD()
 	function TargetFrame_Update() end
 	function TargetFrame_OnEvent() end
 	
-	TargetFrameNumericalThreat:UnregisterAllEvents()
-	TargetFrameNumericalThreat:SetScript("OnShow", nil)
-	TargetFrameNumericalThreat:SetScript("OnHide", nil)
-	TargetFrameNumericalThreat:SetScript("OnEvent", nil)
-	TargetFrameNumericalThreat:Hide()
-	function UnitFrameThreatIndicator_Initialize() end
-	function UnitFrameThreatIndicator_OnEvent() end
+	-- TargetFrameNumericalThreat:UnregisterAllEvents()
+	-- TargetFrameNumericalThreat:SetScript("OnShow", nil)
+	-- TargetFrameNumericalThreat:SetScript("OnHide", nil)
+	-- TargetFrameNumericalThreat:SetScript("OnEvent", nil)
+	-- TargetFrameNumericalThreat:Hide()
+	-- function UnitFrameThreatIndicator_Initialize() end
+	-- function UnitFrameThreatIndicator_OnEvent() end
 	
 	ComboFrame:UnregisterAllEvents()
 	ComboFrame:SetScript("OnEvent", nil)
@@ -243,19 +243,19 @@ function addon:PLAYER_ENTERING_WORLD()
 		bossframe:Hide()
 	end
 	
-	UnregisterUnitWatch(FocusFrame)
-	FocusFrame:UnregisterAllEvents()
-	FocusFrame:SetScript("OnEvent", nil)
-	FocusFrame:Hide()
-	function FocusFrame_Update() end
-	function FocusFrame_OnEvent() end
+	-- UnregisterUnitWatch(FocusFrame)
+	-- FocusFrame:UnregisterAllEvents()
+	-- FocusFrame:SetScript("OnEvent", nil)
+	-- FocusFrame:Hide()
+	-- function FocusFrame_Update() end
+	-- function FocusFrame_OnEvent() end
 	
-	CastingBarFrame:UnregisterAllEvents()
-	CastingBarFrame:SetScript("OnLoad", nil)
-	CastingBarFrame:SetScript("OnEvent", nil)
-	CastingBarFrame:SetScript("OnUpdate", nil)
-	CastingBarFrame:SetScript("OnShow", nil)
-	CastingBarFrame:Hide()
+	-- CastingBarFrame:UnregisterAllEvents()
+	-- CastingBarFrame:SetScript("OnLoad", nil)
+	-- CastingBarFrame:SetScript("OnEvent", nil)
+	-- CastingBarFrame:SetScript("OnUpdate", nil)
+	-- CastingBarFrame:SetScript("OnShow", nil)
+	-- CastingBarFrame:Hide()
 	-- function CastingBarFrame_OnShow() end
 	-- function CastingBarFrame_OnEvent() end
 	-- function CastingBarFrame_OnUpdate() end

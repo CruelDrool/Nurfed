@@ -226,8 +226,8 @@ function module:CreateFrame(modName, unit, events, oneventfunc, menufunc, isWatc
 	if frame.health then self:HealthBar_OnLoad(frame.health) end
 	if frame.powerBar then self:PowerBar_OnLoad(frame.powerBar, frame.unit) end
 	if frame.additionalPowerBar then self:AdditionalPowerBar_OnLoad(frame.additionalPowerBar, frame.unit) end
-	if frame.cast then self:CastBar_OnLoad(frame.cast, frame.unit) end
-	if frame.threat then self:ThreatBar_OnLoad(frame.threat, unit) end
+	-- if frame.cast then self:CastBar_OnLoad(frame.cast, frame.unit) end
+	-- if frame.threat then self:ThreatBar_OnLoad(frame.threat, unit) end
 	
 	if frame.target then self:TargetofTarget_Onload(frame.target, frame.unit.."target") end
 	if frame.targettarget then self:TargetofTarget_Onload(frame.targettarget, frame.unit.."targettarget") end
@@ -463,13 +463,13 @@ function module:Replace(unit, textFormat)
 	end
 	
 	if string.find(textFormat,"$level") then
-		local level = UnitEffectiveLevel(unit)
+		local level = UnitLevel(unit)
 		-- local level = UnitLevel(unit)
 		local classification = UnitClassification(unit)
 		local r, g, b
 		if level > 0 then
 			-- r, g, b = GetRelativeDifficultyColor(UnitLevel("player"), level)
-			r, g, b = GetRelativeDifficultyColor(UnitEffectiveLevel("player"), level)
+			r, g, b = GetRelativeDifficultyColor(UnitLevel("player"), level)
 		end
 
 		if level == 0 then
@@ -490,26 +490,26 @@ function module:Replace(unit, textFormat)
 			r, g, b = 1, 0, 0
 		end
 		
-		if UnitIsWildBattlePet(unit) or UnitIsBattlePetCompanion(unit) then
-			level = UnitBattlePetLevel(unit)
-			local highestLevelPet = 1;
-			local petGUID
-			local slottedPets = 0
-			for i=1,select(2,C_PetJournal.GetNumPets()) do
-				if slottedPets == 3 then break end
-				petGUID = select(1,C_PetJournal.GetPetInfoByIndex(i))
-				if petGUID ~= nil then
-					if C_PetJournal.PetIsSlotted(petGUID) then
-						local current = select(5,C_PetJournal.GetPetInfoByIndex(i))
-						if current > highestLevelPet then
-							highestLevelPet = current
-						end
-						slottedPets = slottedPets + 1
-					end
-				end
-			end
-			r, g, b =  GetRelativeDifficultyColor(highestLevelPet, level)
-		end
+		-- if UnitIsWildBattlePet(unit) or UnitIsBattlePetCompanion(unit) then
+			-- level = UnitBattlePetLevel(unit)
+			-- local highestLevelPet = 1;
+			-- local petGUID
+			-- local slottedPets = 0
+			-- for i=1,select(2,C_PetJournal.GetNumPets()) do
+				-- if slottedPets == 3 then break end
+				-- petGUID = select(1,C_PetJournal.GetPetInfoByIndex(i))
+				-- if petGUID ~= nil then
+					-- if C_PetJournal.PetIsSlotted(petGUID) then
+						-- local current = select(5,C_PetJournal.GetPetInfoByIndex(i))
+						-- if current > highestLevelPet then
+							-- highestLevelPet = current
+						-- end
+						-- slottedPets = slottedPets + 1
+					-- end
+				-- end
+			-- end
+			-- r, g, b =  GetRelativeDifficultyColor(highestLevelPet, level)
+		-- end
 		
 		level = addon:rgbhex(r,g,b)..level.."|r"
 		out = out:gsub("$level", level)
@@ -688,27 +688,27 @@ function module:UpdatePartyLeader(frame)
 end
 
 function module:UpdateRoles(frame)
-    local LFGRole = UnitGroupRolesAssigned(frame.unit);
-    local LFGicon = frame.LFGRole
+    -- local LFGRole = UnitGroupRolesAssigned(frame.unit);
+    -- local LFGicon = frame.LFGRole
 
-    if ( LFGRole == "TANK" or LFGRole == "HEALER" or LFGRole == "DAMAGER") then
-        LFGicon:SetTexCoord(GetTexCoordsForRoleSmallCircle(LFGRole));
-        LFGicon:Show()
-    else
-        LFGicon:Hide()
-    end
+    -- if ( LFGRole == "TANK" or LFGRole == "HEALER" or LFGRole == "DAMAGER") then
+        -- LFGicon:SetTexCoord(GetTexCoordsForRoleSmallCircle(LFGRole));
+        -- LFGicon:Show()
+    -- else
+        -- LFGicon:Hide()
+    -- end
 	
-	local _, raidRole = RaidInfo(frame.unit)
-	local raidIcon = frame.raidRole
-	if raidRole == "MAINASSIST" then
-		raidIcon:SetTexture("Interface\\GroupFrame\\UI-GROUP-MAINASSISTICON")
-		raidIcon:Show()
-	elseif raidRole == "MAINTANK" then
-		raidIcon:SetTexture("Interface\\GroupFrame\\UI-GROUP-MAINTANKICON")
-		raidIcon:Show()
-	else
-		raidIcon:Hide()
-	end
+	-- local _, raidRole = RaidInfo(frame.unit)
+	-- local raidIcon = frame.raidRole
+	-- if raidRole == "MAINASSIST" then
+		-- raidIcon:SetTexture("Interface\\GroupFrame\\UI-GROUP-MAINASSISTICON")
+		-- raidIcon:Show()
+	-- elseif raidRole == "MAINTANK" then
+		-- raidIcon:SetTexture("Interface\\GroupFrame\\UI-GROUP-MAINTANKICON")
+		-- raidIcon:Show()
+	-- else
+		-- raidIcon:Hide()
+	-- end
 end
 
 function module:UpdateName(frame)
@@ -844,17 +844,17 @@ function module:OnMouseWheel(frame, delta)
 end
 
 local function Glide(frame, e)
-	-- if frame.fade < 1 then
-	 if frame.glideFade < 1 then
-		frame.fade = frame.glideFade
-		frame.fade = frame.fade + e
-		if frame.fade > 1 then frame.fade = 1 end
-		local delta = frame.endvalue - frame.startvalue
-		-- local diff = delta * (frame.fade / 1)
-		local diff = delta * frame.fade
-		frame.startvalue = frame.startvalue + diff
-		frame:SetValue(frame.startvalue)
-	end
+	-- -- if frame.fade < 1 then
+	 -- if frame.glideFade < 1 then
+		-- frame.fade = frame.glideFade
+		-- frame.fade = frame.fade + e
+		-- if frame.fade > 1 then frame.fade = 1 end
+		-- local delta = frame.endvalue - frame.startvalue
+		-- -- local diff = delta * (frame.fade / 1)
+		-- local diff = delta * frame.fade
+		-- frame.startvalue = frame.startvalue + diff
+		-- frame:SetValue(frame.startvalue)
+	-- end
 end
 
 --[[
@@ -1138,7 +1138,7 @@ local function HealthBar_OnUpdate(frame, e)
 			end
 			HealthBar_Gradient(frame,e)
 			HealthBar_Text(frame)
-			HealPredictionBar_Update(frame)
+			-- HealPredictionBar_Update(frame)
 		--end
     -- end
 end
@@ -1160,7 +1160,7 @@ function module:HealthBar_Update(frame)
 		frame:SetValue(currValue)
 		
 		HealthBar_Text(frame)
-		HealPredictionBar_Update(frame)
+		-- HealPredictionBar_Update(frame)
 		
 		if UnitExists(frame.unit) then
 			HealthBar_Gradient(frame)
@@ -1625,7 +1625,7 @@ function module:CastBar_OnLoad(frame, unit)
 
 	frame:RegisterEvent("PLAYER_ENTERING_WORLD")	
 	frame:RegisterEvent("GROUP_ROSTER_UPDATE")
-	frame:RegisterEvent("PLAYER_FOCUS_CHANGED")
+	-- frame:RegisterEvent("PLAYER_FOCUS_CHANGED")
 	frame:RegisterEvent("PLAYER_TARGET_CHANGED")
 	
 	frame:RegisterEvent("UNIT_SPELLCAST_START")

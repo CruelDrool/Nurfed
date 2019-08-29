@@ -245,22 +245,22 @@ local function XPbar_Update(frame)
 	local currValue, maxValue, rest, r, g, b
 	local text, perc = ""
 	local name, standingID, barMin, barMax, barValue, factionID = GetWatchedFactionInfo()
-	local friendshipID = GetFriendshipReputation(factionID)
+	-- local friendshipID = GetFriendshipReputation(factionID)
 
 	-- text = frame:GetAttribute("textFormat")
 	-- perc = frame:GetAttribute("percFormat")
 	text = UnitFrames:GetTextFormat(frame:GetParent(), "xp")
 	perc = UnitFrames:GetTextFormat(frame:GetParent(), "perc")
 	if name then
-		if friendshipID then
-			local _, friendRep, friendMaxRep, friendName, friendText, friendTexture, friendTextLevel, friendThreshold, nextFriendThreshold = GetFriendshipReputation(factionID)
-			if nextFriendThreshold then
-				barMin, barMax, barValue = friendThreshold, nextFriendThreshold, friendRep
-			else
-				barMin, barMax, barValue = 0, 1, 1
-			end
-			standingID = 5
-		end
+		-- if friendshipID then
+			-- local _, friendRep, friendMaxRep, friendName, friendText, friendTexture, friendTextLevel, friendThreshold, nextFriendThreshold = GetFriendshipReputation(factionID)
+			-- if nextFriendThreshold then
+				-- barMin, barMax, barValue = friendThreshold, nextFriendThreshold, friendRep
+			-- else
+				-- barMin, barMax, barValue = 0, 1, 1
+			-- end
+			-- standingID = 5
+		-- end
 
 		currValue = barValue  - barMin
 		maxValue = barMax - barMin
@@ -287,7 +287,8 @@ local function XPbar_Update(frame)
 		rest = name
 	else
 		-- -- GetMaxPlayerLevel()
-		if UnitLevel(unit) == MAX_PLAYER_LEVEL or IsXPUserDisabled() then
+		-- if UnitLevel(unit) == MAX_PLAYER_LEVEL or IsXPUserDisabled() then
+		if UnitLevel(unit) == MAX_PLAYER_LEVEL then
 			frame:Hide()
 			return
 		end
@@ -354,7 +355,7 @@ function module:OnEnable()
 	if not self.frame then
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PlayerFrameDropDown)
 		if self.frame.xp then XPbar_OnLoad(self.frame.xp, unit) end
-		if self.frame.azerite then AzeriteBar_OnLoad(self.frame.azerite) end
+		-- if self.frame.azerite then AzeriteBar_OnLoad(self.frame.azerite) end
 	end
 	
 end

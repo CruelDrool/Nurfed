@@ -82,7 +82,7 @@ local events = {
 	"DISPLAY_SIZE_CHANGED",
 	"UPDATE_BINDINGS",
 	"CVAR_UPDATE",
-	"INCOMING_SUMMON_CHANGED",
+	-- "INCOMING_SUMMON_CHANGED",
 }
 
 local partyFrames = {}
