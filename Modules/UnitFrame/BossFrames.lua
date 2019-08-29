@@ -84,10 +84,10 @@ local function Update(frame)
 	UnitFrames:PowerBar_Update(frame.powerBar, frame.unit)
 	UnitFrames:HealthBar_Update(frame.health)
 	if frame.model then UnitFrames:UpdateModel(frame.model, frame.unit) end
-	if UnitExists(frame.unit) then
+	-- if UnitExists(frame.unit) then
 		UnitFrames:UpdateInfo(frame)
 		UnitFrames:UpdateRaidIcon(frame)
-	end
+	-- end
 end
 
 local function OnEvent(frame, event, ...)
@@ -111,11 +111,11 @@ local function OnEvent(frame, event, ...)
 		end
 	elseif event == "UNIT_TARGETABLE_CHANGED" then
 		if arg1 == frame.unit then
-			if UnitCanAttack("player", frame.unit) then
-				frame:SetAlpha(1.0)
-			else
-				frame:SetAlpha(0.6)
-			end
+			-- if UnitCanAttack("player", frame.unit) then
+				-- frame:SetAlpha(1.0)
+			-- else
+				-- frame:SetAlpha(0.6)
+			-- end
 			Update(frame)
 			CloseDropDownMenus()
 		end
