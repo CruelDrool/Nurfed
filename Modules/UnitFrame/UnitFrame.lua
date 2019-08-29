@@ -1177,7 +1177,7 @@ end
 
 local function HealthBar_OnUpdate(frame, e)
 	local unit = frame:GetParent().unit
-    if UnitExists(unit) then
+    -- if UnitExists(unit) then
 		--if not frame.pauseUpdates then
 			local currValue = UnitHealth(unit)
 			local maxValue = UnitHealthMax(unit)
@@ -1201,7 +1201,7 @@ local function HealthBar_OnUpdate(frame, e)
 			HealthBar_Text(frame)
 			HealPredictionBar_Update(frame)
 		--end
-    end
+    -- end
 end
 
 function module:HealthBar_Update(frame)
@@ -1305,7 +1305,7 @@ local function PowerBar_OnUpdate(frame, e)
 	-- if not (frame:GetParent().isEnabled or frame:GetParent():GetParent().isEnabled) then return end
 
 	local unit = frame:GetParent().unit or frame:GetParent():GetParent().unit
-    if UnitExists(unit) then
+    -- if UnitExists(unit) then
 		if not frame.pauseUpdates then
 			local currValue
 			local maxValue
@@ -1334,7 +1334,7 @@ local function PowerBar_OnUpdate(frame, e)
 			end
 			PowerBar_Text(frame);
 		end
-    end
+    -- end
 end
 
 local function AdditionalPowerBar_ShowHide(frame)
