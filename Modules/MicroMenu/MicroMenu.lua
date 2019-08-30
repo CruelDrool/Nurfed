@@ -61,19 +61,20 @@ end
 local mainMenu = {
 	"TITLE",
 	"BLANK",
-	"SOCIAL_MENU", -- Submenu
-	"SEPARATOR",
 	"CHARACTER",
 	"SPELLBOOK_ABILITIES_MENU", -- Submenu
 	"TALENTS",
-	"ACHIEVEMENTS",
+	-- "ACHIEVEMENTS",
 	"QUESTLOG",
-	"GUILD",
-	"DUNGEONS",
-	"COLLECTIONS",
-	"ADVENTURE_JOURNAL",
-	"BLIZZARD_STORE",
+	"SOCIAL_MENU", -- Submenu
+	-- "GUILD",
+	-- "DUNGEONS",
+	-- "COLLECTIONS",
+	-- "ADVENTURE_JOURNAL",
+	-- "BLIZZARD_STORE",
+	"MAP",
 	"GAME_MENU", -- Submenu
+	"HELP_BUTTON",
 	"SEPARATOR",
 	"CANCEL"
 }
@@ -82,8 +83,8 @@ local mainMenu = {
 local subMenus = {
 	GAME_MENU = { 
 		"HELP",
-		"BLIZZARD_STORE",
-		"WHATS_NEW",
+		-- "BLIZZARD_STORE",
+		-- "WHATS_NEW",
 		"SEPARATOR",
 		"SYSTEMOPTIONS",
 		"UIOPTIONS",
@@ -97,16 +98,17 @@ local subMenus = {
 	SOCIAL_MENU = { 
 		"FRIENDS_MENU",
 		"WHO",
+		"GUILD",
 		"RAID",
 	},
 	FRIENDS_MENU = {
 		"FRIENDS_LIST",
-		"QUICK_JOIN",
+		-- "QUICK_JOIN",
 		"IGNORE_LIST",
 	},
 	SPELLBOOK_ABILITIES_MENU = {
 		"SPELLBOOK",
-		"PROFESSIONSBOOK",
+		-- "PROFESSIONSBOOK",
 		"PETBOOK",
 	},
 }
@@ -126,11 +128,11 @@ local function ButtonsArray()
 
 		FRIENDS_MENU = { text = GetMenuButtonText(FRIENDS, "TOGGLEFRIENDSTAB"), func = function() ToggleFriendsFrame(1) end, nested = 1, },
 		FRIENDS_LIST = { text = FRIENDS_LIST, func = function() FriendsTabHeaderTab1:Click(); if FriendsFrame:IsShown() then FriendsFrameTab1:Click() else ToggleFriendsFrame(1) end end, },
-		QUICK_JOIN = { text = GetMenuButtonText(QUICK_JOIN, "TOGGLEQUICKJOINTAB"), func = function() FriendsTabHeaderTab2:Click(); if FriendsFrame:IsShown() then FriendsFrameTab1:Click() else ToggleFriendsFrame(1) end end, },
-		IGNORE_LIST = {text = IGNORE_LIST, func = function() FriendsTabHeaderTab3:Click(); if FriendsFrame:IsShown() then FriendsFrameTab1:Click() else ToggleFriendsFrame(1) end end, },
+		-- QUICK_JOIN = { text = GetMenuButtonText(QUICK_JOIN, "TOGGLEQUICKJOINTAB"), func = function() FriendsTabHeaderTab2:Click(); if FriendsFrame:IsShown() then FriendsFrameTab1:Click() else ToggleFriendsFrame(1) end end, },
+		IGNORE_LIST = {text = IGNORE_LIST, func = function() FriendsTabHeaderTab2:Click(); if FriendsFrame:IsShown() then FriendsFrameTab1:Click() else ToggleFriendsFrame(1) end end, },
 		
 		WHO = { text = GetMenuButtonText(WHO, "TOGGLEWHOTAB"), func = function() ToggleFriendsFrame(2) end, },
-		RAID = { text = GetMenuButtonText(RAID, "TOGGLERAIDTAB"), func = function() ToggleFriendsFrame(3) end, },
+		RAID = { text = GetMenuButtonText(RAID, "TOGGLERAIDTAB"), func = function() if IsInGuild() then ToggleFriendsFrame(4) else ToggleFriendsFrame(3) end end, },
 		
 		CHARACTER = { text = GetMenuButtonText(CHARACTER_BUTTON, "TOGGLECHARACTER0"), func = function() ToggleCharacter("PaperDollFrame"); end, },
 		
@@ -140,10 +142,10 @@ local function ButtonsArray()
 		PROFESSIONSBOOK = { text = GetMenuButtonText(TRADE_SKILLS, "TOGGLEPROFESSIONBOOK"), func = function() ToggleSpellBook(BOOKTYPE_PROFESSION) end, },
 		PETBOOK = { text = GetMenuButtonText(PET, "TOGGLEPETBOOK"), func = function() ToggleSpellBook(BOOKTYPE_PET ) end, disabled = true, },
 		
-		TALENTS = { text = GetMenuButtonText(TALENTS_BUTTON, "TOGGLETALENTS"), func = function() TalentMicroButton:Click() end, },
+		TALENTS = { text = GetMenuButtonText(TALENTS, "TOGGLETALENTS"), func = function() TalentMicroButton:Click() end, },
 		ACHIEVEMENTS = { text = GetMenuButtonText(ACHIEVEMENT_BUTTON, "TOGGLEACHIEVEMENT"), func = function() ToggleAchievementFrame() end, },
 		QUESTLOG = { text = GetMenuButtonText(QUESTLOG_BUTTON, "TOGGLEQUESTLOG"), func = function() ToggleQuestLog() end, },
-		GUILD = { func = function() GuildMicroButton:Click() end, },
+		GUILD = { func = function() ToggleFriendsFrame(3) end, },
 		DUNGEONS = { text = GetMenuButtonText(DUNGEONS_BUTTON, "TOGGLEGROUPFINDER"), func = function() LFDMicroButton:Click() end, },
 		COLLECTIONS = { text = GetMenuButtonText(COLLECTIONS, "TOGGLECOLLECTIONS"), func = function() CollectionsMicroButton:Click() end, },
 		ADVENTURE_JOURNAL = { text = GetMenuButtonText(ADVENTURE_JOURNAL, "TOGGLEENCOUNTERJOURNAL"), func = function() EJMicroButton:Click() end },
@@ -159,12 +161,15 @@ local function ButtonsArray()
 			end
 		end, nested = 1, },
 		HELP = { text = GAMEMENU_HELP, func = function() ToggleHelpFrame() end, },
+		HELP_BUTTON = { text = HELP_BUTTON, func = function() ToggleHelpFrame() end, },
 		WHATS_NEW = { text = GAMEMENU_NEW_BUTTON, func = function() GameMenuButtonWhatsNew:Click() end, },
 		SYSTEMOPTIONS = { text = SYSTEMOPTIONS_MENU, func = function() GameMenuButtonOptions:Click() end, },
 		UIOPTIONS = { text = UIOPTIONS_MENU, func = function() GameMenuButtonUIOptions:Click() end, },
 		KEY_BINDINGS = { text = KEY_BINDINGS, func = function() GameMenuButtonKeybindings:Click() end, },
 		MACROS = { text = MACROS, func = function() ShowMacroFrame() end, },
 		ADDONS = { text = ADDONS, func = function() GameMenuButtonAddons:Click() end, },
+		
+		MAP = { text = GetMenuButtonText(WORLDMAP_BUTTON, "TOGGLEWORLDMAP"), func = function() ToggleWorldMap() end, },
 		
 		-- The functions for the buttons below are now restricted by Blizzard. The buttons are now disabled.
 		LOGOUT = { text = LOGOUT, func = function() Logout() end, disabled = true, },
@@ -205,10 +210,10 @@ local function ButtonsArray()
 		buttons["DUNGEONS"]["text"] = GetMenuButtonText(DUNGEONS_BUTTON.." ("..FEATURE_NOT_AVAILBLE_PANDAREN..")", "TOGGLEGROUPFINDER")		
 	end
 	
-	if not C_AdventureJournal.CanBeShown() then
-		buttons["ADVENTURE_JOURNAL"]["disabled"] = true
-		buttons["ADVENTURE_JOURNAL"]["text"] = GetMenuButtonText(ADVENTURE_JOURNAL.." ("..FEATURE_NOT_YET_AVAILABLE ..")", "TOGGLEENCOUNTERJOURNAL")
-	end
+	-- if not C_AdventureJournal.CanBeShown() then
+		-- buttons["ADVENTURE_JOURNAL"]["disabled"] = true
+		-- buttons["ADVENTURE_JOURNAL"]["text"] = GetMenuButtonText(ADVENTURE_JOURNAL.." ("..FEATURE_NOT_YET_AVAILABLE ..")", "TOGGLEENCOUNTERJOURNAL")
+	-- end
 	
 	if HasPetSpells() or PetHasSpellbook() then
 		buttons["PETBOOK"]["disabled"] = false	

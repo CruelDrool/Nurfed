@@ -531,9 +531,9 @@ function module:Replace(unit, textFormat)
 				class = "NPC"
 			elseif UnitCreatureFamily(unit) then
 				class = UnitCreatureFamily(unit)
-			elseif UnitIsWildBattlePet(unit) or UnitIsBattlePetCompanion(unit) then
-				local petType = UnitBattlePetType(unit);
-				class = _G["BATTLE_PET_NAME_"..petType].." "..PET
+			-- elseif UnitIsWildBattlePet(unit) or UnitIsBattlePetCompanion(unit) then
+				-- local petType = UnitBattlePetType(unit);
+				-- class = _G["BATTLE_PET_NAME_"..petType].." "..PET
 			elseif UnitCreatureType(unit) then
 				class = UnitCreatureType(unit)
 			end
@@ -669,13 +669,13 @@ end
 function module:UpdatePartyLeader(frame)
 	if UnitIsGroupLeader(frame.unit) then
 		frame.assistant:Hide()
-		if HasLFGRestrictions() then
-			frame.guide:Show()
-			frame.leader:Hide()
-		else
+		-- if HasLFGRestrictions() then
+			-- frame.guide:Show()
+			-- frame.leader:Hide()
+		-- else
 			frame.guide:Hide()
 			frame.leader:Show()
-		end
+		-- end
 	elseif UnitIsGroupAssistant(frame.unit) and IsInRaid() then
 		frame.leader:Hide()
 		frame.guide:Hide()
@@ -844,17 +844,17 @@ function module:OnMouseWheel(frame, delta)
 end
 
 local function Glide(frame, e)
-	-- -- if frame.fade < 1 then
-	 -- if frame.glideFade < 1 then
-		-- frame.fade = frame.glideFade
-		-- frame.fade = frame.fade + e
-		-- if frame.fade > 1 then frame.fade = 1 end
-		-- local delta = frame.endvalue - frame.startvalue
-		-- -- local diff = delta * (frame.fade / 1)
-		-- local diff = delta * frame.fade
-		-- frame.startvalue = frame.startvalue + diff
-		-- frame:SetValue(frame.startvalue)
-	-- end
+	-- if frame.fade < 1 then
+	 if frame.glideFade < 1 then
+		frame.fade = frame.glideFade
+		frame.fade = frame.fade + e
+		if frame.fade > 1 then frame.fade = 1 end
+		local delta = frame.endvalue - frame.startvalue
+		-- local diff = delta * (frame.fade / 1)
+		local diff = delta * frame.fade
+		frame.startvalue = frame.startvalue + diff
+		frame:SetValue(frame.startvalue)
+	end
 end
 
 --[[

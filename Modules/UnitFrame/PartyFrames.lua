@@ -90,64 +90,69 @@ local partyFrames = {}
 local function UpdatePhasing(frame)
 	local unit = frame.unit
 	local icon = frame.phasingIcon
-	local inPhase = UnitInPhase(unit)
-	local notInSameWarMode = UnitIsWarModePhased(unit)
+	-- local inPhase = UnitInPhase(unit)
+	-- local notInSameWarMode = UnitIsWarModePhased(unit)
 	
-	if UnitInOtherParty(unit) then
-		frame:SetAlpha(0.6)
-		icon.texture:SetTexture("Interface\\LFGFrame\\LFG-Eye")
-		icon.texture:SetTexCoord(0.125, 0.25, 0.25, 0.5)
-		icon.border:Show()
-		icon.tooltip = PARTY_IN_PUBLIC_GROUP_MESSAGE
-		icon:Show()
-	elseif C_IncomingSummon.HasIncomingSummon(unit) then
-		local status = C_IncomingSummon.IncomingSummonStatus(unit)
-		if status == Enum.SummonStatus.Pending then
-			icon.texture:SetAtlas("Raid-Icon-SummonPending")
-			icon.texture:SetTexCoord(0, 1, 0, 1)
-			icon.tooltip = INCOMING_SUMMON_TOOLTIP_SUMMON_PENDING
-			icon.border:Hide()
-			icon:Show()
-	elseif status == Enum.SummonStatus.Accepted then
-		icon.texture:SetAtlas("Raid-Icon-SummonAccepted")
-		icon.texture:SetTexCoord(0, 1, 0, 1)
-		icon.tooltip = INCOMING_SUMMON_TOOLTIP_SUMMON_ACCEPTED
-		icon.border:Hide()
-		icon:Show()
-	elseif status == Enum.SummonStatus.Declined then
-		icon.texture:SetAtlas("Raid-Icon-SummonDeclined")
-		icon.texture:SetTexCoord(0, 1, 0, 1)
-		icon.tooltip = INCOMING_SUMMON_TOOLTIP_SUMMON_DECLINED
-		icon.border:Hide()
-		icon:Show()
-	end
-	elseif (notInSameWarMode or not inPhase) and UnitIsConnected(unit) then
-		frame:SetAlpha(0.6)
-		icon.texture:SetTexture("Interface\\TargetingFrame\\UI-PhasingIcon")
-		icon.texture:SetTexCoord(0.15625, 0.84375, 0.15625, 0.84375)
-		icon.border:Hide()
-		icon.tooltip = PARTY_PHASED_MESSAGE
-	if notInSameWarMode then
-		if C_PvP.IsWarModeDesired() then
-			icon.tooltip = PARTY_PLAYER_WARMODE_DISABLED
-		else
-			icon.tooltip = PARTY_PLAYER_WARMODE_ENABLED
-		end
-	end
-		icon:Show()
-	else
-		frame:SetAlpha(1)
-		icon:Hide()
-	end	
-	-- if UnitPlayerOrPetInParty(unit) then
-		-- if ( UnitInPhase(unit) or not UnitExists(unit) or not UnitIsConnected(unit)) then
-			-- frame:SetAlpha(1)
-			-- icon:Hide()
-		-- else
-			-- frame:SetAlpha(0.6)
+	-- if UnitInOtherParty(unit) then
+		-- frame:SetAlpha(0.6)
+		-- icon.texture:SetTexture("Interface\\LFGFrame\\LFG-Eye")
+		-- icon.texture:SetTexCoord(0.125, 0.25, 0.25, 0.5)
+		-- icon.border:Show()
+		-- icon.tooltip = PARTY_IN_PUBLIC_GROUP_MESSAGE
+		-- icon:Show()
+	-- elseif C_IncomingSummon.HasIncomingSummon(unit) then
+		-- local status = C_IncomingSummon.IncomingSummonStatus(unit)
+		-- if status == Enum.SummonStatus.Pending then
+			-- icon.texture:SetAtlas("Raid-Icon-SummonPending")
+			-- icon.texture:SetTexCoord(0, 1, 0, 1)
+			-- icon.tooltip = INCOMING_SUMMON_TOOLTIP_SUMMON_PENDING
+			-- icon.border:Hide()
 			-- icon:Show()
+	-- elseif status == Enum.SummonStatus.Accepted then
+		-- icon.texture:SetAtlas("Raid-Icon-SummonAccepted")
+		-- icon.texture:SetTexCoord(0, 1, 0, 1)
+		-- icon.tooltip = INCOMING_SUMMON_TOOLTIP_SUMMON_ACCEPTED
+		-- icon.border:Hide()
+		-- icon:Show()
+	-- elseif status == Enum.SummonStatus.Declined then
+		-- icon.texture:SetAtlas("Raid-Icon-SummonDeclined")
+		-- icon.texture:SetTexCoord(0, 1, 0, 1)
+		-- icon.tooltip = INCOMING_SUMMON_TOOLTIP_SUMMON_DECLINED
+		-- icon.border:Hide()
+		-- icon:Show()
+	-- end
+	-- elseif (notInSameWarMode or not inPhase) and UnitIsConnected(unit) then
+		-- frame:SetAlpha(0.6)
+		-- icon.texture:SetTexture("Interface\\TargetingFrame\\UI-PhasingIcon")
+		-- icon.texture:SetTexCoord(0.15625, 0.84375, 0.15625, 0.84375)
+		-- icon.border:Hide()
+		-- icon.tooltip = PARTY_PHASED_MESSAGE
+	-- if notInSameWarMode then
+		-- if C_PvP.IsWarModeDesired() then
+			-- icon.tooltip = PARTY_PLAYER_WARMODE_DISABLED
+		-- else
+			-- icon.tooltip = PARTY_PLAYER_WARMODE_ENABLED
 		-- end
 	-- end
+		-- icon:Show()
+	-- else
+		-- frame:SetAlpha(1)
+		-- icon:Hide()
+	-- end
+	
+	if UnitPlayerOrPetInParty(unit) then
+		if ( UnitInPhase(unit) or not UnitExists(unit) or not UnitIsConnected(unit)) then
+			frame:SetAlpha(1)
+			icon:Hide()
+		else
+			icon.texture:SetTexture("Interface\\TargetingFrame\\UI-PhasingIcon")
+			icon.texture:SetTexCoord(0.15625, 0.84375, 0.15625, 0.84375)
+			icon.border:Hide()
+			icon.tooltip = PARTY_PHASED_MESSAGE
+			frame:SetAlpha(0.6)
+			icon:Show()
+		end
+	end
 end
 
 local function UpdateOnlineStatus(frame)
