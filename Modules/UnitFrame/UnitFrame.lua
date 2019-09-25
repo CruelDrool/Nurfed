@@ -845,6 +845,7 @@ end
 
 local function Glide(frame, e)
 	-- if frame.fade < 1 then
+	if not frame.startvalue then return end
 	 if frame.glideFade < 1 then
 		frame.fade = frame.glideFade
 		frame.fade = frame.fade + e
