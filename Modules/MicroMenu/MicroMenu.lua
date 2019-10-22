@@ -103,6 +103,7 @@ local subMenus = {
 	FRIENDS_MENU = {
 		"FRIENDS_LIST",
 		"IGNORE_LIST",
+		"RECRUIT_FRIEND",
 	},
 	SPELLBOOK_ABILITIES_MENU = {
 		"SPELLBOOK",
@@ -126,11 +127,12 @@ local function ButtonsArray()
 
 		FRIENDS_MENU = { text = GetMenuButtonText(FRIENDS, "TOGGLEFRIENDSTAB"), func = function() ToggleFriendsFrame(1) end, nested = 1, },
 		FRIENDS_LIST = { text = FRIENDS_LIST, func = function() FriendsTabHeaderTab1:Click(); if FriendsFrame:IsShown() then FriendsFrameTab1:Click() else ToggleFriendsFrame(1) end end, },
-		QUICK_JOIN = { text = GetMenuButtonText(QUICK_JOIN, "TOGGLEQUICKJOINTAB"), func = function() ToggleFriendsFrame(4) end, },
-		IGNORE_LIST = {text = IGNORE_LIST, func = function() FriendsTabHeaderTab3:Click(); if FriendsFrame:IsShown() then FriendsFrameTab1:Click() else ToggleFriendsFrame(1) end end, },
+		IGNORE_LIST = {text = IGNORE_LIST, func = function() FriendsTabHeaderTab2:Click(); if FriendsFrame:IsShown() then FriendsFrameTab1:Click() else ToggleFriendsFrame(1) end end, },
+		RECRUIT_FRIEND = {text = RECRUIT_A_FRIEND, func = function() FriendsTabHeaderTab3:Click(); if FriendsFrame:IsShown() then FriendsFrameTab1:Click() else ToggleFriendsFrame(1) end end, },
 		
 		WHO = { text = GetMenuButtonText(WHO, "TOGGLEWHOTAB"), func = function() ToggleFriendsFrame(2) end, },
 		RAID = { text = GetMenuButtonText(RAID, "TOGGLERAIDTAB"), func = function() ToggleFriendsFrame(3) end, },
+		QUICK_JOIN = { text = GetMenuButtonText(QUICK_JOIN, "TOGGLEQUICKJOINTAB"), func = function() ToggleFriendsFrame(4) end, },
 		
 		CHARACTER = { text = GetMenuButtonText(CHARACTER_BUTTON, "TOGGLECHARACTER0"), func = function() ToggleCharacter("PaperDollFrame"); end, },
 		
