@@ -349,6 +349,11 @@ local Colour_Gradients = {
 	},
 }
 
+RAID_CLASS_COLORS["SHAMAN"].r = 0
+RAID_CLASS_COLORS["SHAMAN"].g = 0.44
+RAID_CLASS_COLORS["SHAMAN"].b = 0.87
+RAID_CLASS_COLORS["SHAMAN"].colorStr = "0070de"
+
 --/run for i=1,GetNumBindings() do local a, b, c = GetBinding(i);if string.find(a, "^TARGET") then print(a, c) end end
 local keyBindingsMap = {
 	player = "TARGETSELF",
