@@ -226,8 +226,8 @@ function module:CreateFrame(modName, unit, events, oneventfunc, menufunc, isWatc
 	if frame.health then self:HealthBar_OnLoad(frame.health) end
 	if frame.powerBar then self:PowerBar_OnLoad(frame.powerBar, frame.unit) end
 	if frame.additionalPowerBar then self:AdditionalPowerBar_OnLoad(frame.additionalPowerBar, frame.unit) end
-	-- if frame.cast then self:CastBar_OnLoad(frame.cast, frame.unit) end
-	-- if frame.threat then self:ThreatBar_OnLoad(frame.threat, unit) end
+	if frame.cast then self:CastBar_OnLoad(frame.cast, frame.unit) end
+	if frame.threat then self:ThreatBar_OnLoad(frame.threat, unit) end
 	
 	if frame.target then self:TargetofTarget_Onload(frame.target, frame.unit.."target") end
 	if frame.targettarget then self:TargetofTarget_Onload(frame.targettarget, frame.unit.."targettarget") end
@@ -1395,6 +1395,16 @@ CASTBAR functions
 
 ]]
 
+local LibCC = LibStub("LibClassicCasterino", true)
+
+local function UnitCastingInfo(unit)
+	return LibCC:UnitCastingInfo(unit)
+end
+
+local function UnitChannelInfo(unit)
+	return LibCC:UnitChannelInfo(unit)
+end
+
 local function CastBar_Text(text, statusbar, short, textFormat)
 	local orient = statusbar:GetOrientation()
 	local out = text
@@ -1631,23 +1641,38 @@ function module:CastBar_OnLoad(frame, unit)
 
 	frame:RegisterEvent("PLAYER_ENTERING_WORLD")	
 	frame:RegisterEvent("GROUP_ROSTER_UPDATE")
-	-- frame:RegisterEvent("PLAYER_FOCUS_CHANGED")
+	-- -- frame:RegisterEvent("PLAYER_FOCUS_CHANGED")
 	frame:RegisterEvent("PLAYER_TARGET_CHANGED")
 	
-	frame:RegisterEvent("UNIT_SPELLCAST_START")
-	frame:RegisterEvent("UNIT_SPELLCAST_STOP")
-	frame:RegisterEvent("UNIT_SPELLCAST_DELAYED")
-	frame:RegisterEvent("UNIT_SPELLCAST_FAILED")
-	frame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
-	frame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTIBLE")
-	frame:RegisterEvent("UNIT_SPELLCAST_NOT_INTERRUPTIBLE")
+	-- frame:RegisterEvent("UNIT_SPELLCAST_START")
+	-- frame:RegisterEvent("UNIT_SPELLCAST_STOP")
+	-- frame:RegisterEvent("UNIT_SPELLCAST_DELAYED")
+	-- frame:RegisterEvent("UNIT_SPELLCAST_FAILED")
+	-- frame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
+	-- frame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTIBLE")
+	-- frame:RegisterEvent("UNIT_SPELLCAST_NOT_INTERRUPTIBLE")
 	
-	frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
-	frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_UPDATE")
-	frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
+	-- frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
+	-- frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_UPDATE")
+	-- frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
 
 	frame:SetScript("OnEvent", CastBar_OnEvent)
 	frame:SetScript("OnUpdate", CastBar_OnUpdate)
+		
+	local CastbarEventHandler = function(event, ...)
+		CastBar_OnEvent(frame, event, ...)
+	end
+	
+	LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_START", CastbarEventHandler)
+	LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_DELAYED", CastbarEventHandler) -- only for player
+	LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_STOP", CastbarEventHandler)
+	LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_FAILED", CastbarEventHandler)
+	LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_INTERRUPTED", CastbarEventHandler)
+	LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_CHANNEL_START", CastbarEventHandler)
+	LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_CHANNEL_UPDATE", CastbarEventHandler) -- only for player
+	LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_CHANNEL_STOP", CastbarEventHandler)
+
+
 end
 
 --[[
@@ -1696,6 +1721,34 @@ THREATBAR functions
 
 ]]
 
+local ThreatLib = LibStub:GetLibrary("LibThreatClassic2")
+
+local function UnitDetailedThreatSituation (unit, mob)
+    return ThreatLib:UnitDetailedThreatSituation (unit, mob)
+end
+
+local function GetThreatStatusColor(status)
+	local r, g, b
+	if status == 0 then
+		r = 0.69
+		g = 0.69
+		b = 0.69
+	elseif status == 1 then
+		r = 1
+		g = 1
+		b = 0.47
+	elseif status == 2 then
+		r = 1
+		g = 0.6
+		b = 0
+	elseif status == 3 then
+		r = 1
+		g = 0
+		b = 0
+	end
+	return r, g, b
+end
+
 local function ThreatBar_Text(frame)
 	local text = frame:GetAttribute("textFormat")
 	local perc = frame:GetAttribute("percFormat")
@@ -1720,31 +1773,32 @@ end
 
 function module:ThreatBar_Update(frame)
 	if not UnitExists(frame.unit) then
-		frame:Hide()
+		frame:SetAlpha(0)
 		return
 	 end
+
 	if UnitIsPlayer(frame.unit) then
-		frame:Hide()
+		frame:SetAlpha(0)
 		return
 	end
 	
 	if UnitIsDead(frame.unit) then
-		frame:Hide()
+		frame:SetAlpha(0)
 		return
 	end
-	
+
 	local isTanking, status, _, rawPercent, threatValue = UnitDetailedThreatSituation(frame.threatUnit, frame.unit)
 	
 	if not threatValue then
-		frame:Hide()
+		frame:SetAlpha(0)
 		return
 	end
 	
 	if threatValue == 0 then
-		frame:Hide()
+		frame:SetAlpha(0)
 		return
 	end
-	
+
 	local currValue, maxValue
 	
 	if isTanking then
@@ -1770,7 +1824,7 @@ function module:ThreatBar_Update(frame)
 		
 	ThreatBar_Text(frame)
 	frame:SetStatusBarColor(GetThreatStatusColor(status))
-	frame:Show()
+	frame:SetAlpha(1)
 end
 
 local function ThreatBar_OnEvent(frame,event,...)
@@ -1780,45 +1834,48 @@ end
 local function ThreatBar_OnUpdate(frame, e)
 	if UnitExists(frame.unit) and not UnitIsPlayer(frame.unit) then
 		local isTanking, status, _, rawPercent, threatValue = UnitDetailedThreatSituation(frame.threatUnit, frame.unit)
-			if not threatValue then
-				return
-			end
-			if threatValue == 0 then
-				return
-			end
-			
-			local maxValue, currValue
-			
-			if isTanking then
-				currValue = threatValue
-				maxValue = threatValue
-			else
-				currValue = threatValue
-			if rawPercent > 0 then
-				maxValue = threatValue / rawPercent * 100
-			else
-				maxValue = threatValue
-			end
-			end
-			
-			if maxValue ~= frame.maxValue then
-				frame:SetMinMaxValues(0, maxValue)
-				frame.maxValue = maxValue
-			end
-			frame.endvalue = currValue
-			if currValue ~= frame.currValue then
-				-- frame:SetMinMaxValues(0, maxValue)
-				frame.currValue = currValue
-			end
-			
-			if frame.glide then
-				Glide(frame, e)
-			else
-				frame:SetValue(currValue)
-			end
-			
-			ThreatBar_Text(frame)
-			frame:SetStatusBarColor(GetThreatStatusColor(status))
+		frame:SetAlpha(1)
+		if not threatValue then
+			return
+		end
+		if threatValue == 0 then
+			return
+		end
+		
+		local maxValue, currValue
+		
+		if isTanking then
+			currValue = threatValue
+			maxValue = threatValue
+		else
+			currValue = threatValue
+		if rawPercent > 0 then
+			maxValue = threatValue / rawPercent * 100
+		else
+			maxValue = threatValue
+		end
+		end
+		
+		if maxValue ~= frame.maxValue then
+			frame:SetMinMaxValues(0, maxValue)
+			frame.maxValue = maxValue
+		end
+		frame.endvalue = currValue
+		if currValue ~= frame.currValue then
+			-- frame:SetMinMaxValues(0, maxValue)
+			frame.currValue = currValue
+		end
+		
+		if frame.glide then
+			Glide(frame, e)
+		else
+			frame:SetValue(currValue)
+		end
+		
+		ThreatBar_Text(frame)
+		frame:SetStatusBarColor(GetThreatStatusColor(status))
+	else
+		frame:SetAlpha(0)
 	end
 end
 
@@ -1845,8 +1902,12 @@ function module:ThreatBar_OnLoad(frame, unit)
 	end
 	frame.threatUnit = "player"
 	frame:RegisterEvent("PLAYER_ENTERING_WORLD")
-    frame:RegisterEvent("UNIT_THREAT_LIST_UPDATE")
-    frame:RegisterEvent("UNIT_THREAT_SITUATION_UPDATE")
+	frame:RegisterEvent("PLAYER_TARGET_CHANGED")
+	frame:RegisterEvent("PLAYER_REGEN_DISABLED")
+	frame:RegisterEvent("PLAYER_REGEN_ENABLED")
+	frame:RegisterUnitEvent("UNIT_TARGET", "target")
+    -- frame:RegisterEvent("UNIT_THREAT_LIST_UPDATE")
+    -- frame:RegisterEvent("UNIT_THREAT_SITUATION_UPDATE")
 	frame:SetScript("OnEvent", ThreatBar_OnEvent)
 	frame:SetScript("OnUpdate", ThreatBar_OnUpdate)
 end
@@ -1857,6 +1918,9 @@ end
 Buffs, debuffs and stuffs.
 
 ]]
+
+local LibClassicDurations = LibStub("LibClassicDurations")
+LibClassicDurations:Register(addon)
 
 local PLAYER_UNITS = {
 	player = true,
@@ -1913,6 +1977,12 @@ function module:UpdateAuras(frame)
 				aura.count:Hide()
 			end
 			
+			local durationNew, expirationTimeNew = LibClassicDurations:GetAuraDurationByUnit(frame.unit, spellId, caster, buffName)
+			if duration == 0 and durationNew then
+				duration = durationNew
+				expirationTime = expirationTimeNew
+			end
+			
 			-- Handle cooldowns
 			if ( duration > 0 ) then
 				aura.cooldown:Show()
@@ -1967,7 +2037,7 @@ function module:UpdateAuras(frame)
 	
 	while frameNum <= maxDebuffs do
 		-- local debuffName = UnitDebuff(frame.unit, index, filter)
-		local debuffName, icon, count, debuffType, duration, expirationTime, caster, _, _, _, _, _, casterIsPlayer, nameplateShowAll = UnitDebuff(frame.unit, index, "INCLUDE_NAME_PLATE_ONLY");
+		local debuffName, icon, count, debuffType, duration, expirationTime, caster, _, _, spellId, _, _, casterIsPlayer, nameplateShowAll = UnitDebuff(frame.unit, index, "INCLUDE_NAME_PLATE_ONLY");
 		if debuffName then
 			if ShouldShowDebuffs(frame.unit, caster, nameplateShowAll, casterIsPlayer) then
 				-- name, rank, icon, count, debuffType, duration, expirationTime, caster = UnitDebuff(frame.unit, index, filter)
@@ -1992,7 +2062,13 @@ function module:UpdateAuras(frame)
 					else
 						aura.count:Hide()
 					end
-
+					
+					local durationNew, expirationTimeNew = LibClassicDurations:GetAuraDurationByUnit(frame.unit, spellId, caster, debuffName)
+					if duration == 0 and durationNew then
+						duration = durationNew
+						expirationTime = expirationTimeNew
+					end
+					
 					-- Handle cooldowns
 					if duration > 0 then
 						aura.cooldown:Show();
