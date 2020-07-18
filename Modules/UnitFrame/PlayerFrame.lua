@@ -196,10 +196,6 @@ end
 local function AzeriteBar_Update(frame)
 	local currValue, maxValue, currLevel, r, g, b
 	local text, perc = ""
-	
-	text = UnitFrames:GetTextFormat(frame:GetParent(), "azerite")
-	perc = UnitFrames:GetTextFormat(frame:GetParent(), "perc")
-	
 	local azeriteItemLocation = C_AzeriteItem.FindActiveAzeriteItem()
  
 	if not azeriteItemLocation then
@@ -207,21 +203,31 @@ local function AzeriteBar_Update(frame)
 		return
 	end
 	
-	currValue, maxValue = C_AzeriteItem.GetAzeriteItemXPInfo(azeriteItemLocation)
 	currLevel = C_AzeriteItem.GetPowerLevel(azeriteItemLocation)
 	
 	r, g, b = ARTIFACT_BAR_COLOR:GetRGB()
 	
-	frame:SetMinMaxValues(0, maxValue)
 	frame:SetStatusBarColor(r, g, b)
 	frame.bg:SetVertexColor(r, g, b, frame.bg:GetAlpha())
-	frame:SetValue(currValue)
+	if C_AzeriteItem.IsAzeriteItemAtMaxLevel() then
+		frame:SetMinMaxValues(0,1)
+		frame:SetValue(1)
+		text = LEVEL.." "..currLevel
+	else
+		text = UnitFrames:GetTextFormat(frame:GetParent(), "azerite")
+		perc = UnitFrames:GetTextFormat(frame:GetParent(), "perc")
+		
+		currValue, maxValue = C_AzeriteItem.GetAzeriteItemXPInfo(azeriteItemLocation)
+		
+		frame:SetMinMaxValues(0, maxValue)	
+		frame:SetValue(currValue)
 
-	text = text:gsub("$cur", addon:CommaNumber(currValue))
-	text = text:gsub("$max", addon:FormatNumber(maxValue))
-	text = text:gsub("$level", LEVEL.." "..currLevel)
-	
-	perc = perc:gsub("$perc", UnitFrames:FormatPercentage(currValue / maxValue*100))
+		text = text:gsub("$cur", addon:CommaNumber(currValue))
+		text = text:gsub("$max", addon:FormatNumber(maxValue))
+		text = text:gsub("$level", LEVEL.." "..currLevel)
+		
+		perc = perc:gsub("$perc", UnitFrames:FormatPercentage(currValue / maxValue*100))
+	end
 	
 	frame.text:SetText(text)
 	frame.perc:SetText(perc)
