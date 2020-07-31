@@ -112,6 +112,10 @@ function addon:UpdateConfigs()
 	LibStub("AceConfigRegistry-3.0"):NotifyChange(addonName)
 end
 
+function addon:Transliterate(str, mark)
+	return LibStub("LibTranslit-1.0"):Transliterate(str, mark)
+end
+
 function addon:rgbhex(r, g, b)
 	if type(r) == "table" then
 		if r.r then
