@@ -42,6 +42,7 @@ local defaults = {
 		templatePrefix = "Nurfed_Unit_",
 		glideAnimation = true,
 		glideFade = 0.35,
+		translit = false,
 	}
 }
 
@@ -85,6 +86,15 @@ module.options = {
 			get = function() local value = module.db.profile.glideFade; value=1-value; return value end,
 			set = function(info, value) value=1-value; module.db.profile.glideFade = value end,
 			-- disabled = function() return not module.db.profile.foo end,
+		},
+		translit = {
+			order = 6,
+			type = "toggle",
+			name = "Transliteration",
+			desc = "Convert cyrillic to Latin",
+			width = "full",
+			get = function() return module.db.profile.translit end,
+			set = function(info, value) module.db.profile.translit = value end,
 		},
 		skins = {
 			type = "select",
@@ -417,6 +427,9 @@ function module:Replace(unit, textFormat)
 	out = textFormat
 	if string.find(textFormat,"$name") then
 		local name = UnitName(unit)
+		if self.db.profile.translit then
+			name = addon:Transliterate(name, "!")
+		end
 		local color
 		if UnitIsPlayer(unit) then
 			local _, englishClass = UnitClass(unit)
@@ -455,6 +468,11 @@ function module:Replace(unit, textFormat)
 			if UnitIsInMyGuild(unit) then
 				color = "|cffff00ff"
 			end
+			
+			if self.db.profile.translit then
+				guildName = addon:Transliterate(guildName, "!")
+			end
+			
 			guildName = color..guildName.."|r"
 			out = out:gsub("$guild", guildName)
 		else
