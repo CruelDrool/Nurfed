@@ -34,8 +34,8 @@ module.options = {
 			type = "toggle",
 			name = "Enabled",
 			-- desc = "",
-			get = function() return module:IsEnabled() end,
-			set = function() if module:IsEnabled() then module:Disable() else module:Enable() end end,
+			get = function() return module.db.enabled end,
+			set = function() if UnitFrames:IsEnabled() then if module.db.enabled then module:Disable() else module:Enable() end end; if module.db.enabled then module.db.enabled = false else module.db.enabled = true end end,
 		},
 	},
 }
@@ -83,6 +83,8 @@ local function Update(frame)
 end
 
 local function OnEvent(frame, event, ...)
+
+	if not frame.isEnabled then return end
 
 	local arg1, arg2, arg3, arg4, arg5 = ...
 	if event == "PLAYER_ENTERING_WORLD" or event == "DISPLAY_SIZE_CHANGED" then
@@ -140,21 +142,55 @@ local function OnEvent(frame, event, ...)
 			-- end
 		-- end
 	elseif event == "UI_SCALE_CHANGED" then
-		if frame.model then frame.model:RefreshUnit() end
+		if frame.model then UnitFrames:UpdateModel(frame.model, frame.unit) end
 	end
 end
 
-function module:OnInitialize()
+local blizzFrame = {}
+
+local function DisableBlizz()
+	UnregisterUnitWatch(FocusFrame)
 	
+	blizzFrame = {
+		OnEvent = FocusFrame:GetScript("OnEvent"),
+		OnHide = FocusFrame:GetScript("OnHide"),
+		OnUpdate = FocusFrame:GetScript("OnUpdate"),
+	}
+	
+	FocusFrame:SetScript("OnEvent", nil)
+	FocusFrame:SetScript("OnHide", nil)
+	FocusFrame:SetScript("OnUpdate", nil)
+	FocusFrame:Hide()
+end
+
+local function EnableBlizz()
+	FocusFrame:SetScript("OnEvent", blizzFrame.OnEvent)
+	FocusFrame:SetScript("OnHide", blizzFrame.OnHide)
+	FocusFrame:SetScript("OnUpdate", blizzFrame.OnUpdate)
+	TargetFrame_Update(FocusFrame)
+	RegisterUnitWatch(FocusFrame)
+end
+
+function module:OnInitialize()
+	-- Enable if we're supposed to be enabled
+	if self.db and self.db.enabled and UnitFrames:IsEnabled() then
+		self:Enable()
+	end
 end
 
 function module:OnEnable()
+	DisableBlizz()
 	if not self.frame then
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, FocusFrameDropDown, true)
-		-- if self.frame.threat then ThreatBar_OnLoad(self.frame.threat, unit) end
+	end
+	
+	if self.frame then
+		UnitFrames:EnableFrame(self.frame)
+		Update(self.frame)
 	end
 end
 
 function module:OnDisable()
-
+	EnableBlizz()
+	UnitFrames:DisableFrame(self.frame)
 end

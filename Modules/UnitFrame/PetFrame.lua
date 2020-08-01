@@ -33,8 +33,8 @@ module.options = {
 			type = "toggle",
 			name = "Enabled",
 			-- desc = "",
-			get = function() return module:IsEnabled() end,
-			set = function() if module:IsEnabled() then module:Disable() else module:Enable() end end,
+			get = function() return module.db.enabled end,
+			set = function() if UnitFrames:IsEnabled() then if module.db.enabled then module:Disable() else module:Enable() end end; if module.db.enabled then module.db.enabled = false else module.db.enabled = true end end,
 		},
 	},
 }
@@ -71,6 +71,9 @@ local function Update(frame)
 end
 
 local function OnEvent(frame, event, ...)
+
+	if not frame.isEnabled then return end
+
 	local arg1, arg2, arg3, arg4, arg5 = ...
 
 	if event == "PLAYER_ENTERING_WORLD" or event == "DISPLAY_SIZE_CHANGED" then
@@ -122,17 +125,49 @@ local function OnEvent(frame, event, ...)
 	end
 end
 
+local blizzFrame = {}
+
+local function DisableBlizz()
+	UnregisterUnitWatch(PetFrame)
+	blizzFrame = {
+		OnEvent = PetFrame:GetScript("OnEvent"),
+		OnHide = PetFrame:GetScript("OnHide"),
+		OnUpdate = PetFrame:GetScript("OnUpdate"),
+	}
+
+	PetFrame:SetScript("OnEvent", nil)
+	PetFrame:SetScript("OnHide", nil)
+	PetFrame:SetScript("OnUpdate", nil)
+	PetFrame:Hide()
+end
+
+local function EnableBlizz()
+	PetFrame:SetScript("OnEvent", blizzFrame.OnEvent)
+	PetFrame:SetScript("OnHide", blizzFrame.OnHide)
+	PetFrame:SetScript("OnUpdate", blizzFrame.OnUpdate)
+	RegisterUnitWatch(PetFrame)
+end
 
 function module:OnInitialize()
-
+	-- Enable if we're supposed to be enabled
+	if self.db and self.db.enabled and UnitFrames:IsEnabled() then
+		self:Enable()
+	end
 end
 
 function module:OnEnable()
+	DisableBlizz()
 	if not self.frame then
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PetFrameDropDown, true)
+	end
+
+	if self.frame then
+		UnitFrames:EnableFrame(self.frame)
+		Update(self.frame)
 	end
 end
 
 function module:OnDisable()
-
+	EnableBlizz()
+	UnitFrames:DisableFrame(self.frame)
 end

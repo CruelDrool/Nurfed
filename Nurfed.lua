@@ -193,53 +193,12 @@ function addon:PLAYER_ENTERING_WORLD()
 	ComboFrame:Hide()
 	function ComboFrame_Update() end
 	function ComboFrame_OnEvent() end
-	
-	PetFrame:UnregisterAllEvents()
-	PetFrame:SetScript("OnEvent", nil)
-	PetFrame:Hide()
-	function PetFrame_Update() end
-	function PetFrame_OnEvent() end
 		
-	for i = 1, MAX_PARTY_MEMBERS do
-		local party = _G["PartyMemberFrame"..i]
-		party:UnregisterAllEvents()
-		party:SetScript("OnEnter", nil)
-		party:SetScript("OnEvent", nil)
-		party:SetScript("OnUpdate", nil)
-		party:ClearAllPoints()
-		party:SetPoint("BOTTOMLEFT", UIParent, "TOPLEFT", -400, 500)
-		UnregisterUnitWatch(party)
-		party:Hide()
-	end
-	
-	function PartyMemberFrame_OnEvent() end
-	function PartyMemberFrame_OnUpdate() end
-	function PartyMemberFrame_UpdateMemberHealth() end
-	
-	for i = 1, MAX_BOSS_FRAMES do 
-		local bossframe = _G["Boss"..i.."TargetFrame"]
-		bossframe:UnregisterAllEvents()
-		bossframe:SetScript("OnEvent", nil)
-		bossframe:SetScript("OnUpdate", nil)
-		UnregisterUnitWatch(bossframe)
-		bossframe:Hide()
-	end
-	
-	UnregisterUnitWatch(FocusFrame)
-	FocusFrame:UnregisterAllEvents()
-	FocusFrame:SetScript("OnEvent", nil)
-	FocusFrame:Hide()
-	function FocusFrame_Update() end
-	function FocusFrame_OnEvent() end
-	
-	CastingBarFrame:UnregisterAllEvents()
-	CastingBarFrame:SetScript("OnLoad", nil)
-	CastingBarFrame:SetScript("OnEvent", nil)
-	CastingBarFrame:SetScript("OnUpdate", nil)
-	CastingBarFrame:SetScript("OnShow", nil)
-	CastingBarFrame:Hide()
-	-- function CastingBarFrame_OnShow() end
-	-- function CastingBarFrame_OnEvent() end
-	-- function CastingBarFrame_OnUpdate() end
+	-- CastingBarFrame:UnregisterAllEvents()
+	-- CastingBarFrame:SetScript("OnLoad", nil)
+	-- CastingBarFrame:SetScript("OnEvent", nil)
+	-- CastingBarFrame:SetScript("OnUpdate", nil)
+	-- CastingBarFrame:SetScript("OnShow", nil)
+	-- CastingBarFrame:Hide()
 	
 end

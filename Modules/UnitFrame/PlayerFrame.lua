@@ -8,6 +8,7 @@ local unit = "player"
 
 module.defaults = {
 	enabled = true,
+	disableBlizzCastBar = true,
 	formats = {
 		name = "$name",
 		infoline = "$level ($g)",
@@ -36,8 +37,16 @@ module.options = {
 			type = "toggle",
 			name = "Enabled",
 			-- desc = "",
+			width = "full",
 			get = function() return module.db.enabled end,
 			set = function() if UnitFrames:IsEnabled() then if module.db.enabled then module:Disable() else module:Enable() end end; if module.db.enabled then module.db.enabled = false else module.db.enabled = true end end,
+		},
+		blizzCastBar = {
+			order = 2,
+			type = "toggle",
+			name = "Disable Blizzard Castbar",
+			get = function() return module.db.disableBlizzCastBar end,
+			set = function(info, value) module.db.disableBlizzCastBar = value; if value == true then module:DisableBlizzCastBar() else module:EnableBlizzCastBar() end end,
 		},
 	},
 }
@@ -362,15 +371,49 @@ local function XPbar_OnLoad(frame, unit)
 	frame:SetScript("OnEvent", XPbar_OnEvent)
 end
 
+blizzCastBarFrame = {}
+
+function module:DisableBlizzCastBar()
+	if self.db.disableBlizzCastBar then
+		blizzCastBarFrame = {
+			OnLoad = CastingBarFrame:GetScript("OnLoad"),
+			OnEvent = CastingBarFrame:GetScript("OnEvent"),
+			OnUpdate = CastingBarFrame:GetScript("OnUpdate"),
+			OnShow = CastingBarFrame:GetScript("OnShow"),
+		}
+		CastingBarFrame:SetScript("OnLoad", nil)
+		CastingBarFrame:SetScript("OnEvent", nil)
+		CastingBarFrame:SetScript("OnUpdate", nil)
+		CastingBarFrame:SetScript("OnShow", nil)
+		CastingBarFrame:Hide()
+	end
+end
+
+function module:EnableBlizzCastBar()
+	CastingBarFrame:SetScript("OnLoad", blizzCastBarFrame.OnLoad)
+	CastingBarFrame:SetScript("OnEvent", blizzCastBarFrame.OnEvent)
+	CastingBarFrame:SetScript("OnUpdate", blizzCastBarFrame.OnUpdate)
+	CastingBarFrame:SetScript("OnShow", blizzCastBarFrame.OnShow)
+end
+
+local blizzFrame = {}
+
 local function DisableBlizz()
+	module:DisableBlizzCastBar()
+	blizzFrame = {
+		OnEvent = PlayerFrame:GetScript("OnEvent"),
+		OnUpdate = PlayerFrame:GetScript("OnUpdate"),
+	}
+	
 	PlayerFrame:SetScript("OnEvent", nil)
 	PlayerFrame:SetScript("OnUpdate", nil)
 	PlayerFrame:Hide()
 end
 
 local function EnableBlizz()
-	PlayerFrame:SetScript("OnEvent", PlayerFrame_OnEvent)
-	PlayerFrame:SetScript("OnUpdate", PlayerFrame_OnUpdate)
+	module:EnableBlizzCastBar()
+	PlayerFrame:SetScript("OnEvent", blizzFrame.OnEvent)
+	PlayerFrame:SetScript("OnUpdate", blizzFrame.OnUpdate)
 	PlayerFrame_Update()
 	UnitFrame_Update(PlayerFrame)
 	PlayerFrame:Show()
@@ -378,37 +421,47 @@ end
 
 function module:OnInitialize()
 	-- Enable if we're supposed to be enabled
-	if self.db.enabled and UnitFrames:IsEnabled() then
+	if self.db and self.db.enabled and UnitFrames:IsEnabled() then
 		self:Enable()
 	end
 end
 
 function module:OnEnable()
+	if InCombatLockdown() then
+		table.insert(UnitFrames.OutOfCombatQueue,module.OnEnable)
+		addon:print(string.format("[%1$s] Currently in combat. Will enable the %2$s module when out of combat.", WrapTextInColorCode(addonName, "ff37FDFC"), WrapTextInColorCode(moduleName, "ff00ff00")))
+		return
+	end
 	DisableBlizz()
-	if not self.frame then
-		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PlayerFrameDropDown)
-		if self.frame.xp then XPbar_OnLoad(self.frame.xp, unit) end
-		if self.frame.azerite then AzeriteBar_OnLoad(self.frame.azerite) end
 
-		self.frame.inCombat = nil
-		self.frame.onHateList = nil
+	if not module.frame then
+		module.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PlayerFrameDropDown)
+		if module.frame.xp then XPbar_OnLoad(module.frame.xp, unit) end
+		if module.frame.azerite then AzeriteBar_OnLoad(module.frame.azerite) end
 	end
 	
-	if self.frame then
-		UnitFrames:EnableFrame(self.frame)
-		Update(self.frame)
+	if module.frame then
+		UnitFrames:EnableFrame(module.frame)
+		module.frame.inCombat = nil
+		module.frame.onHateList = nil
+		Update(module.frame)
 
-		if self.frame.xp then
-			XPbar_Update(self.frame.xp)
+		if module.frame.xp then
+			XPbar_Update(module.frame.xp)
 		end
 		
-		if self.frame.azerite then 
-			AzeriteBar_Update(self.frame.azerite)
+		if module.frame.azerite then 
+			AzeriteBar_Update(module.frame.azerite)
 		end
 	end
 end
 
 function module:OnDisable()
+	if InCombatLockdown() then
+		table.insert(UnitFrames.OutOfCombatQueue,module.OnDisable)
+		addon:print(string.format("[%1$s] Currently in combat. Will disable the %2$s module when out of combat.", WrapTextInColorCode(addonName, "ff37FDFC"), WrapTextInColorCode(moduleName, "ff00ff00")))
+		return
+	end
 	EnableBlizz()
-	UnitFrames:DisableFrame(self.frame)
+	UnitFrames:DisableFrame(module.frame)
 end

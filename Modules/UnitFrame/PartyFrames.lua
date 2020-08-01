@@ -51,8 +51,8 @@ module.options = {
 			type = "toggle",
 			name = "Enabled",
 			-- desc = "",
-			get = function() return module:IsEnabled() end,
-			set = function() if module:IsEnabled() then module:Disable() else module:Enable() end end,
+			get = function() return module.db.enabled end,
+			set = function() if UnitFrames:IsEnabled() then if module.db.enabled then module:Disable() else module:Enable() end end; if module.db.enabled then module.db.enabled = false else module.db.enabled = true end end,
 		},
 	},
 }
@@ -196,6 +196,9 @@ local function OnUpdate(frame, elapsed)
 end
 
 local function OnEvent(frame, event, ...)
+
+	if not frame.isEnabled then return end
+
 	local arg1, arg2, arg3, arg4, arg5 = ...
 
 	if event == "PLAYER_ENTERING_WORLD" or event == "CVAR_UPDATE" or event == "UPDATE_BINDINGS" or event == "DISPLAY_SIZE_CHANGED" then
@@ -292,11 +295,65 @@ local function ShowParty()
 	end
 end
 
+local blizzFrames = {}
+
+local function DisableBlizz()
+	for i = 1, MAX_PARTY_MEMBERS do
+		local frame = _G["PartyMemberFrame"..i]
+		local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint(frame:GetNumPoints())
+		
+		blizzFrames[i] = {
+			point = { 
+				[1] = point,
+				[2] = relativeTo:GetName(),
+				[3] = relativePoint,
+				[4] = xOfs,
+				[5] = yOfs,
+			},
+			OnEnter = frame:GetScript("OnEnter"),
+			OnEvent = frame:GetScript("OnEvent"),
+			OnUpdate = frame:GetScript("OnUpdate"),
+		}
+		
+		frame:SetScript("OnEnter", nil)
+		frame:SetScript("OnEvent", nil)
+		frame:SetScript("OnUpdate", nil)
+		
+		frame:ClearAllPoints()
+		frame:SetPoint("BOTTOMLEFT", UIParent, "TOPLEFT", -400, 500)
+		UnregisterUnitWatch(frame)
+		frame:Hide()
+	end
+end
+
+local function EnableBlizz()
+	for i = 1, MAX_PARTY_MEMBERS do
+		local frame = _G["PartyMemberFrame"..i]
+		local point, relativeTo, relativePoint, xOfs, yOfs = unpack(blizzFrames[i].point)
+		
+		frame:ClearAllPoints()
+		frame:SetPoint(point, _G[relativeTo], relativePoint, xOfs, yOfs)
+		
+		frame:SetScript("OnEnter", blizzFrames[i].OnEnter)
+		frame:SetScript("OnEvent", blizzFrames[i].OnEvent)
+		frame:SetScript("OnUpdate", blizzFrames[i].OnUpdate)
+		RegisterUnitWatch(frame)
+		PartyMemberFrame_UpdateArt(frame)
+		PartyMemberFrame_UpdateMember(frame)
+		PartyMemberFrame_UpdateLeader(frame)
+		PartyMemberFrame_UpdateAssignedRoles(frame)
+	end
+end
+
 function module:OnInitialize()
-	
+	-- Enable if we're supposed to be enabled
+	if self.db and self.db.enabled and UnitFrames:IsEnabled() then
+		self:Enable()
+	end
 end
 
 function module:OnEnable()
+	DisableBlizz()
 	if table.getn(partyFrames) == 0 then
 		for i=1,4 do
 			local frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, _G["PartyMemberFrame"..i.."DropDown"], true, i)
@@ -304,10 +361,22 @@ function module:OnEnable()
 			table.insert(partyFrames, frame)
 		end
 	end
+	
+	if table.getn(partyFrames) > 0 then
+		for _, frame in ipairs(partyFrames) do
+			UnitFrames:EnableFrame(frame)
+			Update(frame)
+		end
+	end
+	
 	self:SecureHook("HidePartyFrame", HideParty)
 	self:SecureHook("ShowPartyFrame", ShowParty)
 end
 
 function module:OnDisable()
+	EnableBlizz()
+	for _, frame in ipairs(partyFrames) do
+		UnitFrames:DisableFrame(frame)
+	end
 	self:UnhookAll()
 end

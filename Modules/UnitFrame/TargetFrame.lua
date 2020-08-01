@@ -113,6 +113,14 @@ local function UpdateCombo(frame, unit)
 	end
 end
 
+function UpdateQuestionIcon(frame)
+	if (UnitIsQuestBoss(frame.unit)) then
+		frame.questIcon:Show()
+	else
+		frame.questIcon:Hide()
+	end
+end
+
 local function Update(frame)
 	UnitFrames:PowerBar_Update(frame.powerBar, frame.unit)
 	UnitFrames:HealthBar_Update(frame.health)
@@ -129,6 +137,7 @@ local function Update(frame)
 		UnitFrames:UpdateRoles(frame)
 		UnitFrames:UpdatePVPStatus(frame)
 		UnitFrames:UpdateAuras(frame)
+		UpdateQuestionIcon(frame)
 	end	
 end
 
@@ -159,6 +168,10 @@ local function OnEvent(frame, event, ...)
 			UnitFrames:UpdateInfo(frame)
 			if event == "UNIT_FACTION" then
 				UnitFrames:UpdatePVPStatus(frame)
+			end
+			
+			if event == "UNIT_CLASSIFICATION_CHANGED" then
+				UpdateQuestionIcon(frame)
 			end
 		end
 	elseif event == "UNIT_AURA" then
@@ -201,12 +214,21 @@ local function OnEvent(frame, event, ...)
 			-- end
 		-- end
 	elseif event == "UI_SCALE_CHANGED" then
-		if frame.model then UnitFrames:UpdateModel(frame.model, frame.unit)end
+		if frame.model then UnitFrames:UpdateModel(frame.model, frame.unit) end
 	end
 end
 
+local blizzFrame = {}
+
 local function DisableBlizz()
 	UnregisterUnitWatch(TargetFrame)
+	
+	blizzFrame = {
+		OnEvent = TargetFrame:GetScript("OnEvent"),
+		OnHide = TargetFrame:GetScript("OnHide"),
+		OnUpdate = TargetFrame:GetScript("OnUpdate"),
+	}
+	
 	TargetFrame:SetScript("OnEvent", nil)
 	TargetFrame:SetScript("OnHide", nil)
 	TargetFrame:SetScript("OnUpdate", nil)
@@ -214,16 +236,16 @@ local function DisableBlizz()
 end
 
 local function EnableBlizz()
-	TargetFrame:SetScript("OnEvent", TargetFrame_OnEvent)
-	TargetFrame:SetScript("OnHide", TargetFrame_OnHide)
-	TargetFrame:SetScript("OnUpdate", function(self, elapsed) TargetFrame_OnUpdate(self, elapsed); TargetFrame_HealthUpdate(self, elapsed, self.unit) end)
+	TargetFrame:SetScript("OnEvent", blizzFrame.OnEvent)
+	TargetFrame:SetScript("OnHide", blizzFrame.OnHide)
+	TargetFrame:SetScript("OnUpdate", blizzFrame.OnUpdate)
 	TargetFrame_Update(TargetFrame)
 	RegisterUnitWatch(TargetFrame)
 end
 
 function module:OnInitialize()
 	-- Enable if we're supposed to be enabled
-	if self.db.enabled and UnitFrames:IsEnabled() then
+	if self.db and self.db.enabled and UnitFrames:IsEnabled() then
 		self:Enable()
 	end
 end

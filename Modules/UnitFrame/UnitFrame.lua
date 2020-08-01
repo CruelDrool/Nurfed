@@ -198,6 +198,7 @@ function module:OnDisable()
 	for name, m in self:IterateModules() do
 		m:Disable()
 	end
+
 end
 
 function module:UpdateConfigs()
@@ -311,10 +312,12 @@ end
 
 function module:EnableFrame(frame)
 	local name = frame:GetName()
-	if frame.isWatched then
+	if frame.isWatched and self.locked then
 		RegisterUnitWatch(frame)
 	else
 		frame:Show()
+		if not self.locked then frame.overlay:Show() end
+		if frame.model then module:UpdateModel(frame.model, frame.unit) end
 	end
 	frame.isEnabled = true
 end
@@ -356,8 +359,8 @@ function module:Lock()
 		PlaySound(SOUNDKIT.IG_MAINMENU_OPTION)
 		for f in pairs(module.frames) do
 			local frame = _G[f]
+			frame.overlay:Hide()
 			if frame.isEnabled then
-				frame.overlay:Hide()
 				if frame.model then module:UpdateModel(frame.model, frame.unit) end
 				if frame.isWatched then
 					RegisterUnitWatch(frame)
