@@ -221,26 +221,25 @@ end
 local blizzFrame = {}
 
 local function DisableBlizz()
-	UnregisterUnitWatch(TargetFrame)
-	
+	local frame = TargetFrame
+	local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint(frame:GetNumPoints())
 	blizzFrame = {
-		OnEvent = TargetFrame:GetScript("OnEvent"),
-		OnHide = TargetFrame:GetScript("OnHide"),
-		OnUpdate = TargetFrame:GetScript("OnUpdate"),
+			[1] = point,
+			[2] = relativeTo:GetName(),
+			[3] = relativePoint,
+			[4] = xOfs,
+			[5] = yOfs,
 	}
-	
-	TargetFrame:SetScript("OnEvent", nil)
-	TargetFrame:SetScript("OnHide", nil)
-	TargetFrame:SetScript("OnUpdate", nil)
-	TargetFrame:Hide()
+	frame:ClearAllPoints()
+	frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -500, 500)
 end
 
 local function EnableBlizz()
-	TargetFrame:SetScript("OnEvent", blizzFrame.OnEvent)
-	TargetFrame:SetScript("OnHide", blizzFrame.OnHide)
-	TargetFrame:SetScript("OnUpdate", blizzFrame.OnUpdate)
-	TargetFrame_Update(TargetFrame)
-	RegisterUnitWatch(TargetFrame)
+	local frame = TargetFrame
+	local point, relativeTo, relativePoint, xOfs, yOfs = unpack(blizzFrame)
+	
+	frame:ClearAllPoints()
+	frame:SetPoint(point, _G[relativeTo], relativePoint, xOfs, yOfs)
 end
 
 function module:OnInitialize()
@@ -251,6 +250,11 @@ function module:OnInitialize()
 end
 
 function module:OnEnable()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnEnable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
 	DisableBlizz()
 	if not self.frame then
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, TargetFrameDropDown, true)
@@ -263,6 +267,11 @@ function module:OnEnable()
 end
 
 function module:OnDisable()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnDisable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
 	EnableBlizz()
 	UnitFrames:DisableFrame(self.frame)
 end

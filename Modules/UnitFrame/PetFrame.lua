@@ -128,24 +128,25 @@ end
 local blizzFrame = {}
 
 local function DisableBlizz()
-	UnregisterUnitWatch(PetFrame)
+	local frame = PetFrame
+	local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint(frame:GetNumPoints())
 	blizzFrame = {
-		OnEvent = PetFrame:GetScript("OnEvent"),
-		OnHide = PetFrame:GetScript("OnHide"),
-		OnUpdate = PetFrame:GetScript("OnUpdate"),
+			[1] = point,
+			[2] = relativeTo:GetName(),
+			[3] = relativePoint,
+			[4] = xOfs,
+			[5] = yOfs,
 	}
-
-	PetFrame:SetScript("OnEvent", nil)
-	PetFrame:SetScript("OnHide", nil)
-	PetFrame:SetScript("OnUpdate", nil)
-	PetFrame:Hide()
+	frame:ClearAllPoints()
+	frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -500, 500)
 end
 
 local function EnableBlizz()
-	PetFrame:SetScript("OnEvent", blizzFrame.OnEvent)
-	PetFrame:SetScript("OnHide", blizzFrame.OnHide)
-	PetFrame:SetScript("OnUpdate", blizzFrame.OnUpdate)
-	RegisterUnitWatch(PetFrame)
+	local frame = PetFrame
+	local point, relativeTo, relativePoint, xOfs, yOfs = unpack(blizzFrame)
+	
+	frame:ClearAllPoints()
+	frame:SetPoint(point, _G[relativeTo], relativePoint, xOfs, yOfs)
 end
 
 function module:OnInitialize()
@@ -156,6 +157,11 @@ function module:OnInitialize()
 end
 
 function module:OnEnable()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnEnable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
 	DisableBlizz()
 	if not self.frame then
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PetFrameDropDown, true)
@@ -168,6 +174,11 @@ function module:OnEnable()
 end
 
 function module:OnDisable()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnDisable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
 	EnableBlizz()
 	UnitFrames:DisableFrame(self.frame)
 end

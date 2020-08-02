@@ -258,7 +258,7 @@ local function HideParty()
 	if not IsInRaid() and GetCVar("useCompactPartyFrames") == "0" then return end
 	-- GetCVarBool()
 	if InCombatLockdown() then
-		table.insert(UnitFrames.OutOfCombatQueue,HideParty)
+		addon:AddOutOfCombatQueue(HideParty)
 		return
 	end
 
@@ -280,7 +280,7 @@ local function ShowParty()
 	if IsInRaid() and GetCVar("useCompactPartyFrames") == "1" then return end
 	-- GetCVarBool()
 	if InCombatLockdown() then
-		table.insert(UnitFrames.OutOfCombatQueue,ShowParty)
+		addon:AddOutOfCombatQueue(ShowParty)
 		return
 	end
 	
@@ -302,26 +302,19 @@ local function DisableBlizz()
 		local frame = _G["PartyMemberFrame"..i]
 		local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint(frame:GetNumPoints())
 		
-		blizzFrames[i] = {
-			point = { 
+		blizzFrames[i] = { 
 				[1] = point,
 				[2] = relativeTo:GetName(),
 				[3] = relativePoint,
 				[4] = xOfs,
 				[5] = yOfs,
-			},
-			OnEnter = frame:GetScript("OnEnter"),
-			OnEvent = frame:GetScript("OnEvent"),
-			OnUpdate = frame:GetScript("OnUpdate"),
 		}
 		
-		frame:SetScript("OnEnter", nil)
-		frame:SetScript("OnEvent", nil)
-		frame:SetScript("OnUpdate", nil)
+		-- frame:SetScript("OnEvent", nil)
+		-- frame:SetScript("OnUpdate", nil)
 		
 		frame:ClearAllPoints()
-		frame:SetPoint("BOTTOMLEFT", UIParent, "TOPLEFT", -400, 500)
-		UnregisterUnitWatch(frame)
+		frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -500, 500)
 		frame:Hide()
 	end
 end
@@ -329,15 +322,13 @@ end
 local function EnableBlizz()
 	for i = 1, MAX_PARTY_MEMBERS do
 		local frame = _G["PartyMemberFrame"..i]
-		local point, relativeTo, relativePoint, xOfs, yOfs = unpack(blizzFrames[i].point)
+		local point, relativeTo, relativePoint, xOfs, yOfs = unpack(blizzFrames[i])
 		
 		frame:ClearAllPoints()
 		frame:SetPoint(point, _G[relativeTo], relativePoint, xOfs, yOfs)
 		
-		frame:SetScript("OnEnter", blizzFrames[i].OnEnter)
-		frame:SetScript("OnEvent", blizzFrames[i].OnEvent)
-		frame:SetScript("OnUpdate", blizzFrames[i].OnUpdate)
-		RegisterUnitWatch(frame)
+		-- frame:SetScript("OnEvent", PartyMemberFrame_OnEvent)
+		-- frame:SetScript("OnUpdate", PartyMemberFrame_OnUpdate)
 		PartyMemberFrame_UpdateArt(frame)
 		PartyMemberFrame_UpdateMember(frame)
 		PartyMemberFrame_UpdateLeader(frame)
@@ -353,6 +344,11 @@ function module:OnInitialize()
 end
 
 function module:OnEnable()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnEnable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
 	DisableBlizz()
 	if table.getn(partyFrames) == 0 then
 		for i=1,4 do
@@ -374,6 +370,11 @@ function module:OnEnable()
 end
 
 function module:OnDisable()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnDisable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
 	EnableBlizz()
 	for _, frame in ipairs(partyFrames) do
 		UnitFrames:DisableFrame(frame)

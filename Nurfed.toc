@@ -1,5 +1,5 @@
 ## Interface: 80205
-## Version: 1.0
+## Version: 1.0.0
 ## Title: Nurfed UI
 ## Notes: Inspired by Tivoli and Apoco.
 ## Author: CruelDrool

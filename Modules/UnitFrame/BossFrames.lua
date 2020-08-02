@@ -140,16 +140,18 @@ local function DisableBlizz()
 
 	for i = 1, MAX_BOSS_FRAMES do
 		local frame = _G["Boss"..i.."TargetFrame"]
-		blizzFrames[i] = {
-			OnEnter = frame:GetScript("OnEnter"),
-			OnEvent = frame:GetScript("OnEvent"),
-			OnUpdate = frame:GetScript("OnUpdate"),
+		local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint(frame:GetNumPoints())
+		
+		blizzFrames[i] = { 
+				[1] = point,
+				[2] = relativeTo:GetName(),
+				[3] = relativePoint,
+				[4] = xOfs,
+				[5] = yOfs,
 		}
 		
-		frame:SetScript("OnEvent", nil)
-		frame:SetScript("OnUpdate", nil)
-		
-		UnregisterUnitWatch(frame)
+		frame:ClearAllPoints()
+		frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -500, 500)
 		frame:Hide()
 	end
 end
@@ -157,11 +159,10 @@ end
 local function EnableBlizz()
 	for i = 1, MAX_BOSS_FRAMES do
 		local frame = _G["Boss"..i.."TargetFrame"]
+		local point, relativeTo, relativePoint, xOfs, yOfs = unpack(blizzFrames[i])
 		
-		frame:SetScript("OnEnter", blizzFrames[i].OnEnter)
-		frame:SetScript("OnEvent", blizzFrames[i].OnEvent)
-		frame:SetScript("OnUpdate", blizzFrames[i].OnUpdate)
-		RegisterUnitWatch(frame)
+		frame:ClearAllPoints()
+		frame:SetPoint(point, _G[relativeTo], relativePoint, xOfs, yOfs)
 	end
 end
 
@@ -174,6 +175,11 @@ function module:OnInitialize()
 end
 
 function module:OnEnable()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnEnable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
 	DisableBlizz()
 	if table.getn(bossFrames) == 0 then
 		for i=1,5 do
@@ -191,6 +197,11 @@ function module:OnEnable()
 end
 
 function module:OnDisable()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnDisable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
 	EnableBlizz()
 	for _, frame in ipairs(bossFrames) do
 		UnitFrames:DisableFrame(frame)

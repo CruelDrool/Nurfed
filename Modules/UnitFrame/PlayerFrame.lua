@@ -371,17 +371,9 @@ local function XPbar_OnLoad(frame, unit)
 	frame:SetScript("OnEvent", XPbar_OnEvent)
 end
 
-blizzCastBarFrame = {}
 
 function module:DisableBlizzCastBar()
 	if self.db.disableBlizzCastBar then
-		blizzCastBarFrame = {
-			OnLoad = CastingBarFrame:GetScript("OnLoad"),
-			OnEvent = CastingBarFrame:GetScript("OnEvent"),
-			OnUpdate = CastingBarFrame:GetScript("OnUpdate"),
-			OnShow = CastingBarFrame:GetScript("OnShow"),
-		}
-		CastingBarFrame:SetScript("OnLoad", nil)
 		CastingBarFrame:SetScript("OnEvent", nil)
 		CastingBarFrame:SetScript("OnUpdate", nil)
 		CastingBarFrame:SetScript("OnShow", nil)
@@ -390,20 +382,13 @@ function module:DisableBlizzCastBar()
 end
 
 function module:EnableBlizzCastBar()
-	CastingBarFrame:SetScript("OnLoad", blizzCastBarFrame.OnLoad)
-	CastingBarFrame:SetScript("OnEvent", blizzCastBarFrame.OnEvent)
-	CastingBarFrame:SetScript("OnUpdate", blizzCastBarFrame.OnUpdate)
-	CastingBarFrame:SetScript("OnShow", blizzCastBarFrame.OnShow)
+	CastingBarFrame:SetScript("OnEvent", CastingBarFrame_OnEvent)
+	CastingBarFrame:SetScript("OnUpdate", CastingBarFrame_OnUpdate)
+	CastingBarFrame:SetScript("OnShow", CastingBarFrame_OnShow)
 end
-
-local blizzFrame = {}
 
 local function DisableBlizz()
 	module:DisableBlizzCastBar()
-	blizzFrame = {
-		OnEvent = PlayerFrame:GetScript("OnEvent"),
-		OnUpdate = PlayerFrame:GetScript("OnUpdate"),
-	}
 	
 	PlayerFrame:SetScript("OnEvent", nil)
 	PlayerFrame:SetScript("OnUpdate", nil)
@@ -412,8 +397,8 @@ end
 
 local function EnableBlizz()
 	module:EnableBlizzCastBar()
-	PlayerFrame:SetScript("OnEvent", blizzFrame.OnEvent)
-	PlayerFrame:SetScript("OnUpdate", blizzFrame.OnUpdate)
+	PlayerFrame:SetScript("OnEvent", PlayerFrame_OnEvent)
+	PlayerFrame:SetScript("OnUpdate", PlayerFrame_OnUpdate)
 	PlayerFrame_Update()
 	UnitFrame_Update(PlayerFrame)
 	PlayerFrame:Show()
@@ -428,38 +413,38 @@ end
 
 function module:OnEnable()
 	if InCombatLockdown() then
-		table.insert(UnitFrames.OutOfCombatQueue,module.OnEnable)
-		addon:print(string.format("[%1$s] Currently in combat. Will enable the %2$s module when out of combat.", WrapTextInColorCode(addonName, "ff37FDFC"), WrapTextInColorCode(moduleName, "ff00ff00")))
+		addon:AddOutOfCombatQueue("OnEnable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
 		return
 	end
 	DisableBlizz()
 
-	if not module.frame then
-		module.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PlayerFrameDropDown)
-		if module.frame.xp then XPbar_OnLoad(module.frame.xp, unit) end
-		if module.frame.azerite then AzeriteBar_OnLoad(module.frame.azerite) end
+	if not self.frame then
+		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PlayerFrameDropDown)
+		if self.frame.xp then XPbar_OnLoad(self.frame.xp, unit) end
+		if self.frame.azerite then AzeriteBar_OnLoad(self.frame.azerite) end
 	end
 	
-	if module.frame then
-		UnitFrames:EnableFrame(module.frame)
-		module.frame.inCombat = nil
-		module.frame.onHateList = nil
-		Update(module.frame)
+	if self.frame then
+		UnitFrames:EnableFrame(self.frame)
+		self.frame.inCombat = nil
+		self.frame.onHateList = nil
+		Update(self.frame)
 
-		if module.frame.xp then
-			XPbar_Update(module.frame.xp)
+		if self.frame.xp then
+			XPbar_Update(self.frame.xp)
 		end
 		
-		if module.frame.azerite then 
-			AzeriteBar_Update(module.frame.azerite)
+		if self.frame.azerite then 
+			AzeriteBar_Update(self.frame.azerite)
 		end
 	end
 end
 
 function module:OnDisable()
 	if InCombatLockdown() then
-		table.insert(UnitFrames.OutOfCombatQueue,module.OnDisable)
-		addon:print(string.format("[%1$s] Currently in combat. Will disable the %2$s module when out of combat.", WrapTextInColorCode(addonName, "ff37FDFC"), WrapTextInColorCode(moduleName, "ff00ff00")))
+		addon:AddOutOfCombatQueue("OnDisable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
 		return
 	end
 	EnableBlizz()

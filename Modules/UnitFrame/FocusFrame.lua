@@ -149,26 +149,27 @@ end
 local blizzFrame = {}
 
 local function DisableBlizz()
-	UnregisterUnitWatch(FocusFrame)
-	
+	local frame = FocusFrame
+	local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint(frame:GetNumPoints())
 	blizzFrame = {
-		OnEvent = FocusFrame:GetScript("OnEvent"),
-		OnHide = FocusFrame:GetScript("OnHide"),
-		OnUpdate = FocusFrame:GetScript("OnUpdate"),
+			[1] = point,
+			[2] = relativeTo:GetName(),
+			[3] = relativePoint,
+			[4] = xOfs,
+			[5] = yOfs,
 	}
-	
-	FocusFrame:SetScript("OnEvent", nil)
-	FocusFrame:SetScript("OnHide", nil)
-	FocusFrame:SetScript("OnUpdate", nil)
-	FocusFrame:Hide()
+	frame:SetClampedToScreen(false)
+	frame:ClearAllPoints()
+	frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -500, 500)
 end
 
 local function EnableBlizz()
-	FocusFrame:SetScript("OnEvent", blizzFrame.OnEvent)
-	FocusFrame:SetScript("OnHide", blizzFrame.OnHide)
-	FocusFrame:SetScript("OnUpdate", blizzFrame.OnUpdate)
-	TargetFrame_Update(FocusFrame)
-	RegisterUnitWatch(FocusFrame)
+	local frame = FocusFrame
+	local point, relativeTo, relativePoint, xOfs, yOfs = unpack(blizzFrame)
+	
+	frame:SetClampedToScreen(true)
+	frame:ClearAllPoints()
+	frame:SetPoint(point, _G[relativeTo], relativePoint, xOfs, yOfs)
 end
 
 function module:OnInitialize()
@@ -179,6 +180,11 @@ function module:OnInitialize()
 end
 
 function module:OnEnable()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnEnable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
 	DisableBlizz()
 	if not self.frame then
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, FocusFrameDropDown, true)
@@ -191,6 +197,11 @@ function module:OnEnable()
 end
 
 function module:OnDisable()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnDisable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
 	EnableBlizz()
 	UnitFrames:DisableFrame(self.frame)
 end

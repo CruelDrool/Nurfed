@@ -64,8 +64,8 @@ module.options = {
 			width = "full",
 			name = "Enabled",
 			-- desc = "",
-			get = function() return module:IsEnabled() end,
-			set = function() if module:IsEnabled() then module:Disable() else module:Enable() end end,
+			get = function() return module.db.profile.enabled end,
+			set = function(info, value) module.db.profile.enabled = value; if module:IsEnabled() then module:DisableUnitframes() else module:EnableUnitframes() end end,
 		},
 		decimalpoints = {
 			order = 3,
@@ -112,7 +112,6 @@ module.options = {
 }
 
 module.frames = {}
-module.OutOfCombatQueue = {}
 
 function module:OnInitialize()
 	-- Go through each module and get the options and default DB values.
@@ -169,9 +168,9 @@ function module:OnEnable()
 	
 	self:SecureHook(addon.LDBObj,"OnTooltipShow", function(tooltip)
 		if module.locked then
-			tooltip:AddLine("Left Click - |cffff0000Unlock|r UI", 0.75, 0.75, 0.75)
+			tooltip:AddLine(string.format("Left Click - %s UI", addon:WrapTextInColorCode("Unlock", {1, 0, 0})), addon:UnpackColorTable(addon.colors.tooltipLine))
 		else
-			tooltip:AddLine("Left Click - |cff00ff00Lock|r UI", 0.75, 0.75, 0.75)
+			tooltip:AddLine(string.format("Left Click - %s UI", addon:WrapTextInColorCode("Lock", {0, 1, 0})), addon:UnpackColorTable(addon.colors.tooltipLine))
 		end
 	end)
 	
@@ -181,7 +180,6 @@ function module:OnEnable()
 	end
 	
 	self:RegisterEvent("PLAYER_REGEN_DISABLED")
-	self:RegisterEvent("PLAYER_REGEN_ENABLED")
 	
 	self.db.profile.enabled = true
 	self:ToggleModules()
@@ -195,10 +193,28 @@ function module:OnDisable()
 	self:UnhookAll()
 	self:UnregisterAllEvents()
 	self.db.profile.enabled = false
-	for name, m in self:IterateModules() do
-		m:Disable()
-	end
+	-- for name, m in self:IterateModules() do
+		-- m:Disable()
+	-- end
 
+end
+
+function module:EnableUnitframes()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("Enable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
+	self:Enable()
+end
+
+function module:DisableUnitframes()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("Disable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
+	self:Disable()
 end
 
 function module:UpdateConfigs()
@@ -333,7 +349,8 @@ end
 function module:Lock()
 
 	if InCombatLockdown() then
-		table.insert(module.OutOfCombatQueue, module.Lock)
+		addon:AddOutOfCombatQueue("Lock", module)
+		addon:InfoMessage("Unlocking the UI when combat ends.")
 		return
 	end
 	
@@ -379,14 +396,6 @@ function module:PLAYER_REGEN_DISABLED()
 	end
 end
 
-function module:PLAYER_REGEN_ENABLED()
-	for i, func in pairs(self.OutOfCombatQueue) do 
-		if type(func) == "function" then
-			func()
-		end
-		self.OutOfCombatQueue[i] = nil
-	end
-end
 
 function module:GetTextFormat(frame, f)
 	local modName = self.frames[frame:GetName()]
