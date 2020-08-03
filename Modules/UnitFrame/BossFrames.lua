@@ -140,7 +140,13 @@ local function DisableBlizz()
 
 	for i = 1, MAX_BOSS_FRAMES do
 		local frame = _G["Boss"..i.."TargetFrame"]
+		local spellBar = _G[frame:GetName().."SpellBar"]
 		local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint(frame:GetNumPoints())
+		
+		spellBar:SetScript("OnEvent", nil)
+		spellBar:SetScript("OnUpdate", nil)
+
+		spellBar.showCastbar = false
 		
 		blizzFrames[i] = { 
 				[1] = point,
@@ -151,7 +157,7 @@ local function DisableBlizz()
 		}
 		
 		frame:ClearAllPoints()
-		frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -500, 500)
+		frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -5000, 5000)
 		frame:Hide()
 	end
 end
@@ -159,7 +165,12 @@ end
 local function EnableBlizz()
 	for i = 1, MAX_BOSS_FRAMES do
 		local frame = _G["Boss"..i.."TargetFrame"]
+		local spellBar = _G[frame:GetName().."SpellBar"]
 		local point, relativeTo, relativePoint, xOfs, yOfs = unpack(blizzFrames[i])
+		
+		spellBar:SetScript("OnEvent", Target_Spellbar_OnEvent)
+		spellBar:SetScript("OnUpdate", CastingBarFrame_OnUpdate)
+		spellBar.showCastbar = GetCVarBool("showTargetCastbar")
 		
 		frame:ClearAllPoints()
 		frame:SetPoint(point, _G[relativeTo], relativePoint, xOfs, yOfs)
