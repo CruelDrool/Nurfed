@@ -1721,12 +1721,6 @@ THREATBAR functions
 
 ]]
 
-local ThreatLib = LibStub:GetLibrary("LibThreatClassic2")
-
-local function UnitDetailedThreatSituation (unit, mob)
-    return ThreatLib:UnitDetailedThreatSituation (unit, mob)
-end
-
 local function GetThreatStatusColor(status)
 	local r, g, b
 	if status == 0 then
@@ -1773,32 +1767,31 @@ end
 
 function module:ThreatBar_Update(frame)
 	if not UnitExists(frame.unit) then
-		frame:SetAlpha(0)
+		frame:Hide()
 		return
 	 end
-
 	if UnitIsPlayer(frame.unit) then
-		frame:SetAlpha(0)
+		frame:Hide()
 		return
 	end
 	
 	if UnitIsDead(frame.unit) then
-		frame:SetAlpha(0)
+		frame:Hide()
 		return
 	end
-
+	
 	local isTanking, status, _, rawPercent, threatValue = UnitDetailedThreatSituation(frame.threatUnit, frame.unit)
 	
 	if not threatValue then
-		frame:SetAlpha(0)
+		frame:Hide()
 		return
 	end
 	
 	if threatValue == 0 then
-		frame:SetAlpha(0)
+		frame:Hide()
 		return
 	end
-
+	
 	local currValue, maxValue
 	
 	if isTanking then
@@ -1824,7 +1817,7 @@ function module:ThreatBar_Update(frame)
 		
 	ThreatBar_Text(frame)
 	frame:SetStatusBarColor(GetThreatStatusColor(status))
-	frame:SetAlpha(1)
+	frame:Show()
 end
 
 local function ThreatBar_OnEvent(frame,event,...)
@@ -1834,48 +1827,45 @@ end
 local function ThreatBar_OnUpdate(frame, e)
 	if UnitExists(frame.unit) and not UnitIsPlayer(frame.unit) then
 		local isTanking, status, _, rawPercent, threatValue = UnitDetailedThreatSituation(frame.threatUnit, frame.unit)
-		frame:SetAlpha(1)
-		if not threatValue then
-			return
-		end
-		if threatValue == 0 then
-			return
-		end
-		
-		local maxValue, currValue
-		
-		if isTanking then
-			currValue = threatValue
-			maxValue = threatValue
-		else
-			currValue = threatValue
-		if rawPercent > 0 then
-			maxValue = threatValue / rawPercent * 100
-		else
-			maxValue = threatValue
-		end
-		end
-		
-		if maxValue ~= frame.maxValue then
-			frame:SetMinMaxValues(0, maxValue)
-			frame.maxValue = maxValue
-		end
-		frame.endvalue = currValue
-		if currValue ~= frame.currValue then
-			-- frame:SetMinMaxValues(0, maxValue)
-			frame.currValue = currValue
-		end
-		
-		if frame.glide then
-			Glide(frame, e)
-		else
-			frame:SetValue(currValue)
-		end
-		
-		ThreatBar_Text(frame)
-		frame:SetStatusBarColor(GetThreatStatusColor(status))
-	else
-		frame:SetAlpha(0)
+			if not threatValue then
+				return
+			end
+			if threatValue == 0 then
+				return
+			end
+			
+			local maxValue, currValue
+			
+			if isTanking then
+				currValue = threatValue
+				maxValue = threatValue
+			else
+				currValue = threatValue
+			if rawPercent > 0 then
+				maxValue = threatValue / rawPercent * 100
+			else
+				maxValue = threatValue
+			end
+			end
+			
+			if maxValue ~= frame.maxValue then
+				frame:SetMinMaxValues(0, maxValue)
+				frame.maxValue = maxValue
+			end
+			frame.endvalue = currValue
+			if currValue ~= frame.currValue then
+				-- frame:SetMinMaxValues(0, maxValue)
+				frame.currValue = currValue
+			end
+			
+			if frame.glide then
+				Glide(frame, e)
+			else
+				frame:SetValue(currValue)
+			end
+			
+			ThreatBar_Text(frame)
+			frame:SetStatusBarColor(GetThreatStatusColor(status))
 	end
 end
 
@@ -1902,12 +1892,8 @@ function module:ThreatBar_OnLoad(frame, unit)
 	end
 	frame.threatUnit = "player"
 	frame:RegisterEvent("PLAYER_ENTERING_WORLD")
-	frame:RegisterEvent("PLAYER_TARGET_CHANGED")
-	frame:RegisterEvent("PLAYER_REGEN_DISABLED")
-	frame:RegisterEvent("PLAYER_REGEN_ENABLED")
-	frame:RegisterUnitEvent("UNIT_TARGET", "target")
-    -- frame:RegisterEvent("UNIT_THREAT_LIST_UPDATE")
-    -- frame:RegisterEvent("UNIT_THREAT_SITUATION_UPDATE")
+    frame:RegisterEvent("UNIT_THREAT_LIST_UPDATE")
+    frame:RegisterEvent("UNIT_THREAT_SITUATION_UPDATE")
 	frame:SetScript("OnEvent", ThreatBar_OnEvent)
 	frame:SetScript("OnUpdate", ThreatBar_OnUpdate)
 end
