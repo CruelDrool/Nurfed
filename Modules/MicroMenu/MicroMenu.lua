@@ -174,10 +174,10 @@ local function ButtonsArray()
 	}
 	
 	local level = UnitLevel("player")
-		
-	if level < SHOW_SPEC_LEVEL then
+	local minLevel = 10
+	if level < minLevel then
 		buttons["TALENTS"]["disabled"] = true
-		buttons["TALENTS"]["text"] = GetMenuButtonText(TALENTS_BUTTON.." ("..string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, SHOW_SPEC_LEVEL)..")", "TOGGLETALENTS")
+		buttons["TALENTS"]["text"] = GetMenuButtonText(TALENTS_BUTTON.." ("..string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, 10)..")", "TOGGLETALENTS")
 	end
 	
 	if IsTrialAccount() then
@@ -195,9 +195,9 @@ local function ButtonsArray()
 			buttons["GUILD"]["text"] = GetMenuButtonText(LOOKINGFORGUILD, "TOGGLEGUILDTAB")
 		end
 		
-		if level < SHOW_LFD_LEVEL then
+		if level < minLevel then
 			buttons["DUNGEONS"]["disabled"] = true
-			buttons["DUNGEONS"]["text"] = GetMenuButtonText(DUNGEONS_BUTTON.." ("..string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, SHOW_LFD_LEVEL)..")", "TOGGLEGROUPFINDER")
+			buttons["DUNGEONS"]["text"] = GetMenuButtonText(DUNGEONS_BUTTON.." ("..string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, 10)..")", "TOGGLEGROUPFINDER")
 		end
 	else
 		buttons["GUILD"]["disabled"] = true
