@@ -67,6 +67,7 @@ local events = {
 	"GROUP_ROSTER_UPDATE",
 	"RAID_TARGET_UPDATE",
 	"UNIT_AURA",
+	"UNIT_CTR_OPTIONS",
 	"UNIT_LEVEL",
 	"UNIT_OTHER_PARTY_CHANGED",
 	"UNIT_FACTION",
@@ -90,8 +91,6 @@ local partyFrames = {}
 local function UpdatePhasing(frame)
 	local unit = frame.unit
 	local icon = frame.phasingIcon
-	local inPhase = UnitInPhase(unit)
-	local notInSameWarMode = UnitIsWarModePhased(unit)
 	
 	if UnitInOtherParty(unit) then
 		frame:SetAlpha(0.6)
@@ -108,32 +107,25 @@ local function UpdatePhasing(frame)
 			icon.tooltip = INCOMING_SUMMON_TOOLTIP_SUMMON_PENDING
 			icon.border:Hide()
 			icon:Show()
-	elseif status == Enum.SummonStatus.Accepted then
-		icon.texture:SetAtlas("Raid-Icon-SummonAccepted")
-		icon.texture:SetTexCoord(0, 1, 0, 1)
-		icon.tooltip = INCOMING_SUMMON_TOOLTIP_SUMMON_ACCEPTED
-		icon.border:Hide()
-		icon:Show()
-	elseif status == Enum.SummonStatus.Declined then
-		icon.texture:SetAtlas("Raid-Icon-SummonDeclined")
-		icon.texture:SetTexCoord(0, 1, 0, 1)
-		icon.tooltip = INCOMING_SUMMON_TOOLTIP_SUMMON_DECLINED
-		icon.border:Hide()
-		icon:Show()
-	end
-	elseif (notInSameWarMode or not inPhase) and UnitIsConnected(unit) then
-		frame:SetAlpha(0.6)
-		icon.texture:SetTexture("Interface\\TargetingFrame\\UI-PhasingIcon")
-		icon.texture:SetTexCoord(0.15625, 0.84375, 0.15625, 0.84375)
-		icon.border:Hide()
-		icon.tooltip = PARTY_PHASED_MESSAGE
-	if notInSameWarMode then
-		if C_PvP.IsWarModeDesired() then
-			icon.tooltip = PARTY_PLAYER_WARMODE_DISABLED
-		else
-			icon.tooltip = PARTY_PLAYER_WARMODE_ENABLED
+		elseif status == Enum.SummonStatus.Accepted then
+			icon.texture:SetAtlas("Raid-Icon-SummonAccepted")
+			icon.texture:SetTexCoord(0, 1, 0, 1)
+			icon.tooltip = INCOMING_SUMMON_TOOLTIP_SUMMON_ACCEPTED
+			icon.border:Hide()
+			icon:Show()
+		elseif status == Enum.SummonStatus.Declined then
+			icon.texture:SetAtlas("Raid-Icon-SummonDeclined")
+			icon.texture:SetTexCoord(0, 1, 0, 1)
+			icon.tooltip = INCOMING_SUMMON_TOOLTIP_SUMMON_DECLINED
+			icon.border:Hide()
+			icon:Show()
 		end
-	end
+	elseif UnitIsConnected(unit) and UnitPhaseReason(unit) or nil then
+		frame:SetAlpha(0.6);
+		icon.texture:SetTexture("Interface\\TargetingFrame\\UI-PhasingIcon");
+		icon.texture:SetTexCoord(0.15625, 0.84375, 0.15625, 0.84375);
+		icon.border:Hide();
+		icon.tooltip = PartyUtil.GetPhasedReasonString(phaseReason, partyID);
 		icon:Show()
 	else
 		frame:SetAlpha(1)
@@ -200,7 +192,7 @@ local function OnEvent(frame, event, ...)
 
 	if event == "PLAYER_ENTERING_WORLD" or event == "CVAR_UPDATE" or event == "UPDATE_BINDINGS" or event == "DISPLAY_SIZE_CHANGED" then
 		Update(frame)
-	elseif event == "UNIT_PHASE" or event == "PARTY_MEMBER_ENABLE" or event == "PARTY_MEMBER_DISABLE" or event == "UNIT_FLAGS" then
+	elseif event == "UNIT_PHASE" or event == "PARTY_MEMBER_ENABLE" or event == "PARTY_MEMBER_DISABLE" or event == "UNIT_FLAGS" or event == "UNIT_CTR_OPTIONS" then
 		if event == "UNIT_PHASE" or arg1 == frame.unit then
 			UpdatePhasing(frame)
 		end
