@@ -31,7 +31,7 @@
 		<Color r="1" g="1" b="1"/>
 	</Font>
 
-	<Button name="Nurfed_UnitFrame" frameStrata="LOW" inherits="SecureUnitButtonTemplate" parent="UIParent" movable="true" virtual="true">
+	<Button name="Nurfed_UnitFrame" frameStrata="LOW" inherits="SecureUnitButtonTemplate,BackdropTemplate" parent="UIParent" movable="true" virtual="true">
 		<Size x="180" y="59"/>
 		<Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
 			<BackgroundInsets left="5" right="5" top="5" bottom="5"/>
@@ -39,6 +39,20 @@
 			<EdgeSize val="16"/>
 			<Color r="0" g="0" b="0" a="0.75"/>
 		</Backdrop>
+		<Scripts>
+			<OnLoad>
+				self:SetBackdrop({
+					bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+					edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+					tile = true,
+					tileEdge = true,
+					tileSize = 16,
+					edgeSize = 16,
+					insets = { left = 5, right = 5, top = 5, bottom = 5 },
+				})
+				self:SetBackdropColor(0, 0, 0, 0.75)
+			</OnLoad>
+		</Scripts>
 	</Button>
 	
 	<StatusBar name="Nurfed_Unit_hp" virtual="true">
@@ -210,7 +224,7 @@
 		<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5"/>
 	</StatusBar>
 
-	<Frame name="Nurfed_Unit_casting" hidden="true" virtual="true">
+	<Frame name="Nurfed_Unit_casting" hidden="true" virtual="true" inherits="BackdropTemplate">
 		<Size x="15" y="59"/>
 		<Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
 			<BackgroundInsets left="2" right="2" top="2" bottom="2"/>
@@ -256,6 +270,20 @@
 				<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5"/>
 			</StatusBar>
 		</Frames>
+		<Scripts>
+			<OnLoad>
+				self:SetBackdrop({
+					bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+					edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+					tile = true,
+					tileEdge = true,
+					tileSize = 12,
+					edgeSize = 10,
+					insets = { left = 2, right = 2, top = 2, bottom = 2 },
+				})
+				self:SetBackdropColor(0, 0, 0, 0)
+			</OnLoad>
+		</Scripts>
 	</Frame>
 
 	<PlayerModel name="Nurfed_Unit_model" parentKey="model" virtual="true">
@@ -269,7 +297,7 @@
 		</Layers>
 	</PlayerModel>
 
-	<Button name="Nurfed_Unit_mini" inherits="SecureUnitButtonTemplate" hidden="true" virtual="true">
+	<Button name="Nurfed_Unit_mini" inherits="SecureUnitButtonTemplate, BackdropTemplate" hidden="true" virtual="true">
 		<Size x="80" y="22"/>
 		<Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
 			<BackgroundInsets left="2" right="2" top="2" bottom="2"/>
@@ -312,9 +340,23 @@
 				<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5"/>
 			</StatusBar>
 		</Frames>
+		<Scripts>
+			<OnLoad>
+				self:SetBackdrop({
+					bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+					edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+					tile = true,
+					tileEdge = true,
+					tileSize = 16,
+					edgeSize = 8,
+					insets = { left = 2, right = 2, top = 2, bottom = 2 },
+				})
+				self:SetBackdropColor(0, 0, 0, 0.75)
+			</OnLoad>
+		</Scripts>
 	</Button>
 
-	<Frame name="Nurfed_Unit_Overlay" frameStrata="MEDIUM" movable="true" enableMouse="true" frameLevel="10" hidden="true" virtual="true">
+	<Frame name="Nurfed_Unit_Overlay" frameStrata="MEDIUM" movable="true" enableMouse="true" frameLevel="10" hidden="true" virtual="true" inherits="BackdropTemplate">
 		<Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
 			<BackgroundInsets left="5" right="4" top="4" bottom="5"/>
 			<TileSize val="16"/>
@@ -338,6 +380,18 @@
 		</Layers>
 		<Scripts>
 			<OnLoad>
+				self:SetBackdrop({
+					bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+					edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+					tile = true,
+					tileEdge = true,
+					tileSize = 16,
+					edgeSize = 16,
+					insets = { left = 5, right = 4, top = 4, bottom = 5 },
+				})
+				self:SetBackdropColor(0, 1, 0, 0.5)
+				self:SetBackdropBorderColor(0.5, 0.5, 0, 0)
+				
 				self.text:SetText(self:GetParent():GetName())
 				self:RegisterForDrag("LeftButton")
 			</OnLoad>
