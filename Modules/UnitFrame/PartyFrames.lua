@@ -120,16 +120,19 @@ local function UpdatePhasing(frame)
 			icon.border:Hide()
 			icon:Show()
 		end
-	elseif UnitIsConnected(unit) and UnitPhaseReason(unit) or nil then
-		frame:SetAlpha(0.6);
-		icon.texture:SetTexture("Interface\\TargetingFrame\\UI-PhasingIcon");
-		icon.texture:SetTexCoord(0.15625, 0.84375, 0.15625, 0.84375);
-		icon.border:Hide();
-		icon.tooltip = PartyUtil.GetPhasedReasonString(phaseReason, partyID);
-		icon:Show()
 	else
-		frame:SetAlpha(1)
-		icon:Hide()
+		local phaseReason = UnitIsConnected(unit) and UnitPhaseReason(unit) or nil;
+		if phaseReason then
+			frame:SetAlpha(0.6);
+			icon.texture:SetTexture("Interface\\TargetingFrame\\UI-PhasingIcon");
+			icon.texture:SetTexCoord(0.15625, 0.84375, 0.15625, 0.84375);
+			icon.border:Hide();
+			icon.tooltip = PartyUtil.GetPhasedReasonString(phaseReason, unit);
+			icon:Show()
+		else
+			frame:SetAlpha(1)
+			icon:Hide()
+		end
 	end	
 	-- if UnitPlayerOrPetInParty(unit) then
 		-- if ( UnitInPhase(unit) or not UnitExists(unit) or not UnitIsConnected(unit)) then
