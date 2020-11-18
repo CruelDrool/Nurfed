@@ -1,4 +1,4 @@
-## Interface: 80205
+## Interface: 90002
 ## Version: 1.0
 ## Title: Nurfed UI
 ## Notes: Inspired by Tivoli and Apoco.
