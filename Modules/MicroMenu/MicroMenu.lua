@@ -160,7 +160,7 @@ local function ButtonsArray()
 				ShowUIPanel(GameMenuFrame)
 			end
 		end, nested = 1, },
-		HELP = { text = GAMEMENU_HELP, func = function() ToggleHelpFrame() end, },
+		HELP = { text = GAMEMENU_SUPPORT, func = function() ToggleHelpFrame() end, },
 		WHATS_NEW = { text = GAMEMENU_NEW_BUTTON, func = function() GameMenuButtonWhatsNew:Click() end, },
 		SYSTEMOPTIONS = { text = SYSTEMOPTIONS_MENU, func = function() GameMenuButtonOptions:Click() end, },
 		UIOPTIONS = { text = UIOPTIONS_MENU, func = function() GameMenuButtonUIOptions:Click() end, },
