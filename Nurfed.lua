@@ -136,6 +136,7 @@ end
 
 function addon:FormatNumber(n)
 	local number = math.abs(n)
+	local text
 	if number >= 1000000000 then
 		text = format("%.3fG", number/1000000000)
 	elseif number >= 1000000 then
