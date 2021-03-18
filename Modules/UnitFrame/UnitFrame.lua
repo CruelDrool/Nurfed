@@ -1466,7 +1466,9 @@ local function CastBar_OnEvent(frame, event, unit,...)
 	
 	if ( unit ~= frameUnit ) then
          return
-    end	
+    end
+	
+	local _
 
 	if event == "UNIT_SPELLCAST_START" or event == "UNIT_SPELLCAST_CHANNEL_START" then
 		local name, texture, startTime, endTime, castID, notInterruptible
