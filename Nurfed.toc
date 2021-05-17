@@ -1,5 +1,5 @@
-## Interface: 11306
-## Version: 1.0
+## Interface: 11307
+## Version: 1.0.0
 ## Title: Nurfed UI
 ## Notes: Inspired by Tivoli and Apoco.
 ## Author: CruelDrool
