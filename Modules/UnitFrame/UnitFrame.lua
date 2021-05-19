@@ -1413,14 +1413,22 @@ CASTBAR functions
 
 ]]
 
-local LibCC = LibStub("LibClassicCasterino", true)
+local LibCC
+local UnitCastingInfo
+local UnitChannelInfo
 
-local function UnitCastingInfo(unit)
-	return LibCC:UnitCastingInfo(unit)
-end
+if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
+	LibCC = LibStub("LibClassicCasterino", true)
+	UnitCastingInfo = function(unit)
+		return LibCC:UnitCastingInfo(unit)
+	end
 
-local function UnitChannelInfo(unit)
-	return LibCC:UnitChannelInfo(unit)
+	UnitChannelInfo = function(unit)
+		return LibCC:UnitChannelInfo(unit)
+	end
+else
+	UnitCastingInfo = _G.UnitCastingInfo
+	UnitChannelInfo = _G.UnitChannelInfo
 end
 
 local function CastBar_Text(text, statusbar, short, textFormat)
@@ -1476,7 +1484,7 @@ local function CastBar_OnEvent(frame, event, unit,...)
 		-- frame:Clear() will be called everytime the player changes target. Hmmmm...
 		frame:Clear()
 		if event == "UNIT_SPELLCAST_START" then
-			name, _, texture, startTime, endTime, _, castID, notInterruptible = UnitCastingInfo(unit)
+			name, _, texture, startTime, endTime, _, castID = UnitCastingInfo(unit)
 			if not endTime then frame:Hide(); frame:Clear(); return end
 			frame.castID = castID
 			frame.startTime = GetTime() - (startTime / 1000)
@@ -1487,7 +1495,7 @@ local function CastBar_OnEvent(frame, event, unit,...)
 			frame.channeling = false
 			frame.casting = true
 		elseif event == "UNIT_SPELLCAST_CHANNEL_START" then
-			name, _, texture, startTime, endTime, _, notInterruptible = UnitChannelInfo(unit)
+			name, _, texture, startTime, endTime = UnitChannelInfo(unit)
 			if not endTime then frame:Hide(); frame:Clear(); return end
 			frame.startTime = (endTime / 1000) - GetTime()
 			-- frame.maxValue = (endTime - startTime) / 1000
@@ -1497,10 +1505,7 @@ local function CastBar_OnEvent(frame, event, unit,...)
 			frame.channeling = true
 			frame.casting = false
 		end
-		if notInterruptible then
-			-- r, g, b = 1.0, 0.0, 0.0
-			r, g, b = CastingBarFrame.nonInterruptibleColor:GetRGB()
-		end
+
 		frame.statusbar:SetStatusBarColor(r, g, b)
 		frame.maxValue = (endTime - startTime) / 1000
 		frame.statusbar:SetMinMaxValues(0,frame.maxValue)
@@ -1661,7 +1666,7 @@ function module:CastBar_OnLoad(frame, unit)
 
 	frame:RegisterEvent("PLAYER_ENTERING_WORLD")	
 	frame:RegisterEvent("GROUP_ROSTER_UPDATE")
-	-- -- frame:RegisterEvent("PLAYER_FOCUS_CHANGED")
+	-- frame:RegisterEvent("PLAYER_FOCUS_CHANGED")
 	frame:RegisterEvent("PLAYER_TARGET_CHANGED")
 	
 	-- frame:RegisterEvent("UNIT_SPELLCAST_START")
@@ -1682,16 +1687,28 @@ function module:CastBar_OnLoad(frame, unit)
 	local CastbarEventHandler = function(event, ...)
 		CastBar_OnEvent(frame, event, ...)
 	end
-	
-	LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_START", CastbarEventHandler)
-	LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_DELAYED", CastbarEventHandler) -- only for player
-	LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_STOP", CastbarEventHandler)
-	LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_FAILED", CastbarEventHandler)
-	LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_INTERRUPTED", CastbarEventHandler)
-	LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_CHANNEL_START", CastbarEventHandler)
-	LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_CHANNEL_UPDATE", CastbarEventHandler) -- only for player
-	LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_CHANNEL_STOP", CastbarEventHandler)
-
+	if LibCC then
+		LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_START", CastbarEventHandler)
+		LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_DELAYED", CastbarEventHandler) -- only for player
+		LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_STOP", CastbarEventHandler)
+		LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_FAILED", CastbarEventHandler)
+		LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_INTERRUPTED", CastbarEventHandler)
+		LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_CHANNEL_START", CastbarEventHandler)
+		LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_CHANNEL_UPDATE", CastbarEventHandler) -- only for player
+		LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_CHANNEL_STOP", CastbarEventHandler)
+	else
+		frame:RegisterEvent("PLAYER_FOCUS_CHANGED")
+		frame:RegisterEvent("UNIT_SPELLCAST_START")
+		frame:RegisterEvent("UNIT_SPELLCAST_STOP")
+		frame:RegisterEvent("UNIT_SPELLCAST_DELAYED")
+		frame:RegisterEvent("UNIT_SPELLCAST_FAILED")
+		frame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
+		-- frame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTIBLE")
+		-- frame:RegisterEvent("UNIT_SPELLCAST_NOT_INTERRUPTIBLE")
+		frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
+		frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_UPDATE")
+		frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
+	end
 
 end
 
@@ -1925,8 +1942,12 @@ Buffs, debuffs and stuffs.
 
 ]]
 
-local LibClassicDurations = LibStub("LibClassicDurations")
-LibClassicDurations:Register(addon)
+local LibClassicDurations
+
+if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
+	LibClassicDurations = LibStub("LibClassicDurations")
+	LibClassicDurations:Register(addon)
+end
 
 local PLAYER_UNITS = {
 	player = true,
@@ -1983,12 +2004,13 @@ function module:UpdateAuras(frame)
 				aura.count:Hide()
 			end
 			
-			local durationNew, expirationTimeNew = LibClassicDurations:GetAuraDurationByUnit(frame.unit, spellId, caster, buffName)
-			if duration == 0 and durationNew then
-				duration = durationNew
-				expirationTime = expirationTimeNew
+			if LibClassicDurations then
+				local durationNew, expirationTimeNew = LibClassicDurations:GetAuraDurationByUnit(frame.unit, spellId, caster, buffName)
+				if duration == 0 and durationNew then
+					duration = durationNew
+					expirationTime = expirationTimeNew
+				end
 			end
-			
 			-- Handle cooldowns
 			if ( duration > 0 ) then
 				aura.cooldown:Show()
@@ -2069,12 +2091,13 @@ function module:UpdateAuras(frame)
 						aura.count:Hide()
 					end
 					
-					local durationNew, expirationTimeNew = LibClassicDurations:GetAuraDurationByUnit(frame.unit, spellId, caster, debuffName)
-					if duration == 0 and durationNew then
-						duration = durationNew
-						expirationTime = expirationTimeNew
+					if LibClassicDurations then
+						local durationNew, expirationTimeNew = LibClassicDurations:GetAuraDurationByUnit(frame.unit, spellId, caster, debuffName)
+						if duration == 0 and durationNew then
+							duration = durationNew
+							expirationTime = expirationTimeNew
+						end
 					end
-					
 					-- Handle cooldowns
 					if duration > 0 then
 						aura.cooldown:Show();

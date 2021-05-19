@@ -39,6 +39,23 @@
 			<EdgeSize val="16"/>
 			<Color r="0" g="0" b="0" a="0.75"/>
 		</Backdrop>
+		<Scripts>
+			<OnLoad>
+				if BackdropTemplateMixin then
+					Mixin(self, BackdropTemplateMixin)
+				end
+				self:SetBackdrop({
+					bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+					edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+					tile = true,
+					tileEdge = true,
+					tileSize = 16,
+					edgeSize = 16,
+					insets = { left = 5, right = 5, top = 5, bottom = 5 },
+				})
+				self:SetBackdropColor(0, 0, 0, 0.75)
+			</OnLoad>
+		</Scripts>
 	</Button>
 	
 	<StatusBar name="Nurfed_Unit_hp" virtual="true">
@@ -256,6 +273,23 @@
 				<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5"/>
 			</StatusBar>
 		</Frames>
+		<Scripts>
+			<OnLoad>
+				if BackdropTemplateMixin then
+					Mixin(self, BackdropTemplateMixin)
+				end
+				self:SetBackdrop({
+					bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+					edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+					tile = true,
+					tileEdge = true,
+					tileSize = 12,
+					edgeSize = 10,
+					insets = { left = 2, right = 2, top = 2, bottom = 2 },
+				})
+				self:SetBackdropColor(0, 0, 0, 0)
+			</OnLoad>
+		</Scripts>
 	</Frame>
 
 	<PlayerModel name="Nurfed_Unit_model" parentKey="model" virtual="true">
@@ -312,6 +346,23 @@
 				<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5"/>
 			</StatusBar>
 		</Frames>
+		<Scripts>
+			<OnLoad>
+				if BackdropTemplateMixin then
+					Mixin(self, BackdropTemplateMixin)
+				end
+				self:SetBackdrop({
+					bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+					edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+					tile = true,
+					tileEdge = true,
+					tileSize = 16,
+					edgeSize = 8,
+					insets = { left = 2, right = 2, top = 2, bottom = 2 },
+				})
+				self:SetBackdropColor(0, 0, 0, 0.75)
+			</OnLoad>
+		</Scripts>
 	</Button>
 
 	<Frame name="Nurfed_Unit_Overlay" frameStrata="MEDIUM" movable="true" enableMouse="true" frameLevel="10" hidden="true" virtual="true">
@@ -338,6 +389,21 @@
 		</Layers>
 		<Scripts>
 			<OnLoad>
+				if BackdropTemplateMixin then
+					Mixin(self, BackdropTemplateMixin)
+				end
+				self:SetBackdrop({
+					bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+					edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+					tile = true,
+					tileEdge = true,
+					tileSize = 16,
+					edgeSize = 16,
+					insets = { left = 5, right = 4, top = 4, bottom = 5 },
+				})
+				self:SetBackdropColor(0, 1, 0, 0.5)
+				self:SetBackdropBorderColor(0.5, 0.5, 0, 0)
+				
 				self.text:SetText(self:GetParent():GetName())
 				self:RegisterForDrag("LeftButton")
 			</OnLoad>

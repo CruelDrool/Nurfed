@@ -247,13 +247,14 @@ function addon:PLAYER_ENTERING_WORLD()
 		UnregisterUnitWatch(bossframe)
 		bossframe:Hide()
 	end
-	
-	-- UnregisterUnitWatch(FocusFrame)
-	-- FocusFrame:UnregisterAllEvents()
-	-- FocusFrame:SetScript("OnEvent", nil)
-	-- FocusFrame:Hide()
-	-- function FocusFrame_Update() end
-	-- function FocusFrame_OnEvent() end
+	if WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC then
+		UnregisterUnitWatch(FocusFrame)
+		FocusFrame:UnregisterAllEvents()
+		FocusFrame:SetScript("OnEvent", nil)
+		FocusFrame:Hide()
+		function FocusFrame_Update() end
+		function FocusFrame_OnEvent() end
+	end
 	
 	CastingBarFrame:UnregisterAllEvents()
 	CastingBarFrame:SetScript("OnLoad", nil)
