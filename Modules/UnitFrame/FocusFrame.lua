@@ -1,4 +1,4 @@
-if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then return end
+-- if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then return end
 local addonName = ...
 local moduleName = "FocusFrame"
 local displayName = moduleName
