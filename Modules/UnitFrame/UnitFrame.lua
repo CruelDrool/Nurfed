@@ -359,6 +359,13 @@ local Colour_Gradients = {
 	},
 }
 
+if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
+	RAID_CLASS_COLORS["SHAMAN"].r = 0
+	RAID_CLASS_COLORS["SHAMAN"].g = 0.44
+	RAID_CLASS_COLORS["SHAMAN"].b = 0.87
+	RAID_CLASS_COLORS["SHAMAN"].colorStr = "ff0070de"
+end
+
 --/run for i=1,GetNumBindings() do local a, b, c = GetBinding(i);if string.find(a, "^TARGET") then print(a, c) end end
 local keyBindingsMap = {
 	player = "TARGETSELF",
@@ -418,6 +425,12 @@ local function RaidInfo(unit)
 		end
 	end
 	return group, role
+end
+
+local UnitEffectiveLevel = _G.UnitEffectiveLevel
+
+if not UnitEffectiveLevel then
+	UnitEffectiveLevel = _G.UnitLevel
 end
 
 function module:Replace(unit, textFormat)
@@ -507,8 +520,8 @@ function module:Replace(unit, textFormat)
 			level = BOSS
 			r, g, b = 1, 0, 0
 		end
-		
-		if UnitIsWildBattlePet(unit) or UnitIsBattlePetCompanion(unit) then
+
+		if UnitIsWildBattlePet and ( UnitIsWildBattlePet(unit) or UnitIsBattlePetCompanion(unit) ) then
 			level = UnitBattlePetLevel(unit)
 			local highestLevelPet = 1;
 			local petGUID
@@ -528,7 +541,6 @@ function module:Replace(unit, textFormat)
 			end
 			r, g, b =  GetRelativeDifficultyColor(highestLevelPet, level)
 		end
-		
 		level = addon:rgbhex(r,g,b)..level.."|r"
 		out = out:gsub("$level", level)
 	end
@@ -549,7 +561,7 @@ function module:Replace(unit, textFormat)
 				class = "NPC"
 			elseif UnitCreatureFamily(unit) then
 				class = UnitCreatureFamily(unit)
-			elseif UnitIsWildBattlePet(unit) or UnitIsBattlePetCompanion(unit) then
+			elseif UnitIsWildBattlePet and ( UnitIsWildBattlePet(unit) or UnitIsBattlePetCompanion(unit) ) then
 				local petType = UnitBattlePetType(unit);
 				class = _G["BATTLE_PET_NAME_"..petType].." "..PET
 			elseif UnitCreatureType(unit) then
@@ -687,7 +699,7 @@ end
 function module:UpdatePartyLeader(frame)
 	if UnitIsGroupLeader(frame.unit) then
 		frame.assistant:Hide()
-		if HasLFGRestrictions() then
+		if HasLFGRestrictions and HasLFGRestrictions() then
 			frame.guide:Show()
 			frame.leader:Hide()
 		else
@@ -706,7 +718,7 @@ function module:UpdatePartyLeader(frame)
 end
 
 function module:UpdateRoles(frame)
-    local LFGRole = UnitGroupRolesAssigned(frame.unit);
+    local LFGRole = UnitGroupRolesAssigned and UnitGroupRolesAssigned(frame.unit) or "NONE"
     local LFGicon = frame.LFGRole
 
     if ( LFGRole == "TANK" or LFGRole == "HEALER" or LFGRole == "DAMAGER") then
@@ -1025,16 +1037,16 @@ local function HealPredictionBar_Update(frame)
     local _, maxHealth = frame:GetMinMaxValues()
 	
 	-- Returns the incoming healing from Player/oneself.
-	local myIncomingHeal = UnitGetIncomingHeals(unit, "player") or 0
+	local myIncomingHeal = UnitGetIncomingHeals and UnitGetIncomingHeals(unit, "player") or 0
 	
 	-- Returns the incoming healing from all sources (including Player/oneself).
-	local allIncomingHeal = UnitGetIncomingHeals(unit) or 0
+	local allIncomingHeal = UnitGetIncomingHeals and UnitGetIncomingHeals(unit) or 0
 	
 	-- Returns the total amount of healing the unit can absorb without gaining health.
-	local healAbsorb = UnitGetTotalHealAbsorbs(unit) or 0
+	local healAbsorb = UnitGetTotalHealAbsorbs and  UnitGetTotalHealAbsorbs(unit) or 0
 	
 	-- Returns the total amount of damage the unit can absorb before losing health.
-	local totalAbsorb = UnitGetTotalAbsorbs(unit) or 0
+	local totalAbsorb = UnitGetTotalAbsorbs and UnitGetTotalAbsorbs(unit) or 0
 	
 	-- We don't fill outside the health bar with healAbsorbs.  Instead, an overHealAbsorbGlow is shown.
 	if ( health < healAbsorb ) then
@@ -1408,6 +1420,24 @@ CASTBAR functions
 
 ]]
 
+local LibCC
+local UnitCastingInfo
+local UnitChannelInfo
+
+if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
+	LibCC = LibStub("LibClassicCasterino", true)
+	UnitCastingInfo = function(unit)
+		return LibCC:UnitCastingInfo(unit)
+	end
+
+	UnitChannelInfo = function(unit)
+		return LibCC:UnitChannelInfo(unit)
+	end
+else
+	UnitCastingInfo = _G.UnitCastingInfo
+	UnitChannelInfo = _G.UnitChannelInfo
+end
+
 local function CastBar_Text(text, statusbar, short, textFormat)
 	local orient = statusbar:GetOrientation()
 	local out = text
@@ -1461,7 +1491,12 @@ local function CastBar_OnEvent(frame, event, unit,...)
 		-- frame:Clear() will be called everytime the player changes target. Hmmmm...
 		frame:Clear()
 		if event == "UNIT_SPELLCAST_START" then
-			name, _, texture, startTime, endTime, _, castID, notInterruptible = UnitCastingInfo(unit)
+			if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
+				name, _, texture, startTime, endTime, _, castID, notInterruptible = UnitCastingInfo(unit)
+			else
+				name, _, texture, startTime, endTime, _, castID = UnitCastingInfo(unit)
+			end
+
 			if not endTime then frame:Hide(); frame:Clear(); return end
 			frame.castID = castID
 			frame.startTime = GetTime() - (startTime / 1000)
@@ -1472,7 +1507,11 @@ local function CastBar_OnEvent(frame, event, unit,...)
 			frame.channeling = false
 			frame.casting = true
 		elseif event == "UNIT_SPELLCAST_CHANNEL_START" then
-			name, _, texture, startTime, endTime, _, notInterruptible = UnitChannelInfo(unit)
+			if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
+				name, _, texture, startTime, endTime, _, notInterruptible = UnitChannelInfo(unit)
+			else
+				name, _, texture, startTime, endTime = UnitChannelInfo(unit)
+			end
 			if not endTime then frame:Hide(); frame:Clear(); return end
 			frame.startTime = (endTime / 1000) - GetTime()
 			-- frame.maxValue = (endTime - startTime) / 1000
@@ -1486,6 +1525,7 @@ local function CastBar_OnEvent(frame, event, unit,...)
 			-- r, g, b = 1.0, 0.0, 0.0
 			r, g, b = CastingBarFrame.nonInterruptibleColor:GetRGB()
 		end
+
 		frame.statusbar:SetStatusBarColor(r, g, b)
 		frame.maxValue = (endTime - startTime) / 1000
 		frame.statusbar:SetMinMaxValues(0,frame.maxValue)
@@ -1646,20 +1686,36 @@ function module:CastBar_OnLoad(frame, unit)
 
 	frame:RegisterEvent("PLAYER_ENTERING_WORLD")	
 	frame:RegisterEvent("GROUP_ROSTER_UPDATE")
-	frame:RegisterEvent("PLAYER_FOCUS_CHANGED")
 	frame:RegisterEvent("PLAYER_TARGET_CHANGED")
 	
-	frame:RegisterEvent("UNIT_SPELLCAST_START")
-	frame:RegisterEvent("UNIT_SPELLCAST_STOP")
-	frame:RegisterEvent("UNIT_SPELLCAST_DELAYED")
-	frame:RegisterEvent("UNIT_SPELLCAST_FAILED")
-	frame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
-	frame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTIBLE")
-	frame:RegisterEvent("UNIT_SPELLCAST_NOT_INTERRUPTIBLE")
-	
-	frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
-	frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_UPDATE")
-	frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
+	if LibCC then
+		local CastbarEventHandler = function(event, ...)
+			CastBar_OnEvent(frame, event, ...)
+		end
+		LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_START", CastbarEventHandler)
+		LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_STOP", CastbarEventHandler)
+		LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_DELAYED", CastbarEventHandler) -- only for player
+		LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_FAILED", CastbarEventHandler)
+		LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_INTERRUPTED", CastbarEventHandler)
+		LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_CHANNEL_START", CastbarEventHandler)
+		LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_CHANNEL_UPDATE", CastbarEventHandler) -- only for player
+		LibCC.RegisterCallback(frame,"UNIT_SPELLCAST_CHANNEL_STOP", CastbarEventHandler)
+	else
+		frame:RegisterEvent("PLAYER_FOCUS_CHANGED")
+		frame:RegisterEvent("UNIT_SPELLCAST_START")
+		frame:RegisterEvent("UNIT_SPELLCAST_STOP")
+		frame:RegisterEvent("UNIT_SPELLCAST_DELAYED")
+		frame:RegisterEvent("UNIT_SPELLCAST_FAILED")
+		frame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
+		frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
+		frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_UPDATE")
+		frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
+		
+		if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
+			frame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTIBLE")
+			frame:RegisterEvent("UNIT_SPELLCAST_NOT_INTERRUPTIBLE")
+		end
+	end
 
 	frame:SetScript("OnEvent", CastBar_OnEvent)
 	frame:SetScript("OnUpdate", CastBar_OnUpdate)
@@ -1710,6 +1766,32 @@ end
 THREATBAR functions
 
 ]]
+
+local GetThreatStatusColor = _G.GetThreatStatusColor
+
+if not GetThreatStatusColor then
+	GetThreatStatusColor = function(status)
+		local r, g, b
+		if status == 0 then
+			r = 0.69
+			g = 0.69
+			b = 0.69
+		elseif status == 1 then
+			r = 1
+			g = 1
+			b = 0.47
+		elseif status == 2 then
+			r = 1
+			g = 0.6
+			b = 0
+		elseif status == 3 then
+			r = 1
+			g = 0
+			b = 0
+		end
+		return r, g, b
+	end
+end
 
 local function ThreatBar_Text(frame)
 	local text = frame:GetAttribute("textFormat")
@@ -1873,6 +1955,13 @@ Buffs, debuffs and stuffs.
 
 ]]
 
+local LibClassicDurations
+
+if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
+	LibClassicDurations = LibStub("LibClassicDurations")
+	LibClassicDurations:Register(addon)
+end
+
 local PLAYER_UNITS = {
 	player = true,
 	vehicle = true,
@@ -1928,6 +2017,13 @@ function module:UpdateAuras(frame)
 				aura.count:Hide()
 			end
 			
+			if LibClassicDurations then
+				local durationNew, expirationTimeNew = LibClassicDurations:GetAuraDurationByUnit(frame.unit, spellId, caster, buffName)
+				if duration == 0 and durationNew then
+					duration = durationNew
+					expirationTime = expirationTimeNew
+				end
+			end
 			-- Handle cooldowns
 			if ( duration > 0 ) then
 				aura.cooldown:Show()
@@ -1982,7 +2078,7 @@ function module:UpdateAuras(frame)
 	
 	while frameNum <= maxDebuffs do
 		-- local debuffName = UnitDebuff(frame.unit, index, filter)
-		local debuffName, icon, count, debuffType, duration, expirationTime, caster, _, _, _, _, _, casterIsPlayer, nameplateShowAll = UnitDebuff(frame.unit, index, "INCLUDE_NAME_PLATE_ONLY");
+		local debuffName, icon, count, debuffType, duration, expirationTime, caster, _, _, spellId, _, _, casterIsPlayer, nameplateShowAll = UnitDebuff(frame.unit, index, "INCLUDE_NAME_PLATE_ONLY");
 		if debuffName then
 			if ShouldShowDebuffs(frame.unit, caster, nameplateShowAll, casterIsPlayer) then
 				-- name, rank, icon, count, debuffType, duration, expirationTime, caster = UnitDebuff(frame.unit, index, filter)
@@ -2007,7 +2103,14 @@ function module:UpdateAuras(frame)
 					else
 						aura.count:Hide()
 					end
-
+					
+					if LibClassicDurations then
+						local durationNew, expirationTimeNew = LibClassicDurations:GetAuraDurationByUnit(frame.unit, spellId, caster, debuffName)
+						if duration == 0 and durationNew then
+							duration = durationNew
+							expirationTime = expirationTimeNew
+						end
+					end
 					-- Handle cooldowns
 					if duration > 0 then
 						aura.cooldown:Show();

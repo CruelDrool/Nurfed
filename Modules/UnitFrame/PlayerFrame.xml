@@ -41,7 +41,7 @@
 				</Attributes>
 			</StatusBar>
 
-			<StatusBar parentKey="azerite" frameStrata="LOW">
+			<StatusBar parentKey="azerite" frameStrata="LOW" hidden="true">
 				<Size x="170" y="8"/>
 				<Anchors>
 					<Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-5" y="14" />

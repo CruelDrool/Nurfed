@@ -1,4 +1,4 @@
-## Interface: 90200
+## Interface: 11402
 ## Version: 1.0.0
 ## Title: Nurfed UI
 ## Notes: Inspired by Tivoli and Apoco.
@@ -24,12 +24,14 @@ Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 Libs\LibWindow-1.1\LibWindow-1.1.lua
 Libs\LibTranslit-1.0\LibTranslit-1.0.lua
 
+Libs\LibClassicCasterino\LibClassicCasterino.lua
+Libs\LibClassicDurations\LibClassicDurations.xml
+
 Nurfed.lua
 Modules\UnitFrame\UnitFrame.lua
 Modules\UnitFrame\Templates.xml
 Modules\UnitFrame\PlayerFrame.xml
 Modules\UnitFrame\TargetFrame.xml
-Modules\UnitFrame\FocusFrame.xml
 Modules\UnitFrame\PartyFrames.xml
 Modules\UnitFrame\PetFrame.xml
 Modules\UnitFrame\BossFrames.xml

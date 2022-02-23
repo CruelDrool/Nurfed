@@ -67,7 +67,6 @@ local events = {
 	"GROUP_ROSTER_UPDATE",
 	"RAID_TARGET_UPDATE",
 	"UNIT_AURA",
-	"UNIT_CTR_OPTIONS",
 	"UNIT_LEVEL",
 	"UNIT_OTHER_PARTY_CHANGED",
 	"UNIT_FACTION",
@@ -83,7 +82,6 @@ local events = {
 	"DISPLAY_SIZE_CHANGED",
 	"UPDATE_BINDINGS",
 	"CVAR_UPDATE",
-	"INCOMING_SUMMON_CHANGED",
 }
 
 local partyFrames = {}
@@ -99,7 +97,7 @@ local function UpdatePhasing(frame)
 		icon.border:Show()
 		icon.tooltip = PARTY_IN_PUBLIC_GROUP_MESSAGE
 		icon:Show()
-	elseif C_IncomingSummon.HasIncomingSummon(unit) then
+	elseif C_IncomingSummon and C_IncomingSummon.HasIncomingSummon(unit) then
 		local status = C_IncomingSummon.IncomingSummonStatus(unit)
 		if status == Enum.SummonStatus.Pending then
 			icon.texture:SetAtlas("Raid-Icon-SummonPending")
@@ -121,7 +119,7 @@ local function UpdatePhasing(frame)
 			icon:Show()
 		end
 	else
-		local phaseReason = UnitIsConnected(unit) and UnitPhaseReason(unit) or nil;
+		local phaseReason = UnitIsConnected(unit) and ( UnitPhaseReason and UnitPhaseReason(unit) ) or nil;
 		if phaseReason then
 			frame:SetAlpha(0.6);
 			icon.texture:SetTexture("Interface\\TargetingFrame\\UI-PhasingIcon");
@@ -292,6 +290,10 @@ function module:OnInitialize()
 end
 
 function module:OnEnable()
+	if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
+		table.insert(events, "INCOMING_SUMMON_CHANGED")
+		table.insert(events, "UNIT_CTR_OPTIONS")
+	end
 	if table.getn(partyFrames) == 0 then
 		for i=1,4 do
 			local frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, _G["PartyMemberFrame"..i.."DropDown"], true, i)

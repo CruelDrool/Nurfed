@@ -251,7 +251,7 @@ local function XPbar_Update(frame)
 	local currValue, maxValue, rest, r, g, b
 	local text, perc = ""
 	local name, standingID, barMin, barMax, barValue, factionID = GetWatchedFactionInfo()
-	local friendshipID = GetFriendshipReputation(factionID)
+	local friendshipID = GetFriendshipReputation and GetFriendshipReputation(factionID) or nil
 
 	-- text = frame:GetAttribute("textFormat")
 	-- perc = frame:GetAttribute("percFormat")
@@ -293,7 +293,7 @@ local function XPbar_Update(frame)
 		rest = name
 	else
 		-- -- GetMaxPlayerLevel()
-		if UnitLevel(unit) == MAX_PLAYER_LEVEL or IsXPUserDisabled() then
+		if UnitLevel(unit) == MAX_PLAYER_LEVEL or (IsXPUserDisabled and IsXPUserDisabled()) then
 			frame:Hide()
 			return
 		end
@@ -360,7 +360,14 @@ function module:OnEnable()
 	if not self.frame then
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PlayerFrameDropDown)
 		if self.frame.xp then XPbar_OnLoad(self.frame.xp, unit) end
-		if self.frame.azerite then AzeriteBar_OnLoad(self.frame.azerite) end
+		if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE and self.frame.azerite then 
+			AzeriteBar_OnLoad(self.frame.azerite)
+		else
+			self.frame.health:SetPoint("BOTTOMRIGHT", self.frame, "BOTTOMRIGHT", -5, 25)
+			self.frame.powerBar:SetPoint("BOTTOMRIGHT", self.frame, "BOTTOMRIGHT", -5, 14)
+			self.frame:SetHeight(59)
+			self.frame.overlay:SetHeight(90)
+		end
 	end
 	
 end

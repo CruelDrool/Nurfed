@@ -57,66 +57,187 @@ local function GetMenuButtonText(text, binding, textFormat, abbr)
 end
 
 -- Level 1
--- This array contains the buttons for the micro menu.
-local mainMenu = {
-	"TITLE",
-	"BLANK",
-	"SOCIAL_MENU", -- Submenu
-	"SEPARATOR",
-	"CHARACTER",
-	"SPELLBOOK_ABILITIES_MENU", -- Submenu
-	"TALENTS",
-	"ACHIEVEMENTS",
-	"QUESTLOG",
-	"GUILD",
-	"DUNGEONS",
-	"COLLECTIONS",
-	"ADVENTURE_JOURNAL",
-	"BLIZZARD_STORE",
-	"GAME_MENU", -- Submenu
-	"SEPARATOR",
-	"CANCEL"
-}
+-- This table will be populated with the buttons for the micro menu.
+local mainMenu
 
 -- Level 2 and up
-local subMenus = {
-	GAME_MENU = { 
-		"HELP",
-		"BLIZZARD_STORE",
-		"WHATS_NEW",
+local subMenus
+
+if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
+	 mainMenu = {
+		"TITLE",
+		"BLANK",
+		"SOCIAL_MENU", -- Submenu
 		"SEPARATOR",
-		"SYSTEMOPTIONS",
-		"UIOPTIONS",
-		"KEY_BINDINGS",
-		"MACROS",
-		"ADDONS",
-		-- "SEPARATOR",
-		-- "LOGOUT",
-		-- "EXIT_GAME",
-	},
-	SOCIAL_MENU = { 
-		"FRIENDS_MENU",
-		"WHO",
-		"RAID",
-		"QUICK_JOIN",
-	},
-	FRIENDS_MENU = {
-		"FRIENDS_LIST",
-		"IGNORE_LIST",
-		"RECRUIT_FRIEND",
-	},
-	SPELLBOOK_ABILITIES_MENU = {
-		"SPELLBOOK",
-		"PROFESSIONSBOOK",
-		"PETBOOK",
-	},
-}
+		"CHARACTER",
+		"SPELLBOOK_ABILITIES_MENU", -- Submenu
+		"TALENTS",
+		"ACHIEVEMENTS",
+		"QUESTLOG",
+		"GUILD",
+		"DUNGEONS",
+		"COLLECTIONS",
+		"ADVENTURE_JOURNAL",
+		"BLIZZARD_STORE",
+		"GAME_MENU", -- Submenu
+		"SEPARATOR",
+		"CANCEL"
+	}
+
+	subMenus = {
+		GAME_MENU = { 
+			"SUPPORT",
+			"BLIZZARD_STORE",
+			"WHATS_NEW",
+			"SEPARATOR",
+			"SYSTEMOPTIONS",
+			"UIOPTIONS",
+			"KEY_BINDINGS",
+			"MACROS",
+			"ADDONS",
+			-- "SEPARATOR",
+			-- "LOGOUT",
+			-- "EXIT_GAME",
+		},
+		SOCIAL_MENU = { 
+			"FRIENDS_MENU", -- Submenu
+			"WHO",
+			"RAID",
+			"QUICK_JOIN",
+		},
+		FRIENDS_MENU = {
+			"FRIENDS_LIST",
+			"IGNORE_LIST",
+			"RECRUIT_FRIEND",
+		},
+		SPELLBOOK_ABILITIES_MENU = {
+			"SPELLBOOK",
+			"PROFESSIONSBOOK",
+			"PETBOOK",
+		},
+	}
+elseif WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
+	mainMenu = {
+		"TITLE",
+		"BLANK",
+		"CHARACTER",
+		"SPELLBOOK_ABILITIES_MENU", -- Submenu
+		"TALENTS",
+		"QUESTLOG",
+		"SOCIAL_MENU", -- Submenu
+		"MAP",
+		"GAME_MENU", -- Submenu
+		"HELP_REQUEST",
+		"SEPARATOR",
+		"CANCEL"
+	}
+	subMenus = {
+		GAME_MENU = { 
+			"HELP",
+			"SEPARATOR",
+			"SYSTEMOPTIONS",
+			"UIOPTIONS",
+			"KEY_BINDINGS",
+			"MACROS",
+			"ADDONS",
+			-- "SEPARATOR",
+			-- "LOGOUT",
+			-- "EXIT_GAME",
+		},
+		SOCIAL_MENU = { 
+			"FRIENDS_MENU", -- Submenu
+			"WHO",
+			"GUILD",
+			"RAID",
+		},
+		FRIENDS_MENU = {
+			"FRIENDS_LIST",
+			"IGNORE_LIST",
+		},
+		SPELLBOOK_ABILITIES_MENU = {
+			"SPELLBOOK",
+			"PETBOOK",
+		},
+	}
+elseif WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC then
+	mainMenu = {
+		"TITLE",
+		"BLANK",
+		"CHARACTER",
+		"SPELLBOOK_ABILITIES_MENU", -- Submenu
+		"TALENTS",
+		"QUESTLOG",
+		"SOCIAL_MENU", -- Submenu
+		"DUNGEONS",
+		"GAME_MENU", -- Submenu
+		"HELP_REQUEST",
+		"SEPARATOR",
+		"CANCEL"
+	}
+	subMenus = {
+		GAME_MENU = { 
+			"SUPPORT",
+			"SEPARATOR",
+			"SYSTEMOPTIONS",
+			"UIOPTIONS",
+			"KEY_BINDINGS",
+			"MACROS",
+			"ADDONS",
+			-- "SEPARATOR",
+			-- "LOGOUT",
+			-- "EXIT_GAME",
+		},
+		SOCIAL_MENU = { 
+			"FRIENDS_MENU", -- Submenu
+			"WHO",
+			"GUILD",
+			"RAID",
+		},
+		FRIENDS_MENU = {
+			"FRIENDS_LIST",
+			"IGNORE_LIST",
+		},
+		SPELLBOOK_ABILITIES_MENU = {
+			"SPELLBOOK",
+			"PETBOOK",
+		},
+	}
+end
 
 -- /run for i=1,GetNumBindings() do local a, b, c = GetBinding(i);if string.find(a, "^TOGGLE") then print(a, c) end end
 
 -- This functions returns an array the contains the available buttons that can be used in main menu itself and submenus.
 local function ButtonsArray()
-	
+	local minLevelSpec, minLevelLFD, talentsText, toggleRaidTabFunc, toggleGuildFrameFunc, toggleLFDFunc, LFDtext, LFDKeybind
+	if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
+		minLevelSpec = 10
+		minLevelLFD = 10
+		talentsText = TALENTS_BUTTON
+		toggleRaidTabFunc = function() ToggleFriendsFrame(3) end
+		toggleGuildFrameFunc = function() GuildMicroButton:Click() end
+		toggleLFDFunc = function() LFDMicroButton:Click() end
+		LFDtext = DUNGEONS_BUTTON
+		LFDKeybind = "TOGGLEGROUPFINDER"
+	elseif WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
+		minLevelSpec = SHOW_SPEC_LEVEL
+		minLevelLFD = SHOW_LFD_LEVEL
+		talentsText = TALENTS
+		toggleRaidTabFunc = function() ToggleFriendsFrame(4) end
+		toggleGuildFrameFunc = function() ToggleFriendsFrame(3) end
+		toggleLFDFunc = function() end
+		LFDtext = ""
+		LFDKeybind = ""
+	elseif WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC then
+		minLevelSpec = SHOW_SPEC_LEVEL
+		minLevelLFD = 1
+		talentsText = TALENTS
+		toggleRaidTabFunc = function() ToggleFriendsFrame(4) end
+		toggleGuildFrameFunc = function() ToggleFriendsFrame(3) end
+		toggleLFDFunc = function() LFGMicroButton:Click() end
+		LFDtext = string.format("%s/%s", LFG_TITLE, LFM_TITLE)
+		LFDKeybind = "TOGGLELFGPARENT"
+	end
+
 	local buttons = {
 		SEPARATOR = { dist = 0, isTitle = true, isUninteractable = true, iconOnly = true, icon = "Interface\\Common\\UI-TooltipDivider-Transparent", tCoordLeft = 0, tCoordRight = 1, tCoordTop = 0, tCoordBottom = 1, tSizeX = 0, tFitDropDownSizeX = true, tSizeY = 8, },
 		BLANK = { isTitle = 1, notClickable = 1},
@@ -129,11 +250,11 @@ local function ButtonsArray()
 		FRIENDS_LIST = { text = FRIENDS_LIST, func = function() FriendsTabHeaderTab1:Click(); if FriendsFrame:IsShown() then FriendsFrameTab1:Click() else ToggleFriendsFrame(1) end end, },
 		IGNORE_LIST = {text = IGNORE_LIST, func = function() FriendsTabHeaderTab2:Click(); if FriendsFrame:IsShown() then FriendsFrameTab1:Click() else ToggleFriendsFrame(1) end end, },
 		RECRUIT_FRIEND = {text = RECRUIT_A_FRIEND, func = function() FriendsTabHeaderTab3:Click(); if FriendsFrame:IsShown() then FriendsFrameTab1:Click() else ToggleFriendsFrame(1) end end, },
-		
+
 		WHO = { text = GetMenuButtonText(WHO, "TOGGLEWHOTAB"), func = function() ToggleFriendsFrame(2) end, },
-		RAID = { text = GetMenuButtonText(RAID, "TOGGLERAIDTAB"), func = function() ToggleFriendsFrame(3) end, },
+		RAID = { text = GetMenuButtonText(RAID, "TOGGLERAIDTAB"), func = toggleRaidTabFunc, },
 		QUICK_JOIN = { text = GetMenuButtonText(QUICK_JOIN, "TOGGLEQUICKJOINTAB"), func = function() ToggleFriendsFrame(4) end, },
-		
+
 		CHARACTER = { text = GetMenuButtonText(CHARACTER_BUTTON, "TOGGLECHARACTER0"), func = function() ToggleCharacter("PaperDollFrame"); end, },
 		
 		-- SPELLBOOK_ABILITIES = { text = GetMenuButtonText(SPELLBOOK_ABILITIES_BUTTON, "TOGGLESPELLBOOK"), func = function() SpellbookMicroButton:Click() end, },
@@ -142,11 +263,11 @@ local function ButtonsArray()
 		PROFESSIONSBOOK = { text = GetMenuButtonText(TRADE_SKILLS, "TOGGLEPROFESSIONBOOK"), func = function() ToggleSpellBook(BOOKTYPE_PROFESSION) end, },
 		PETBOOK = { text = GetMenuButtonText(PET, "TOGGLEPETBOOK"), func = function() ToggleSpellBook(BOOKTYPE_PET ) end, disabled = true, },
 		
-		TALENTS = { text = GetMenuButtonText(TALENTS_BUTTON, "TOGGLETALENTS"), func = function() TalentMicroButton:Click() end, },
+		TALENTS = { text = GetMenuButtonText(talentsText, "TOGGLETALENTS"), func = function() TalentMicroButton:Click() end, },
 		ACHIEVEMENTS = { text = GetMenuButtonText(ACHIEVEMENT_BUTTON, "TOGGLEACHIEVEMENT"), func = function() ToggleAchievementFrame() end, },
 		QUESTLOG = { text = GetMenuButtonText(QUESTLOG_BUTTON, "TOGGLEQUESTLOG"), func = function() ToggleQuestLog() end, },
-		GUILD = { func = function() GuildMicroButton:Click() end, },
-		DUNGEONS = { text = GetMenuButtonText(DUNGEONS_BUTTON, "TOGGLEGROUPFINDER"), func = function() LFDMicroButton:Click() end, },
+		GUILD = { func = toggleGuildFrameFunc, },
+		DUNGEONS = { text = GetMenuButtonText(LFDtext, LFDKeybind), func = toggleLFDFunc, },
 		COLLECTIONS = { text = GetMenuButtonText(COLLECTIONS, "TOGGLECOLLECTIONS"), func = function() CollectionsMicroButton:Click() end, },
 		ADVENTURE_JOURNAL = { text = GetMenuButtonText(ADVENTURE_JOURNAL, "TOGGLEENCOUNTERJOURNAL"), func = function() EJMicroButton:Click() end },
 		BLIZZARD_STORE = { text = BLIZZARD_STORE, func = function() ToggleStoreUI() end, },
@@ -160,7 +281,9 @@ local function ButtonsArray()
 				ShowUIPanel(GameMenuFrame)
 			end
 		end, nested = 1, },
-		HELP = { text = GAMEMENU_SUPPORT, func = function() ToggleHelpFrame() end, },
+		SUPPORT = { text = GAMEMENU_SUPPORT, func = function() ToggleHelpFrame() end, },
+		HELP = { text = GAMEMENU_HELP, func = function() ToggleHelpFrame() end, },
+		HELP_REQUEST = { text = HELP_BUTTON, func = function() ToggleHelpFrame() end, },
 		WHATS_NEW = { text = GAMEMENU_NEW_BUTTON, func = function() GameMenuButtonWhatsNew:Click() end, },
 		SYSTEMOPTIONS = { text = SYSTEMOPTIONS_MENU, func = function() GameMenuButtonOptions:Click() end, },
 		UIOPTIONS = { text = UIOPTIONS_MENU, func = function() GameMenuButtonUIOptions:Click() end, },
@@ -168,48 +291,62 @@ local function ButtonsArray()
 		MACROS = { text = MACROS, func = function() ShowMacroFrame() end, },
 		ADDONS = { text = ADDONS, func = function() GameMenuButtonAddons:Click() end, },
 		
+		MAP = { text = GetMenuButtonText(WORLDMAP_BUTTON, "TOGGLEWORLDMAP"), func = function() ToggleWorldMap() end, },
+		
 		-- The functions for the buttons below are now restricted by Blizzard. The buttons are now disabled.
 		LOGOUT = { text = LOGOUT, func = function() Logout() end, disabled = true, },
 		EXIT_GAME = { text = EXIT_GAME, func = function() Quit() end, disabled = true, },
 	}
 	
 	local level = UnitLevel("player")
-	local minLevel = 10
-	if level < minLevel then
+
+	if level < minLevelSpec then
 		buttons["TALENTS"]["disabled"] = true
-		buttons["TALENTS"]["text"] = GetMenuButtonText(TALENTS_BUTTON.." ("..string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, 10)..")", "TOGGLETALENTS")
+		buttons["TALENTS"]["text"] = GetMenuButtonText(string.format('%s (%s)', talentsText, string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, minLevelSpec)), "TOGGLETALENTS")
 	end
 	
 	if IsTrialAccount() then
 		buttons["BLIZZARD_STORE"]["disabled"] = true
-		buttons["BLIZZARD_STORE"]["text"] = BLIZZARD_STORE.." ("..ERR_RESTRICTED_ACCOUNT_TRIAL..")"
+		buttons["BLIZZARD_STORE"]["text"] = string.format('%s (%s)', BLIZZARD_STORE, ERR_RESTRICTED_ACCOUNT_TRIAL)
 	end
 	
 	if UnitFactionGroup("player") ~= "Neutral" then
+		local disabled, text = false, ""
 		if IsTrialAccount() then
-			buttons["GUILD"]["disabled"] = true
-			buttons["GUILD"]["text"] = GetMenuButtonText(LOOKINGFORGUILD.." ("..ERR_RESTRICTED_ACCOUNT_TRIAL..")", "TOGGLEGUILDTAB")
+			disabled = true
+			text = string.format('%s (%s)', LOOKINGFORGUILD, ERR_RESTRICTED_ACCOUNT_TRIAL)
 		elseif IsInGuild() then
-			buttons["GUILD"]["text"] = GetMenuButtonText(GUILD, "TOGGLEGUILDTAB")
+			if WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then
+				text = GUILD
+			else
+				text = GUILD_AND_COMMUNITIES
+			end
 		else
-			buttons["GUILD"]["text"] = GetMenuButtonText(LOOKINGFORGUILD, "TOGGLEGUILDTAB")
+			if WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then
+				disabled = true
+				text = GUILD
+			else
+				text = LOOKINGFORGUILD
+			end
 		end
-		
-		if level < minLevel then
+		buttons["GUILD"]["disabled"] = disabled
+		buttons["GUILD"]["text"] = GetMenuButtonText(text, "TOGGLEGUILDTAB")
+
+		if level < minLevelLFD then
 			buttons["DUNGEONS"]["disabled"] = true
-			buttons["DUNGEONS"]["text"] = GetMenuButtonText(DUNGEONS_BUTTON.." ("..string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, 10)..")", "TOGGLEGROUPFINDER")
+			buttons["DUNGEONS"]["text"] = GetMenuButtonText(string.format('%s (%s)', DUNGEONS_BUTTON, string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, minLevelLFD)), "TOGGLEGROUPFINDER")
 		end
 	else
 		buttons["GUILD"]["disabled"] = true
-		buttons["GUILD"]["text"] = GetMenuButtonText(LOOKINGFORGUILD.." ("..FEATURE_NOT_AVAILBLE_PANDAREN..")", "TOGGLEGUILDTAB")
+		buttons["GUILD"]["text"] = GetMenuButtonText(string.format('%s (%s)', LOOKINGFORGUILD, FEATURE_NOT_AVAILBLE_PANDAREN), "TOGGLEGUILDTAB")
 		
 		buttons["DUNGEONS"]["disabled"] = true
-		buttons["DUNGEONS"]["text"] = GetMenuButtonText(DUNGEONS_BUTTON.." ("..FEATURE_NOT_AVAILBLE_PANDAREN..")", "TOGGLEGROUPFINDER")		
+		buttons["DUNGEONS"]["text"] = GetMenuButtonText(string.format('%s (%s)', DUNGEONS_BUTTON, FEATURE_NOT_AVAILBLE_PANDAREN), "TOGGLEGROUPFINDER")		
 	end
 	
-	if not C_AdventureJournal.CanBeShown() then
+	if not (C_AdventureJournal and C_AdventureJournal.CanBeShown()) then
 		buttons["ADVENTURE_JOURNAL"]["disabled"] = true
-		buttons["ADVENTURE_JOURNAL"]["text"] = GetMenuButtonText(ADVENTURE_JOURNAL.." ("..FEATURE_NOT_YET_AVAILABLE ..")", "TOGGLEENCOUNTERJOURNAL")
+		buttons["ADVENTURE_JOURNAL"]["text"] = GetMenuButtonText(string.format('%s (%s)', ADVENTURE_JOURNAL, FEATURE_NOT_YET_AVAILABLE), "TOGGLEENCOUNTERJOURNAL")
 	end
 	
 	if HasPetSpells() or PetHasSpellbook() then
