@@ -3,7 +3,7 @@ local moduleName = "UnitFrames"
 local displayName = moduleName
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
 local module = addon:NewModule(moduleName)
--- module:SetDefaultModuleState(false)
+module:SetDefaultModuleState(false)
 
 local defaults = {
 	profile = {
@@ -23,26 +23,46 @@ local defaults = {
 			threat = "$cur",
 			casting = "$spell",
 		},
-		skins = {
-			keys = {
-				["Nurfed"] = "Nurfed (default)",
-				["Test"] = "Testeleste",
-			},
-			["Nurfed"] = {
-				templatePrefix = "Nurfed_Unit_",
-				glideFade = 0.35,
-				-- statusbartexture = "Interface\\AddOns\\Nurfed\\Images\\statusbar5",
-			},
-			["Test"] = {
-				glideFade = 0.1,
-			},
-		},
+		-- skins = {
+		-- 	keys = {
+		-- 		["Nurfed"] = "Nurfed (default)",
+		-- 		["Test"] = "Testeleste",
+		-- 	},
+		-- 	["Nurfed"] = {
+		-- 		templatePrefix = "Nurfed_Unit_",
+		-- 		glideFade = 0.35,
+		-- 		-- statusbartexture = "Interface\\AddOns\\Nurfed\\Images\\statusbar5",
+		-- 	},
+		-- 	["Test"] = {
+		-- 		glideFade = 0.1,
+		-- 	},
+		-- },
 		decimalpoints = 2,
 		skin = "Nurfed",
 		templatePrefix = "Nurfed_Unit_",
-		glideAnimation = true,
-		glideFade = 0.35,
-		translit = false,
+		glideAnimation = {
+			enabled = true,
+			fadeTimeout = 0.35,
+		},
+		lowHealthFlash = {
+			enabled = true,
+			warning = {
+				perc = 0.3,
+				freq = 0.7,
+			},
+			dangerous = {
+				perc = 0.2,
+				freq = 0.5,
+			},
+			critical = {
+				perc = 0.1,
+				freq = 0.3,
+			},
+		},
+		transliterate = {
+			enabled = false,
+			mark = "!",
+		},
 	}
 }
 
@@ -64,11 +84,11 @@ module.options = {
 			width = "full",
 			name = "Enabled",
 			-- desc = "",
-			get = function() return module:IsEnabled() end,
-			set = function() if module:IsEnabled() then module:Disable() else module:Enable() end end,
+			get = function() return module.db.profile.enabled end,
+			set = function(info, value) module.db.profile.enabled = value; if module:IsEnabled() then module:DisableUnitframes() else module:EnableUnitframes() end end,
 		},
 		decimalpoints = {
-			order = 3,
+			order = 7,
 			name = "Decimal points",
 			-- desc = "",
 			type = "range",
@@ -77,52 +97,246 @@ module.options = {
 			set = function(info, value) module.db.profile.decimalpoints = value end,
 			-- disabled = function() return not module.db.profile.foo end,
 		},
-		glidefade = {
+		glideanimation = {
+			order = 4,
+			type = "group",
+			width = "full",
+			name = "Glide animation",
+			guiInline = true,
+			args = {
+				enabled = {
+					order = 1,
+					type = "toggle",
+					name = "Enabled",
+					width = "full",
+					-- desc = "",
+					get = function() return module.db.profile.glideAnimation.enabled end,
+					set = function(info, value) module.db.profile.glideAnimation.enabled = value end,
+				},
+				fadetimeout = {
+					order = 2,
+					name = "Fade timeout",
+					-- desc = "",
+					type = "range",
+					min = 0.05, max = 0.95, step = 0.05,
+					get = function() local value = module.db.profile.glideAnimation.fadeTimeout; value=1-value; return value end,
+					set = function(info, value) value=1-value; module.db.profile.glideAnimation.fadeTimeout = value end,
+					-- disabled = function() return not module.db.profile.foo end,
+				},
+			},
+		},
+		lowhealthflash = {
 			order = 5,
-			name = "Glide fade timeout",
-			-- desc = "",
-			type = "range",
-			min = 0.1, max = 0.9, step = 0.05,
-			get = function() local value = module.db.profile.glideFade; value=1-value; return value end,
-			set = function(info, value) value=1-value; module.db.profile.glideFade = value end,
-			-- disabled = function() return not module.db.profile.foo end,
+			type = "group",
+			width = "full",
+			name = "Low health flash for friendly units",
+			guiInline = true,
+			args = {
+				enabled = {
+					order = 1,
+					type = "toggle",
+					name = "Enabled",
+					width = "full",
+					-- desc = "",
+					get = function() return module.db.profile.lowHealthFlash.enabled end,
+					set = function(info, value) module.db.profile.lowHealthFlash.enabled = value end,
+				},
+				warning = {
+					order = 2,
+					type = "group",
+					width = "full",
+					name = "Warning",
+					guiInline = true,
+					args = {
+						perc = {
+							order = 1,
+							name = "Percent",
+							-- desc = "",
+							type = "range",
+							isPercent = true,
+							min = 0.01, max = 1, step = 0.01,
+							get = function() return module.db.profile.lowHealthFlash.warning.perc end,
+							set = function(info, value) module.db.profile.lowHealthFlash.warning.perc = value end,
+						},
+						freq = {
+							order = 2,
+							name = "Frequency",
+							-- desc = "",
+							type = "range",
+							min = 0.1, max = 1, step = 0.1,
+							get = function() return module.db.profile.lowHealthFlash.warning.freq end,
+							set = function(info, value) module.db.profile.lowHealthFlash.warning.freq = value end,
+						},
+					},
+				},
+				dangerous = {
+					order = 3,
+					type = "group",
+					width = "full",
+					name = "Dangerous",
+					guiInline = true,
+					args = {
+						perc = {
+							order = 1,
+							name = "Percent",
+							-- desc = "",
+							type = "range",
+							isPercent = true,
+							min = 0.01, max = 1, step = 0.01,
+							get = function() return module.db.profile.lowHealthFlash.dangerous.perc end,
+							set = function(info, value) module.db.profile.lowHealthFlash.dangerous.perc = value end,
+						},
+						freq = {
+							order = 2,
+							name = "Frequency",
+							-- desc = "",
+							type = "range",
+							min = 0.1, max = 1, step = 0.1,
+							get = function() return module.db.profile.lowHealthFlash.dangerous.freq end,
+							set = function(info, value) module.db.profile.lowHealthFlash.dangerous.freq = value end,
+						},
+					},
+				},
+				critical = {
+					order = 4,
+					type = "group",
+					width = "full",
+					name = "Critical",
+					guiInline = true,
+					args = {
+						perc = {
+							order = 1,
+							name = "Percent",
+							-- desc = "",
+							type = "range",
+							isPercent = true,
+							min = 0.01, max = 1, step = 0.01,
+							get = function() return module.db.profile.lowHealthFlash.critical.perc end,
+							set = function(info, value) module.db.profile.lowHealthFlash.critical.perc = value end,
+						},
+						freq = {
+							order = 2,
+							name = "Frequency",
+							-- desc = "",
+							type = "range",
+							min = 0.1, max = 1, step = 0.1,
+							get = function() return module.db.profile.lowHealthFlash.critical.freq end,
+							set = function(info, value) module.db.profile.lowHealthFlash.critical.freq = value end,
+						},
+					},
+				},
+			},
 		},
 		translit = {
 			order = 6,
-			type = "toggle",
-			name = "Transliteration",
-			desc = "Convert cyrillic to Latin",
+			type = "group",
 			width = "full",
-			get = function() return module.db.profile.translit end,
-			set = function(info, value) module.db.profile.translit = value end,
+			name = "Transliteration",
+			guiInline = true,
+			args = {
+				intro = {
+					order = 1,
+					type = "description",
+					name = "Convert Cyrillic to Latin.",
+				},
+				enabled = {
+					order = 2,
+					type = "toggle",
+					name = "Enabled",
+					width = "full",
+					get = function() return module.db.profile.transliterate.enabled end,
+					set = function(info, value) module.db.profile.transliterate.enabled = value end,
+				},
+				mark = {
+					order = 3,
+					type = "input",
+					name = "Mark",
+					width = "half",
+					desc = "Mark words that have been transliterated.",
+					get = function() return module.db.profile.transliterate.mark end,
+					set = function(info, value) module.db.profile.transliterate.mark = value end,
+				},
+			},
+
 		},
-		skins = {
-			type = "select",
-			name = "Skins",
-			values = function() return module.db.profile.skins.keys end,
-			get = function() return module.db.profile.skin end,
-			set = function(info, value)
-				module.db.profile.skin = tostring(value)
-				for k, v in pairs(module.db.profile.skins[value]) do
-					module.db.profile[k] = v
-				end
-			end,
+		-- skins = {
+		-- 	type = "select",
+		-- 	name = "Skins",
+		-- 	values = function() return module.db.profile.skins.keys end,
+		-- 	get = function() return module.db.profile.skin end,
+		-- 	set = function(info, value)
+		-- 		module.db.profile.skin = tostring(value)
+		-- 		for k, v in pairs(module.db.profile.skins[value]) do
+		-- 			module.db.profile[k] = v
+		-- 		end
+		-- 	end,
+		-- },
+		formats = {
+			order = 3,
+			type = "group",
+			width = "full",
+			name = "Text formats",
+			guiInline = true,
+			args = {
+				name = {
+					order = 1,
+					type = "input",
+					name = "Name",
+					-- desc = "",
+					get = function() return module:GetTextFormat("name") end,
+					set = function(info, value) module.db.profile.formats.name = value;for k in pairs(module.frames) do module:UpdateInfo(_G[k]) end end,
+				},
+				infoline = {
+					order = 2,
+					type = "input",
+					name = "Infoline",
+					-- desc = "",
+					get = function() return module:GetTextFormat("infoline") end,
+					set = function(info, value) module.db.profile.formats.infoline = value;for k in pairs(module.frames) do module:UpdateInfo(_G[k]) end  end,
+				},
+				health = {
+					order = 3,
+					type = "input",
+					name = "Health",
+					-- desc = "",
+					get = function() return module:GetTextFormat("health") end,
+					set = function(info, value) module.db.profile.formats.health = value;for k in pairs(module.frames) do module:UpdateInfo(_G[k]) end  end,
+				},
+				power = {
+					order = 4,
+					type = "input",
+					name = "Power",
+					-- desc = "",
+					get = function() return module:GetTextFormat("power") end,
+					set = function(info, value) module.db.profile.formats.power = value; end,
+				},
+				threat = {
+					order = 5,
+					type = "input",
+					name = "Threat",
+					-- desc = "",
+					get = function() return module:GetTextFormat("threat") end,
+					set = function(info, value) module.db.profile.formats.threat = value end,
+				},
+			},
 		},
 	},
 }
 
 module.frames = {}
-module.OutOfCombatQueue = {}
 
 function module:OnInitialize()
-	for name, mod in self:IterateModules() do
-		if mod.options then
+	-- Go through each module and get the options and default DB values.
+	for name, m in self:IterateModules() do
+		if m.options then
 			if not self.options.args[name] then
-				self.options.args[name] = mod.options
+				self.options.args[name] = m.options
 			end
 		end
-		if mod.defaults then
-			defaults.profile[mod:GetName()] = mod.defaults
+		-- Need to do this part because we have modules to this module and 
+		-- the child-databases (created by :RegisterNamespace) only have :RegisterDefaults and :ResetProfile available.
+		if m.defaults then
+			defaults.profile[name] = m.defaults
 		end
 	end
 	
@@ -142,19 +356,33 @@ function module:OnInitialize()
 	end
 end
 
+-- Go through modules and enable/disable those that should be.
+function module:ToggleModules()
+	for name, m in self:IterateModules() do
+		-- Give the module access to its database.
+		m.db = self.db.profile[name]
+		
+		if m.db.enabled then
+			m:Enable()
+		else
+			m:Disable()
+		end
+	end
+end
+
 function module:OnEnable()
 	self:SecureHook(addon.LDBObj,"OnClick", function(frame, msg)
 		if msg == "LeftButton" then
 			module:Lock()
-			addon.LDBObj.OnTooltipShow(GameTooltip)
+			addon.LDBObj.OnTooltipShow(LibDBIconTooltip)
 		end
 	end)
 	
 	self:SecureHook(addon.LDBObj,"OnTooltipShow", function(tooltip)
 		if module.locked then
-			tooltip:AddLine("Left Click - |cffff0000Unlock|r UI", 0.75, 0.75, 0.75)
+			tooltip:AddLine(string.format("Left Click - %s UI", addon:WrapTextInColorCode("Unlock", {1, 0, 0})), addon:UnpackColorTable(addon.colors.tooltipLine))
 		else
-			tooltip:AddLine("Left Click - |cff00ff00Lock|r UI", 0.75, 0.75, 0.75)
+			tooltip:AddLine(string.format("Left Click - %s UI", addon:WrapTextInColorCode("Lock", {0, 1, 0})), addon:UnpackColorTable(addon.colors.tooltipLine))
 		end
 	end)
 	
@@ -164,9 +392,9 @@ function module:OnEnable()
 	end
 	
 	self:RegisterEvent("PLAYER_REGEN_DISABLED")
-	self:RegisterEvent("PLAYER_REGEN_ENABLED")
 	
 	self.db.profile.enabled = true
+	self:ToggleModules()
 end
 
 function module:OnDisable()
@@ -177,13 +405,46 @@ function module:OnDisable()
 	self:UnhookAll()
 	self:UnregisterAllEvents()
 	self.db.profile.enabled = false
-	-- for name, mod in self:IterateModules() do
-		-- mod.disabledByParent = true
-		-- mod:Disable()
+	-- for name, m in self:IterateModules() do
+		-- m:Disable()
 	-- end
+
+end
+
+function module:EnableUnitframes()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("Enable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
+	self:Enable()
+end
+
+function module:DisableUnitframes()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("Disable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
+	self:Disable()
 end
 
 function module:UpdateConfigs()
+	if self.db.profile.enabled then 
+		-- If profile says that the module is supposed to enabled, but it isn't already, then go ahead and enable it.
+		if not self:IsEnabled() then
+			self:Enable()
+		else
+		-- Already enabled. Go through modules and enable/disable those that should be.
+			self:ToggleModules()
+		end
+	else
+		-- If the module is currently enabled, but isn't supposed to, then disable it.
+		if self:IsEnabled() then
+			self:Disable()
+		end
+	end
+	
 	for f, modName in pairs(self.frames) do
 		if f then
 			local frame = _G[f]
@@ -197,14 +458,9 @@ function module:UpdateConfigs()
 			end
 		end
 	end
-	-- for name, mod in self:IterateModules() do
-		-- if self.db.profile[mod:GetName()].enabled then
-			-- mod:Enable()
-		-- end
-	-- end
 end
 
-function module:CreateFrame(modName, unit, events, oneventfunc, menufunc, isWatched, id)
+function module:CreateFrame(modName, unit, events, oneventfunc, dropdownMenu, isWatched, id)
 	if not self:GetModule(modName) then return end
 	if not type(unit) == "string" then return end
 	if not type(events) == "table" then return end
@@ -225,7 +481,10 @@ function module:CreateFrame(modName, unit, events, oneventfunc, menufunc, isWatc
 		frame.unit = unit
 	end
 
-	if isWatched then RegisterUnitWatch(frame); frame.isWatched = true end
+	if isWatched then 
+		-- RegisterUnitWatch(frame); 
+		frame.isWatched = true 
+	end
 		
 	for _, event in pairs(events) do
 		if type(event) == "string" then
@@ -235,7 +494,6 @@ function module:CreateFrame(modName, unit, events, oneventfunc, menufunc, isWatc
 	
 	if frame.health then self:HealthBar_OnLoad(frame.health) end
 	if frame.powerBar then self:PowerBar_OnLoad(frame.powerBar, frame.unit) end
-	if frame.additionalPowerBar then self:AdditionalPowerBar_OnLoad(frame.additionalPowerBar, frame.unit) end
 	if frame.cast then self:CastBar_OnLoad(frame.cast, frame.unit) end
 	if frame.threat then self:ThreatBar_OnLoad(frame.threat, unit) end
 	
@@ -252,10 +510,10 @@ function module:CreateFrame(modName, unit, events, oneventfunc, menufunc, isWatc
 	
 	frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 	
-	if type(menufunc) == "table" then
+	if type(dropdownMenu) == "table" then
 		
 		local showmenu = function()
-			ToggleDropDownMenu(1, nil, menufunc, "cursor")
+			ToggleDropDownMenu(1, nil, dropdownMenu, "cursor")
 		end
 		SecureUnitButton_OnLoad(frame, frame.unit, showmenu)
 	end
@@ -270,10 +528,40 @@ function module:CreateFrame(modName, unit, events, oneventfunc, menufunc, isWatc
 	return frame
 end
 
+function module:DisableFrame(frame)
+	local name = frame:GetName()
+	if frame.isWatched then
+		UnregisterUnitWatch(frame)
+	end
+	frame.isEnabled = false
+	frame:Hide()
+end
+
+function module:EnableFrame(frame)
+	local name = frame:GetName()
+	if frame.isWatched and self.locked then
+		RegisterUnitWatch(frame)
+	else
+		frame:Show()
+		if not self.locked then frame.overlay:Show() end
+		if frame.model then module:UpdateModel(frame.model, frame.unit) end
+	end
+	frame.isEnabled = true
+end
+
+function module:ShowHideHighlight(frame)
+	if UnitExists("target") and UnitIsUnit("target", frame.unit) then
+		frame:LockHighlight()
+	else
+		frame:UnlockHighlight()
+	end
+end
+
 function module:Lock()
 
 	if InCombatLockdown() then
-		table.insert(module.OutOfCombatQueue, module.Lock)
+		addon:AddOutOfCombatQueue("Lock", module)
+		addon:InfoMessage("Unlocking the UI when combat ends.")
 		return
 	end
 	
@@ -284,12 +572,14 @@ function module:Lock()
 		PlaySound(SOUNDKIT.GS_TITLE_OPTION_EXIT)
 		for f in pairs(module.frames) do
 			local frame = _G[f]
-			frame.overlay:Show()
-			if frame.isWatched then
-				UnregisterUnitWatch(frame)
+			if frame.isEnabled then
+				frame.overlay:Show()
+				if frame.isWatched then
+					UnregisterUnitWatch(frame)
+				end
+				frame:Show()
+				if frame.model then module:UpdateModel(frame.model, frame.unit) end
 			end
-			frame:Show()
-			if frame.model then module:UpdateModel(frame.model, frame.unit) end
 		end
 	elseif not module.locked then
 		module.locked = true
@@ -298,11 +588,13 @@ function module:Lock()
 		for f in pairs(module.frames) do
 			local frame = _G[f]
 			frame.overlay:Hide()
-			if frame.model then module:UpdateModel(frame.model, frame.unit) end
-			if frame.isWatched then
-				RegisterUnitWatch(frame)
-			elseif frame.hidden then
-				frame:Hide()
+			if frame.isEnabled then
+				if frame.model then module:UpdateModel(frame.model, frame.unit) end
+				if frame.isWatched then
+					RegisterUnitWatch(frame)
+				elseif frame.hidden then
+					frame:Hide()
+				end
 			end
 		end
 	end
@@ -315,30 +607,39 @@ function module:PLAYER_REGEN_DISABLED()
 	end
 end
 
-function module:PLAYER_REGEN_ENABLED()
-	for i, func in pairs(self.OutOfCombatQueue) do 
-		if type(func) == "function" then
-			func()
-		end
-		self.OutOfCombatQueue[i] = nil
-	end
-end
 
-function module:GetTextFormat(frame, f)
-	local modName = self.frames[frame:GetName()]
+function module:GetTextFormat(f,frame, modName)
+	modName = modName or frame and self.frames[frame:GetName()]
 	
 	if modName ~= nil then
 		if self.db.profile[modName].formats then
 			if self.db.profile[modName].formats[f] then
+				if self.db.profile[modName].formats[f] == "" then
+					if defaults.profile[modName].formats[f] then
+						return defaults.profile[modName].formats[f]
+					elseif self.db.profile.formats[f] and self.db.profile.formats[f] ~= "" then
+						return self.db.profile.formats[f]
+					elseif defaults.profile.formats[f] then
+						return defaults.profile.formats[f]
+					end
+				end
 				return self.db.profile[modName].formats[f]
 			elseif self.db.profile.formats[f] then
+				if self.db.profile.formats[f] == "" then
+					return defaults.profile.formats[f]
+				end
 				return self.db.profile.formats[f]
 			end
+			return ""
 		end
 	else
 		if self.db.profile.formats[f] then
+			if self.db.profile.formats[f] == "" then
+				return defaults.profile.formats[f]
+			end
 			return self.db.profile.formats[f]
 		end
+		return ""
 	end
 end
 
@@ -359,13 +660,6 @@ local Colour_Gradients = {
 	},
 }
 
-if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
-	RAID_CLASS_COLORS["SHAMAN"].r = 0
-	RAID_CLASS_COLORS["SHAMAN"].g = 0.44
-	RAID_CLASS_COLORS["SHAMAN"].b = 0.87
-	RAID_CLASS_COLORS["SHAMAN"].colorStr = "ff0070de"
-end
-
 --/run for i=1,GetNumBindings() do local a, b, c = GetBinding(i);if string.find(a, "^TARGET") then print(a, c) end end
 local keyBindingsMap = {
 	player = "TARGETSELF",
@@ -384,33 +678,6 @@ local keyBindingsMap = {
 	arena3 = "TARGETARENA3",
 	arena4 = "TARGETARENA4",
 }
-
-SecondsToTimeAbbrev_Orig = SecondsToTimeAbbrev
-function SecondsToTimeAbbrev(seconds)
-	local time
-	if seconds > 86400 then
-		local day = floor(seconds / 86400)
-		local hour = floor((seconds % 86400) / 3600)
-		time = format(DAY_ONELETTER_ABBR.." "..HOUR_ONELETTER_ABBR, day, hour)
-		-- time = format(DAY_ONELETTER_ABBR, ceil(seconds / 86400))
-	elseif seconds > 3600 then
-		local hour = floor(seconds / 3600)
-		local min = floor((seconds % 3600) / 60)
-		local sec = (seconds % 3600) % 60
-		-- time = format("%1d:%02d:%04.1f", hour, min, sec)
-		time = format("%1d:%02d:%02d", hour, min, sec)
-	elseif seconds > 60 then
-		local min = floor(seconds / 60)
-		local sec = seconds % 60
-		time = format("%02d:%02d", min, sec)
-	elseif seconds > 1 then
-		time = format("%1d", seconds)
-	else
-		-- time = format("%.1f", seconds), (seconds * 100 - floor(seconds * 100))/100
-		time = format("%.1f", seconds)
-	end
-	return time
-end
 
 local function RaidInfo(unit)
 	local _, group, role
@@ -435,19 +702,18 @@ end
 
 function module:Replace(unit, textFormat)
 	if textFormat == nil then return "" end
-	if not UnitExists(unit) then return "" end
+	if not UnitExists(unit) then return textFormat end
 	-- local unit = frame.unit
-	out = textFormat
+	local out = textFormat
 	if string.find(textFormat,"$name") then
 		local name = UnitName(unit)
-		if self.db.profile.translit then
-			name = addon:Transliterate(name, "!")
+		if self.db.profile.transliterate.enabled then
+			name = addon:Transliterate(name, self.db.profile.transliterate.mark)
 		end
 		local color
 		if UnitIsPlayer(unit) then
 			local _, englishClass = UnitClass(unit)
-			color = RAID_CLASS_COLORS[englishClass]
-			if color ~= nil then color = addon:rgbhex(color) else color = addon:rgbhex(UnitSelectionColor(unit)) end
+			if RAID_CLASS_COLORS[englishClass] ~= nil then color = RAID_CLASS_COLORS[englishClass] else color = {UnitSelectionColor(unit)} end
 		else
 			-- if not UnitPlayerControlled(unit) and UnitIsTapped(unit) then
 				-- if not UnitIsTappedByPlayer(unit) and not UnitIsTappedByAllThreatList(unit) then
@@ -457,36 +723,40 @@ function module:Replace(unit, textFormat)
 				-- end
 			if not UnitPlayerControlled(unit) then
 				if UnitIsTapDenied(unit) then
-					color = "|cff7f7f7f"
+					-- color = "ff7f7f7f"
+					color = {0.5,0.5,0.5}
 				else
-					color = addon:rgbhex(UnitSelectionColor(unit))
+					color = {UnitSelectionColor(unit)}
 				end
 			else
 				local creatureType = UnitCreatureType(unit)
 				if UnitPlayerControlled(unit) and (creatureType == "Beast" or creatureType == "Demon" or creatureType == "Elemental" or creatureType == "Undead") then
 					-- unit is a pet/minion
-					color = "|cff005500"
+					-- color = "ff005500"
+					color = {0,1/3,0}
 				else
 					-- color = addon:rgbhex(UnitSelectionColor(unit))
-					color = addon:rgbhex(FACTION_BAR_COLORS[UnitReaction(unit, "player")])
+					color = FACTION_BAR_COLORS[UnitReaction(unit, "player")]
 				end
 			end
 		end
-		out = out:gsub("$name", color..name.."|r")
+		name = addon:WrapTextInColorCode(name, color)
+		out = out:gsub("$name", name)
 	end
 	if string.find(textFormat,"$guild") then
 		local guildName = GetGuildInfo(unit)
 		if guildName ~= nil then
-			local color = "|cff00bfff"
+			-- local color = "ff00bfff"
+			local color = {0,0.75,1}
 			if UnitIsInMyGuild(unit) then
-				color = "|cffff00ff"
+				-- color = "ffff00ff"
+				color = {1,0,1}
 			end
 			
-			if self.db.profile.translit then
-				guildName = addon:Transliterate(guildName, "!")
+			if self.db.profile.transliterate.enabled then
+				guildName = addon:Transliterate(guildName, self.db.profile.transliterate.mark)
 			end
-			
-			guildName = color..guildName.."|r"
+			guildName = addon:WrapTextInColorCode(guildName, color)
 			out = out:gsub("$guild", guildName)
 		else
 			out = out:gsub("%S*$guild%S*%s?", "")
@@ -500,7 +770,7 @@ function module:Replace(unit, textFormat)
 		local r, g, b
 		if level > 0 then
 			-- r, g, b = GetRelativeDifficultyColor(UnitLevel("player"), level)
-			r, g, b = GetRelativeDifficultyColor(UnitEffectiveLevel("player"), level)
+			r, g, b = addon:UnpackColorTable(GetRelativeDifficultyColor(UnitEffectiveLevel("player"), level))
 		end
 
 		if level == 0 then
@@ -539,9 +809,9 @@ function module:Replace(unit, textFormat)
 					end
 				end
 			end
-			r, g, b =  GetRelativeDifficultyColor(highestLevelPet, level)
+			r, g, b =  addon:UnpackColorTable(GetRelativeDifficultyColor(highestLevelPet, level))
 		end
-		level = addon:rgbhex(r,g,b)..level.."|r"
+		level = addon:WrapTextInColorCode(level, {r, g, b})
 		out = out:gsub("$level", level)
 	end
 	
@@ -552,9 +822,9 @@ function module:Replace(unit, textFormat)
 			class, englishClass = UnitClass(unit)
 			if not class then class = "Unknown" end
 			if RAID_CLASS_COLORS[englishClass] then
-				class = addon:rgbhex(RAID_CLASS_COLORS[englishClass])..class.."|r"
+				class = addon:WrapTextInColorCode(class, RAID_CLASS_COLORS[englishClass])
 			else
-				class = addon:rgbhex(UnitSelectionColor(unit))..class.."|r"
+				class = addon:WrapTextInColorCode(class, {UnitSelectionColor(unit)})
 			end
 		else
 			if UnitCreatureType(unit) == "Humanoid" and UnitIsFriend("player", unit) then
@@ -605,7 +875,8 @@ function module:Replace(unit, textFormat)
 		if UnitIsPlayer(unit) and UnitPlayerOrPetInParty(unit) and IsInRaid() then
 			local groupNumber = RaidInfo(unit)
 			if groupNumber then
-				out = out:gsub("$group", GROUP..": |cffffff00"..groupNumber.."|r")
+				groupNumber = addon:WrapTextInColorCode(groupNumber, {1,1,0})
+				out = out:gsub("$group", string.format("%s: %s", GROUP, groupNumber))
 			end
 		else
 			out = out:gsub("%S*$group%S*%s?", "")
@@ -615,7 +886,8 @@ function module:Replace(unit, textFormat)
 		if UnitIsPlayer(unit) and UnitPlayerOrPetInParty(unit) and IsInRaid() then
 			local groupNumber = RaidInfo(unit)
 			if groupNumber then
-				out = out:gsub("$g", string.sub(GROUP, 0, 1)..": |cffffff00"..groupNumber.."|r")
+				groupNumber = addon:WrapTextInColorCode(groupNumber, {1,1,0})
+				out = out:gsub("$g", string.format("%s: %s", string.sub(GROUP, 0, 1), groupNumber))
 			end
 		else
 			out = out:gsub("%S*$g%S*%s?", "")
@@ -656,9 +928,7 @@ function module:Replace(unit, textFormat)
 		end
 		binding = nil
 	end
-	if out ~= textFormat then
-		return out
-	end
+	return out
 end
 
 --------------------------------------------
@@ -742,8 +1012,7 @@ function module:UpdateRoles(frame)
 end
 
 function module:UpdateName(frame)
-	--local textFormat = frame:GetAttribute("nameFormat")
-	local textFormat = self:GetTextFormat(frame, "name")
+	local textFormat = self:GetTextFormat("name", frame)
 	local name
 	if textFormat ~= nil then
 		name = self:Replace(frame.unit, textFormat)
@@ -752,8 +1021,7 @@ function module:UpdateName(frame)
 end
 
 function module:UpdateLevel(frame)
-	-- local textFormat = frame:GetAttribute("levelFormat")
-	local textFormat = self:GetTextFormat(frame, "level")
+	local textFormat = self:GetTextFormat("level", frame)
 	local level
 	if textFormat ~= nil then
 		level = self:Replace(frame.unit, textFormat)
@@ -763,8 +1031,7 @@ function module:UpdateLevel(frame)
 end
 
 function module:UpdateGroupIndicator(frame)
-	-- local textFormat = frame:GetAttribute("groupFormat")
-	local textFormat = self:GetTextFormat(frame, "group")
+	local textFormat = self:GetTextFormat("group", frame)
 	local text
 	if textFormat ~= nil then
 		text = self:Replace(frame.unit, textFormat)
@@ -782,7 +1049,7 @@ function module:UpdateInfo(frame)
 	if frame.level then self:UpdateLevel(frame) end
 	if frame.group then self:UpdateGroupIndicator(frame) end
 	if frame.infoline then 
-		local textFormat = self:GetTextFormat(frame, "infoline")
+		local textFormat = self:GetTextFormat("infoline", frame)
 		local infoline
 		if textFormat ~= nil then
 			infoline = self:Replace(frame.unit, textFormat)
@@ -874,10 +1141,9 @@ function module:OnMouseWheel(frame, delta)
 end
 
 local function Glide(frame, e)
-	-- if frame.fade < 1 then
-	if not frame.startvalue then return end
-	 if frame.glideFade < 1 then
-		frame.fade = frame.glideFade
+	if not frame.startvalue or not module.db.profile.glideAnimation.enabled then frame:SetValue(frame.endvalue); return end
+	if module.db.profile.glideAnimation.fadeTimeout < 1 then
+		frame.fade = module.db.profile.glideAnimation.fadeTimeout
 		frame.fade = frame.fade + e
 		if frame.fade > 1 then frame.fade = 1 end
 		local delta = frame.endvalue - frame.startvalue
@@ -897,9 +1163,9 @@ HEALTHBAR functions
 local function HealthBar_Text(frame)
 	local unit = frame:GetParent().unit
 	
-	local text = module:GetTextFormat(frame:GetParent(), "health")
-	local miss = module:GetTextFormat(frame:GetParent(), "miss")
-	local perc = module:GetTextFormat(frame:GetParent(), "perc")
+	local text = module:GetTextFormat("health", frame:GetParent())
+	local miss = module:GetTextFormat("miss", frame:GetParent())
+	local perc = module:GetTextFormat("perc", frame:GetParent())
 
 	-- if frame.disconnected then
 	if not UnitIsConnected(unit) and UnitIsPlayer(unit) then
@@ -951,13 +1217,13 @@ function HealthBar_Gradient(frame, elapsed, gradient)
 	local alpha = 255;
 	local perc = frame.currValue / frame.maxValue
 	-- Blinking healthbar at low HP!
-	if UnitIsFriend("player", frame:GetParent().unit) and perc < 0.3 then
-		local divisor = 0.7
+	if module.db.profile.lowHealthFlash.enabled and UnitIsFriend("player", frame:GetParent().unit) and perc <= module.db.profile.lowHealthFlash.warning.perc then
+		local divisor =  module.db.profile.lowHealthFlash.warning.freq
 				
-		if perc < 0.2 then
-			divisor = 0.5
-		elseif perc < 0.1 then
-			divisor = 0.3
+		if perc <= module.db.profile.lowHealthFlash.dangerous.perc then
+			divisor = module.db.profile.lowHealthFlash.dangerous.freq
+		elseif perc <= module.db.profile.lowHealthFlash.critical.perc then
+			divisor = module.db.profile.lowHealthFlash.critical.freq
 		end
 		
 		if elapsed then
@@ -1161,12 +1427,9 @@ local function HealthBar_OnUpdate(frame, e)
 			if currValue ~= frame.currValue then
 				frame.currValue = currValue
 			 end
-			
-			if frame.glide then
-				Glide(frame, e)
-			else
-				frame:SetValue(currValue)
-			end
+
+			Glide(frame, e)
+
 			HealthBar_Gradient(frame,e)
 			HealthBar_Text(frame)
 			HealPredictionBar_Update(frame)
@@ -1202,20 +1465,9 @@ end
 
 function module:HealthBar_OnLoad(frame)
 
-	frame.glide = frame:GetAttribute("glide")
 	frame.pauseUpdates = false
 	frame.statusCounter = 0
 	frame.statusSign = -1
-	
-	if frame.glide then
-		local glideFade = frame:GetAttribute("glideFade")
-		-- TODO: Override fadetime from in-game.
-		if glideFade then
-			frame.glideFade = glideFade
-		else
-			frame.glideFade = 0.35
-		end
-	end
 	
 	frame:SetScript("OnUpdate", HealthBar_OnUpdate)
 end
@@ -1230,12 +1482,11 @@ POWERBAR functions
 
 
 local function PowerBar_Text(frame)
-	-- local text = frame:GetAttribute("textFormat")
 	local parent = frame:GetParent()
 	if frame.parent then
 		parent = frame:GetParent():GetParent()
 	end
-	local text = module:GetTextFormat(parent, "power")
+	local text = module:GetTextFormat("power", parent)
 	-- if not UnitIsConnected(frame.unit) UnitIsPlayer(frame.unit) then
 		-- text = ""
 	-- elseif UnitIsGhost(frame.unit) then
@@ -1253,35 +1504,33 @@ local function PowerBar_Text(frame)
 end
 
 local function PowerBar_OnEvent(frame, event, ...)
+	-- if not (frame:GetParent().isEnabled or frame:GetParent():GetParent().isEnabled) then return end
+
 	local arg1 = ...
 	local unit = frame:GetParent().unit or frame:GetParent():GetParent().unit
 	
-	if event == "PLAYER_ENTERING_WORLD" then
-		module:PowerBar_Update(frame, unit)
-	end
+	-- if event == "PLAYER_ENTERING_WORLD" then
+		-- module:PowerBar_Update(frame, unit)
+	-- end
 	
 	if ( arg1 ~= unit ) then
          return
     end
 	
-	if event == "UNIT_DISPLAYPOWER" or event == "PLAYER_SPECIALIZATION_CHANGED" or event == "UPDATE_VEHICLE_ACTIONBAR" then
-		module:PowerBar_Update(frame, unit)
+	if event == "UNIT_DISPLAYPOWER" or event == "PLAYER_SPECIALIZATION_CHANGED" then
+		module:PowerBar_Update(frame)
 	end
 end
 
 local function PowerBar_OnUpdate(frame, e)
-	local unit = frame:GetParent().unit or frame:GetParent():GetParent().unit
+	-- if not (frame:GetParent().isEnabled or frame:GetParent():GetParent().isEnabled) then return end
+
+	local unit = frame.unit
     -- if UnitExists(unit) then
 		if not frame.pauseUpdates then
-			local currValue
-			local maxValue
-			if frame.additional then
-				currValue = UnitPower(unit, ADDITIONAL_POWER_BAR_INDEX)
-				maxValue = UnitPowerMax(unit, ADDITIONAL_POWER_BAR_INDEX)
-			else
-				currValue = UnitPower(unit)
-				maxValue = UnitPowerMax(unit)
-			end
+			local powerType = frame.powerType or UnitPowerType(unit)
+			local maxValue = UnitPowerMax(unit, powerType)
+			local currValue = UnitPower(unit, powerType)
 			
 			if maxValue ~= frame.maxValue then
 				frame:SetMinMaxValues(0, maxValue)
@@ -1293,55 +1542,25 @@ local function PowerBar_OnUpdate(frame, e)
 				frame.currValue = currValue
 			end
 
-			if frame.glide then
-				Glide(frame, e)
-			else
-				frame:SetValue(currValue)
-			end
+			Glide(frame, e)
+	
 			PowerBar_Text(frame);
 		end
     -- end
 end
 
-local function AdditionalPowerBar_ShowHide(frame)
-	local unit = frame:GetParent().unit or frame:GetParent():GetParent().unit
-	if UnitPowerType(unit) ~= ADDITIONAL_POWER_BAR_INDEX and UnitPowerMax(unit, ADDITIONAL_POWER_BAR_INDEX) ~= 0 and (not frame.specRestriction or frame.specRestriction == GetSpecialization()) and not UnitHasVehiclePlayerFrameUI("player") then
-		frame.pauseUpdates = false
-		if frame.parent then
-			frame:GetParent():Show()
-		else
-			frame:Show()
-		end
-
-	else
-		frame.pauseUpdates = true
-		if frame.parent then
-			frame:GetParent():Hide()
-		else
-			frame:Hide()
-		end
-	end
-end
-
 function module:PowerBar_Update(frame)
-	local unit = frame:GetParent().unit or frame:GetParent():GetParent().unit
+
+	local unit = frame.unit
 	 -- if unit == frame.unit then
-		local powerType
-		local powerBarColor
-		local maxValue
-		local currValue
-		if frame.additional then
-			powerType = ADDITIONAL_POWER_BAR_INDEX
-			maxValue = UnitPowerMax(unit, powerType)
-			currValue = UnitPower(unit, powerType)
-			AdditionalPowerBar_ShowHide(frame)
-		else
-			powerType = UnitPowerType(unit)
-			maxValue = UnitPowerMax(unit)
-			currValue = UnitPower(unit)
+		local powerType = frame.powerType or UnitPowerType(unit)
+		local powerBarColor = PowerBarColor[powerType]
+		local maxValue = UnitPowerMax(unit, powerType)
+		local currValue = UnitPower(unit, powerType)
+		if frame.updateFunc then
+			frame:updateFunc(frame)
 		end
 
-		powerBarColor = PowerBarColor[powerType]
 		frame:SetStatusBarColor(powerBarColor.r, powerBarColor.g,powerBarColor.b)
 		frame.bg:SetVertexColor(powerBarColor.r, powerBarColor.g,powerBarColor.b)
 		
@@ -1366,53 +1585,19 @@ function module:PowerBar_Update(frame)
 end
 
 function module:PowerBar_OnLoad(frame, unit)
-	frame.glide = frame:GetAttribute("glide")
 	frame.pauseUpdates = false
-	
-	if frame.glide then
-		local glideFade = frame:GetAttribute("glideFade")
-		-- TODO: Override fadetime from in-game.
-		if glideFade then
-			frame.glideFade = glideFade
-		else
-			frame.glideFade = 0.35
-		end
-
-	end
-	
+	frame.unit = unit	
 	-- if frame.additional then
 		-- AdditionalPowerBar_ShowHide(frame)
 	-- end
 	
-	frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+	-- frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 	frame:RegisterEvent("UNIT_DISPLAYPOWER")
 	
 	frame:SetScript("OnEvent", PowerBar_OnEvent)
 	frame:SetScript("OnUpdate", PowerBar_OnUpdate)
 end
 
-function module:AdditionalPowerBar_OnLoad(frame, unit)
-	local class = UnitClass(unit)
-	if class == "Druid" or class == "Monk" then
-		local statusbar
-		if frame.statusbar then
-			frame.statusbar.parent = true
-			statusbar = frame.statusbar
-		else
-			statusbar = frame
-		end
-		
-		if class == "Monk" then
-			statusbar:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
-			statusbar.specRestriction = SPEC_MONK_MISTWEAVER
-		end
-		
-		statusbar:RegisterEvent("UPDATE_VEHICLE_ACTIONBAR")
-		statusbar.additional = true
-		
-		self:PowerBar_OnLoad(statusbar, unit)
-	end
-end
 
 --[[
 
@@ -1438,13 +1623,9 @@ else
 	UnitChannelInfo = _G.UnitChannelInfo
 end
 
-local function CastBar_Text(text, statusbar, short, textFormat)
+local function CastBar_Text(text, statusbar, short)
 	local orient = statusbar:GetOrientation()
 	local out = text
-	if textFormat then
-		out = textFormat
-		out = out:gsub("$spell", text)
-	end
 
 	if orient == "VERTICAL" then
 		if short then
@@ -1532,7 +1713,7 @@ local function CastBar_OnEvent(frame, event, unit,...)
 		frame.statusbar:SetValue(frame.startTime)
 		frame.icon:SetTexture(texture)
 		frame.name = name
-		CastBar_Text(frame.name, frame.statusbar, _, frame.textFormat)
+		CastBar_Text(frame.name, frame.statusbar, true)
 		frame:SetAlpha(1.0)
 		frame.fadeOut = false
 		frame.holdTime = 0
@@ -1657,9 +1838,6 @@ function module:CastBar_OnLoad(frame, unit)
 			return
 		end
 	end
-
-
-	frame.textFormat = frame:GetAttribute("textFormat")
 	
 	if not frame.statusbar then 
 		frame.statusbar = frame -- A bit silly?
@@ -1756,6 +1934,9 @@ function module:TargetofTarget_Onload(frame, unit)
 	frame:RegisterForClicks("LeftButtonUp");
 	SecureUnitButton_OnLoad(frame, frame.unit)
 	self:HealthBar_OnLoad(frame.hp, frame.unit)
+
+	-- Uncomment the next line to use Glide animation on the Target of Target hp bar.
+	-- self:HealthBar_Update(frame.hp)
 	
 	-- frame:SetScript("OnEvent", TargetofTarget_OnEvent)
 	frame:SetScript("OnUpdate", TargetofTarget_Update)
@@ -1794,8 +1975,8 @@ if not GetThreatStatusColor then
 end
 
 local function ThreatBar_Text(frame)
-	local text = frame:GetAttribute("textFormat")
-	local perc = frame:GetAttribute("percFormat")
+	local text = module:GetTextFormat("threat", frame:GetParent())
+	local perc = module:GetTextFormat("perc", frame:GetParent())
 	
 	if text ~= nil then
 		text = text:gsub("$cur", addon:CommaNumber(frame.currValue))
@@ -1908,11 +2089,7 @@ local function ThreatBar_OnUpdate(frame, e)
 				frame.currValue = currValue
 			end
 			
-			if frame.glide then
-				Glide(frame, e)
-			else
-				frame:SetValue(currValue)
-			end
+			Glide(frame, e)
 			
 			ThreatBar_Text(frame)
 			frame:SetStatusBarColor(GetThreatStatusColor(status))
@@ -1929,17 +2106,7 @@ function module:ThreatBar_OnLoad(frame, unit)
 			return
 		end
 	end
-	
-	frame.glide = frame:GetAttribute("glide")
-		if frame.glide then
-		local glideFade = frame:GetAttribute("glideFade")
-		-- TODO: Override fadetime from in-game.
-		if glideFade then
-			frame.glideFade = glideFade
-		else
-			frame.glideFade = 0.35
-		end
-	end
+
 	frame.threatUnit = "player"
 	frame:RegisterEvent("PLAYER_ENTERING_WORLD")
     frame:RegisterEvent("UNIT_THREAT_LIST_UPDATE")

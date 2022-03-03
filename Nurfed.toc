@@ -25,6 +25,7 @@ Libs\LibWindow-1.1\LibWindow-1.1.lua
 Libs\LibTranslit-1.0\LibTranslit-1.0.lua
 
 Nurfed.lua
+
 Modules\UnitFrame\UnitFrame.lua
 Modules\UnitFrame\Templates.xml
 Modules\UnitFrame\PlayerFrame.xml
@@ -37,3 +38,4 @@ Modules\UnitFrame\BossFrames.xml
 Modules\MicroMenu\MicroMenu.lua
 Modules\Chat\Chat.lua
 Modules\AutoSell\AutoSell.lua
+Modules\CustomTimeAbbreviation\CustomTimeAbbreviation.lua

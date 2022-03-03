@@ -51,11 +51,46 @@ module.options = {
 			type = "toggle",
 			name = "Enabled",
 			-- desc = "",
-			get = function() return module:IsEnabled() end,
-			set = function() if module:IsEnabled() then module:Disable() else module:Enable() end end,
+			get = function() return module.db.enabled end,
+			set = function() if UnitFrames:IsEnabled() then if module.db.enabled then module:Disable() else module:Enable() end end; if module.db.enabled then module.db.enabled = false else module.db.enabled = true end end,
+		},
+		formats = {
+			order = 2,
+			type = "group",
+			width = "full",
+			name = "Text formats",
+			guiInline = true,
+			args = {
+				name = {
+					order = 1,
+					type = "input",
+					name = "Name",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("name", nil, moduleName) end,
+					set = function(info, value) module.db.formats.name = value;for _,v in pairs(module.frames) do UnitFrames:UpdateInfo(v) end end,
+				},
+				health = {
+					order = 2,
+					type = "input",
+					name = "Health",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("health", nil, moduleName) end,
+					set = function(info, value) module.db.formats.health = value end,
+				},
+				power = {
+					order = 3,
+					type = "input",
+					name = "Power",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("power", nil, moduleName) end,
+					set = function(info, value) module.db.formats.power = value end,
+				},
+			},
 		},
 	},
 }
+
+module.frames = {}
 
 local events = {
 	"PLAYER_ENTERING_WORLD",
@@ -83,8 +118,6 @@ local events = {
 	"UPDATE_BINDINGS",
 	"CVAR_UPDATE",
 }
-
-local partyFrames = {}
 
 local function UpdatePhasing(frame)
 	local unit = frame.unit
@@ -189,12 +222,15 @@ local function OnUpdate(frame, elapsed)
 end
 
 local function OnEvent(frame, event, ...)
+
+	if not frame.isEnabled then return end
+
 	local arg1, arg2, arg3, arg4, arg5 = ...
 
 	if event == "PLAYER_ENTERING_WORLD" or event == "CVAR_UPDATE" or event == "UPDATE_BINDINGS" or event == "DISPLAY_SIZE_CHANGED" then
 		Update(frame)
 	elseif event == "UNIT_PHASE" or event == "PARTY_MEMBER_ENABLE" or event == "PARTY_MEMBER_DISABLE" or event == "UNIT_FLAGS" or event == "UNIT_CTR_OPTIONS" then
-		if event == "UNIT_PHASE" or arg1 == frame.unit then
+		if event ~= "UNIT_PHASE" or arg1 == frame.unit then
 			UpdatePhasing(frame)
 		end
 	elseif event == "UNIT_OTHER_PARTY_CHANGED" and arg1 == frame.unit then
@@ -248,11 +284,11 @@ local function HideParty()
 	if not IsInRaid() and GetCVar("useCompactPartyFrames") == "0" then return end
 	-- GetCVarBool()
 	if InCombatLockdown() then
-		table.insert(UnitFrames.OutOfCombatQueue,HideParty)
+		addon:AddOutOfCombatQueue(HideParty)
 		return
 	end
 
-	for k,frame in pairs(partyFrames) do
+	for k,frame in pairs(module.frames) do
 		if frame.isWatched then
 			UnregisterUnitWatch(frame)
 			frame.isWatched = false
@@ -270,11 +306,11 @@ local function ShowParty()
 	if IsInRaid() and GetCVar("useCompactPartyFrames") == "1" then return end
 	-- GetCVarBool()
 	if InCombatLockdown() then
-		table.insert(UnitFrames.OutOfCombatQueue,ShowParty)
+		addon:AddOutOfCombatQueue(ShowParty)
 		return
 	end
 	
-	for k,frame in pairs(partyFrames) do
+	for k,frame in pairs(module.frames) do
 		if UnitFrames.locked and not frame.isWatched then
 			RegisterUnitWatch(frame)
 		end
@@ -285,8 +321,54 @@ local function ShowParty()
 	end
 end
 
+local blizzFrames = {}
+
+local function DisableBlizz()
+	for i = 1, MAX_PARTY_MEMBERS do
+		local frame = _G["PartyMemberFrame"..i]
+		local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint(frame:GetNumPoints())
+		
+		blizzFrames[i] = { 
+				[1] = point,
+				[2] = relativeTo:GetName(),
+				[3] = relativePoint,
+				[4] = xOfs,
+				[5] = yOfs,
+		}
+		
+		-- frame:SetScript("OnEvent", nil)
+		-- frame:SetScript("OnUpdate", nil)
+		
+		frame:ClearAllPoints()
+		frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -500, 500)
+		frame:Hide()
+	end
+	CompactRaidFrameManager:SetFrameLevel(4)
+end
+
+local function EnableBlizz()
+	for i = 1, MAX_PARTY_MEMBERS do
+		local frame = _G["PartyMemberFrame"..i]
+		local point, relativeTo, relativePoint, xOfs, yOfs = unpack(blizzFrames[i])
+		
+		frame:ClearAllPoints()
+		frame:SetPoint(point, _G[relativeTo], relativePoint, xOfs, yOfs)
+		
+		-- frame:SetScript("OnEvent", PartyMemberFrame_OnEvent)
+		-- frame:SetScript("OnUpdate", PartyMemberFrame_OnUpdate)
+		PartyMemberFrame_UpdateArt(frame)
+		PartyMemberFrame_UpdateMember(frame)
+		PartyMemberFrame_UpdateLeader(frame)
+		if PartyMemberFrame_UpdateAssignedRoles then PartyMemberFrame_UpdateAssignedRoles(frame) end
+	end
+	CompactRaidFrameManager:SetFrameLevel(1)
+end
+
 function module:OnInitialize()
-	
+	-- Enable if we're supposed to be enabled
+	if self.db and self.db.enabled and UnitFrames:IsEnabled() then
+		self:Enable()
+	end
 end
 
 function module:OnEnable()
@@ -294,17 +376,43 @@ function module:OnEnable()
 		table.insert(events, "INCOMING_SUMMON_CHANGED")
 		table.insert(events, "UNIT_CTR_OPTIONS")
 	end
-	if table.getn(partyFrames) == 0 then
+
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnEnable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
+	DisableBlizz()
+	if table.getn(self.frames) == 0 then
 		for i=1,4 do
 			local frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, _G["PartyMemberFrame"..i.."DropDown"], true, i)
 			frame:SetScript("OnUpdate", OnUpdate)
-			table.insert(partyFrames, frame)
+			table.insert(module.frames, frame)
 		end
 	end
+
+	if table.getn(self.frames) > 0 then
+		for _, frame in ipairs(module.frames) do
+			UnitFrames:EnableFrame(frame)
+			Update(frame)
+		end
+		ShowParty()
+		HideParty()
+	end
+
 	self:SecureHook("HidePartyFrame", HideParty)
 	self:SecureHook("ShowPartyFrame", ShowParty)
 end
 
 function module:OnDisable()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnDisable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
+	EnableBlizz()
+	for _, frame in ipairs(self.frames) do
+		UnitFrames:DisableFrame(frame)
+	end
 	self:UnhookAll()
 end

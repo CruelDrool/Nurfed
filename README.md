@@ -31,7 +31,8 @@ This whole project is somewhat of an on and off thing, so the likelihood of it g
 				* Size is based upon the combined size of all the additional frames/textures; target of target, buffs/debuffs, cast bar, Target Markers.
 				* Control-key locks the X-axis.
 				* Shift-key locks the Y-axis.
-		* Blinking healthbar of friendly units below 20%, with increased intensity when below 10%.
+			* Resize using the scroll-wheel. Reset the size by Ctrl+Shift+Scroll Up/Down
+		* Blinking healthbar of friendly units at <=30%, with increased intensity when at <=20% or <=10%. These thresholds can be changed.
 		* Able to show who is Master Looter on frames for Target and Focus.
 		* Group roles (tank/dps/healer) and raid roles (main assist/main tank) are displayed on frames for Player, Target, Focus and PartyN.
 		* Guide icon shown instead of Leader icon when in a group formed by Group/Raid Finder tool.
@@ -48,10 +49,14 @@ This whole project is somewhat of an on and off thing, so the likelihood of it g
 	* Wow micro menu:
 		* All buttons are added and working.
 		* Keybindings displayed.
-		* Some buttons greyed out if the Player is too low level or is on a Starter Edition account.
+		* Some buttons greyed out if the the features aren't available to the player.
+	* Custom time abbreviation: Custom function to convert seconds into days, hours and minutes.
+	* Shaman class color (Classic): set the color to blue like in TBC and later.
+	* Money receipt (Classic and BCC): the money receipt feature that exists Retail. Tells you how much you've gained at the vendor/mailbox.
+	
 
 ### What's missing/incomplete
-* Options are severely incomplete.
+* Options are incomplete, but improving.
 * Skins.
 * Missing features (that I can think of):
 	* Auto-repair.

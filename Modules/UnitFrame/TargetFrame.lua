@@ -33,8 +33,57 @@ module.options = {
 			type = "toggle",
 			name = "Enabled",
 			-- desc = "",
-			get = function() return module:IsEnabled() end,
-			set = function() if module:IsEnabled() then module:Disable() else module:Enable() end end,
+			get = function() return module.db.enabled end,
+			set = function() if UnitFrames:IsEnabled() then if module.db.enabled then module:Disable() else module:Enable() end end; if module.db.enabled then module.db.enabled = false else module.db.enabled = true end end,
+		},
+		formats = {
+			order = 2,
+			type = "group",
+			width = "full",
+			name = "Text formats",
+			guiInline = true,
+			args = {
+				name = {
+					order = 1,
+					type = "input",
+					name = "Name",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("name", module.frame) end,
+					set = function(info, value) module.db.formats.name = value;UnitFrames:UpdateInfo(module.frame) end,
+				},
+				infoline = {
+					order = 2,
+					type = "input",
+					name = "Infoline",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("infoline", module.frame) end,
+					set = function(info, value) module.db.formats.infoline = value;UnitFrames:UpdateInfo(module.frame) end,
+				},
+				health = {
+					order = 3,
+					type = "input",
+					name = "Health",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("health", module.frame) end,
+					set = function(info, value) module.db.formats.health = value end,
+				},
+				power = {
+					order = 4,
+					type = "input",
+					name = "Power",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("power", module.frame) end,
+					set = function(info, value) module.db.formats.power = value end,
+				},
+				threat = {
+					order = 5,
+					type = "input",
+					name = "Threat",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("threat", module.frame) end,
+					set = function(info, value) module.db.formats.threat = value;UnitFrames:ThreatBar_Update(module.frame.threat) end,
+				},
+			},
 		},
 	},
 }
@@ -70,8 +119,8 @@ local function UpdateCombo(frame, unit)
 	
 	local comboPoints = GetComboPoints("player", unit)
 	local maxComboPoints = UnitPowerMax("player", Enum.PowerType.ComboPoints)
-	local r, g, b
-	local parent = frame:GetParent()
+	-- local r, g, b
+	-- local parent = frame:GetParent()
 	if comboPoints > 0 then
 		-- if comboPoints == 5 then
 			-- r, g, b = 1, 0, 0
@@ -113,6 +162,14 @@ local function UpdateCombo(frame, unit)
 	end
 end
 
+function UpdateQuestionIcon(frame)
+	if (UnitIsQuestBoss and UnitIsQuestBoss(frame.unit)) then
+		frame.questIcon:Show()
+	else
+		frame.questIcon:Hide()
+	end
+end
+
 local function Update(frame)
 	UnitFrames:PowerBar_Update(frame.powerBar, frame.unit)
 	UnitFrames:HealthBar_Update(frame.health)
@@ -129,10 +186,14 @@ local function Update(frame)
 		UnitFrames:UpdateRoles(frame)
 		UnitFrames:UpdatePVPStatus(frame)
 		UnitFrames:UpdateAuras(frame)
+		UpdateQuestionIcon(frame)
 	end	
 end
 
 local function OnEvent(frame, event, ...)
+
+	if not frame.isEnabled then return end
+
 	local arg1, arg2, arg3, arg4, arg5 = ...
 	if event == "PLAYER_ENTERING_WORLD" or event == "DISPLAY_SIZE_CHANGED" then
 		Update(frame)
@@ -156,6 +217,10 @@ local function OnEvent(frame, event, ...)
 			UnitFrames:UpdateInfo(frame)
 			if event == "UNIT_FACTION" then
 				UnitFrames:UpdatePVPStatus(frame)
+			end
+			
+			if event == "UNIT_CLASSIFICATION_CHANGED" then
+				UpdateQuestionIcon(frame)
 			end
 		end
 	elseif event == "UNIT_AURA" then
@@ -198,20 +263,64 @@ local function OnEvent(frame, event, ...)
 			-- end
 		-- end
 	elseif event == "UI_SCALE_CHANGED" then
-		if frame.model then UnitFrames:UpdateModel(frame.model, frame.unit)end
+		if frame.model then UnitFrames:UpdateModel(frame.model, frame.unit) end
 	end
 end
 
-function module:OnInitialize()
+local blizzFrame = {}
 
+local function DisableBlizz()
+	local frame = TargetFrame
+	local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint(frame:GetNumPoints())
+	blizzFrame = {
+			[1] = point,
+			[2] = relativeTo:GetName(),
+			[3] = relativePoint,
+			[4] = xOfs,
+			[5] = yOfs,
+	}
+	frame:ClearAllPoints()
+	frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -500, 500)
+end
+
+local function EnableBlizz()
+	local frame = TargetFrame
+	local point, relativeTo, relativePoint, xOfs, yOfs = unpack(blizzFrame)
+	
+	frame:ClearAllPoints()
+	frame:SetPoint(point, _G[relativeTo], relativePoint, xOfs, yOfs)
+end
+
+function module:OnInitialize()
+	-- Enable if we're supposed to be enabled
+	if self.db and self.db.enabled and UnitFrames:IsEnabled() then
+		self:Enable()
+	end
 end
 
 function module:OnEnable()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnEnable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
+	DisableBlizz()
 	if not self.frame then
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, TargetFrameDropDown, true)
+	end
+
+	if self.frame then
+		UnitFrames:EnableFrame(self.frame)
+		Update(self.frame)
 	end
 end
 
 function module:OnDisable()
-
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnDisable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
+	EnableBlizz()
+	UnitFrames:DisableFrame(self.frame)
 end

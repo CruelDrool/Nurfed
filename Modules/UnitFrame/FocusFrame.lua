@@ -34,8 +34,57 @@ module.options = {
 			type = "toggle",
 			name = "Enabled",
 			-- desc = "",
-			get = function() return module:IsEnabled() end,
-			set = function() if module:IsEnabled() then module:Disable() else module:Enable() end end,
+			get = function() return module.db.enabled end,
+			set = function() if UnitFrames:IsEnabled() then if module.db.enabled then module:Disable() else module:Enable() end end; if module.db.enabled then module.db.enabled = false else module.db.enabled = true end end,
+		},
+		formats = {
+			order = 2,
+			type = "group",
+			width = "full",
+			name = "Text formats",
+			guiInline = true,
+			args = {
+				name = {
+					order = 1,
+					type = "input",
+					name = "Name",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("name", module.frame) end,
+					set = function(info, value) module.db.formats.name = value;UnitFrames:UpdateInfo(module.frame) end,
+				},
+				infoline = {
+					order = 2,
+					type = "input",
+					name = "Infoline",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("infoline", module.frame) end,
+					set = function(info, value) module.db.formats.infoline = value;UnitFrames:UpdateInfo(module.frame) end,
+				},
+				health = {
+					order = 3,
+					type = "input",
+					name = "Health",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("health", module.frame) end,
+					set = function(info, value) module.db.formats.health = value end,
+				},
+				power = {
+					order = 4,
+					type = "input",
+					name = "Power",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("power", module.frame) end,
+					set = function(info, value) module.db.formats.power = value end,
+				},
+				threat = {
+					order = 5,
+					type = "input",
+					name = "Threat",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("threat", module.frame) end,
+					set = function(info, value) module.db.formats.threat = value;UnitFrames:ThreatBar_Update(module.frame.threat) end,
+				},
+			},
 		},
 	},
 }
@@ -83,6 +132,8 @@ local function Update(frame)
 end
 
 local function OnEvent(frame, event, ...)
+
+	if not frame.isEnabled then return end
 
 	local arg1, arg2, arg3, arg4, arg5 = ...
 	if event == "PLAYER_ENTERING_WORLD" or event == "DISPLAY_SIZE_CHANGED" then
@@ -140,21 +191,66 @@ local function OnEvent(frame, event, ...)
 			-- end
 		-- end
 	elseif event == "UI_SCALE_CHANGED" then
-		if frame.model then frame.model:RefreshUnit() end
+		if frame.model then UnitFrames:UpdateModel(frame.model, frame.unit) end
 	end
 end
 
-function module:OnInitialize()
+local blizzFrame = {}
+
+local function DisableBlizz()
+	local frame = FocusFrame
+	local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint(frame:GetNumPoints())
+	blizzFrame = {
+			[1] = point,
+			[2] = relativeTo:GetName(),
+			[3] = relativePoint,
+			[4] = xOfs,
+			[5] = yOfs,
+	}
+	frame:SetClampedToScreen(false)
+	frame:ClearAllPoints()
+	frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -500, 500)
+end
+
+local function EnableBlizz()
+	local frame = FocusFrame
+	local point, relativeTo, relativePoint, xOfs, yOfs = unpack(blizzFrame)
 	
+	frame:SetClampedToScreen(true)
+	frame:ClearAllPoints()
+	frame:SetPoint(point, _G[relativeTo], relativePoint, xOfs, yOfs)
+end
+
+function module:OnInitialize()
+	-- Enable if we're supposed to be enabled
+	if self.db and self.db.enabled and UnitFrames:IsEnabled() then
+		self:Enable()
+	end
 end
 
 function module:OnEnable()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnEnable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
+	DisableBlizz()
 	if not self.frame then
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, FocusFrameDropDown, true)
-		-- if self.frame.threat then ThreatBar_OnLoad(self.frame.threat, unit) end
+	end
+	
+	if self.frame then
+		UnitFrames:EnableFrame(self.frame)
+		Update(self.frame)
 	end
 end
 
 function module:OnDisable()
-
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnDisable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
+	EnableBlizz()
+	UnitFrames:DisableFrame(self.frame)
 end

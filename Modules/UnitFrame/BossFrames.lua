@@ -57,11 +57,46 @@ module.options = {
 			type = "toggle",
 			name = "Enabled",
 			-- desc = "",
-			get = function() return module:IsEnabled() end,
-			set = function() if module:IsEnabled() then module:Disable() else module:Enable() end end,
+			get = function() return module.db.enabled end,
+			set = function() if UnitFrames:IsEnabled() then if module.db.enabled then module:Disable() else module:Enable() end end; if module.db.enabled then module.db.enabled = false else module.db.enabled = true end end,
+		},
+		formats = {
+			order = 2,
+			type = "group",
+			width = "full",
+			name = "Text formats",
+			guiInline = true,
+			args = {
+				name = {
+					order = 1,
+					type = "input",
+					name = "Name",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("name", nil, moduleName) end,
+					set = function(info, value) module.db.formats.name = value;for _,v in pairs(module.frames) do UnitFrames:UpdateInfo(v) end end,
+				},
+				health = {
+					order = 2,
+					type = "input",
+					name = "Health",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("health", nil, moduleName) end,
+					set = function(info, value) module.db.formats.health = value end,
+				},
+				power = {
+					order = 3,
+					type = "input",
+					name = "Power",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("power", nil, moduleName) end,
+					set = function(info, value) module.db.formats.power = value end,
+				},
+			},
 		},
 	},
 }
+
+module.frames = {}
 
 local events = {
 	"PLAYER_ENTERING_WORLD",
@@ -78,19 +113,22 @@ local events = {
 	"UI_SCALE_CHANGED",
 }
 
-local bossFrames = {}
+
 
 local function Update(frame)
 	UnitFrames:PowerBar_Update(frame.powerBar, frame.unit)
 	UnitFrames:HealthBar_Update(frame.health)
 	if frame.model then UnitFrames:UpdateModel(frame.model, frame.unit) end
-	-- if UnitExists(frame.unit) then
+	if UnitExists(frame.unit) then
 		UnitFrames:UpdateInfo(frame)
 		UnitFrames:UpdateRaidIcon(frame)
-	-- end
+	end
 end
 
 local function OnEvent(frame, event, ...)
+	
+	if not frame.isEnabled then return end
+	
 	local arg1, arg2, arg3, arg4, arg5 = ...
 		if event == "PLAYER_ENTERING_WORLD" or event == "DISPLAY_SIZE_CHANGED" or event == "INSTANCE_ENCOUNTER_ENGAGE_UNIT" then
 		Update(frame)
@@ -130,19 +168,91 @@ local function OnEvent(frame, event, ...)
 	end
 end
 
+
+local blizzFrames = {}
+
+local function DisableBlizz()
+
+	for i = 1, MAX_BOSS_FRAMES do
+		local frame = _G["Boss"..i.."TargetFrame"]
+		local spellBar = _G[frame:GetName().."SpellBar"]
+		local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint(frame:GetNumPoints())
+		
+		spellBar.showCastbar = false
+		
+		blizzFrames[i] = { 
+				[1] = point,
+				[2] = relativeTo:GetName(),
+				[3] = relativePoint,
+				[4] = xOfs,
+				[5] = yOfs,
+		}
+
+		if i == 1 then
+			frame:UnregisterEvent("INSTANCE_ENCOUNTER_ENGAGE_UNIT");
+		end
+		
+		frame:ClearAllPoints()
+		frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -500, 500)
+		frame:Hide()
+	end
+end
+
+local function EnableBlizz()
+	for i = 1, MAX_BOSS_FRAMES do
+		local frame = _G["Boss"..i.."TargetFrame"]
+		local spellBar = _G[frame:GetName().."SpellBar"]
+		local point, relativeTo, relativePoint, xOfs, yOfs = unpack(blizzFrames[i])
+
+		spellBar.showCastbar = GetCVarBool("showTargetCastbar")
+		
+		if i == 1 then
+			frame:RegisterEvent("INSTANCE_ENCOUNTER_ENGAGE_UNIT");
+		end
+		
+		frame:ClearAllPoints()
+		frame:SetPoint(point, _G[relativeTo], relativePoint, xOfs, yOfs)
+	end
+end
+
+
 function module:OnInitialize()
-	
+	-- Enable if we're supposed to be enabled
+	if self.db and self.db.enabled and UnitFrames:IsEnabled() then
+		self:Enable()
+	end
 end
 
 function module:OnEnable()
-	if table.getn(bossFrames) == 0 then
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnEnable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
+	DisableBlizz()
+	if table.getn(self.frames) == 0 then
 		for i=1,5 do
 			local frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, _G["Boss"..i.."TargetFrameDropDown"], true, i)
-			table.insert(bossFrames, frame)
+			table.insert(self.frames, frame)
+		end
+	end
+	
+	if table.getn(self.frames) > 0 then
+		for _, frame in ipairs(self.frames) do
+			UnitFrames:EnableFrame(frame)
+			Update(frame)
 		end
 	end
 end
 
 function module:OnDisable()
-
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnDisable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
+	EnableBlizz()
+	for _, frame in ipairs(self.frames) do
+		UnitFrames:DisableFrame(frame)
+	end
 end

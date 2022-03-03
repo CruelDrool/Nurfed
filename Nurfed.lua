@@ -2,9 +2,9 @@ local addonName = ...
 local addon = LibStub("AceAddon-3.0"):NewAddon(addonName, "AceConsole-3.0", "AceEvent-3.0", "AceHook-3.0")
 addon:SetDefaultModuleLibraries("AceEvent-3.0", "AceHook-3.0")
 addon:SetDefaultModuleState(false)
--- _G[addonName] = addon -- uncomment for debugging purposes
+_G[addonName] = addon -- uncomment for debugging purposess
 
-local LDB = LibStub("LibDataBroker-1.1", true)
+-- local LDB = LibStub("LibDataBroker-1.1", true)
 local LDBIcon = LibStub("LibDBIcon-1.0", true)
 
 local defaults = {
@@ -13,74 +13,18 @@ local defaults = {
 	}
 }
 
-function addon:OnInitialize()
-	self.db = LibStub("AceDB-3.0"):New(addonName.."DB", defaults)
-	self.db.RegisterCallback(self, "OnProfileChanged", "UpdateConfigs")
-	self.db.RegisterCallback(self, "OnProfileCopied", "UpdateConfigs")
-	self.db.RegisterCallback(self, "OnProfileReset", "UpdateConfigs")
-		
-	for name, mod in self:IterateModules() do
-		if mod.options then
-			if not self.options.args[name] then
-				self.options.args.modules.args[name] = mod.options
-			end
-		end
-	end
-	
-	if LDB then
-		self.LDBObj = LibStub("LibDataBroker-1.1"):NewDataObject(addonName, {
-			type = "launcher",
-			OnClick = function(frame, msg)
-				if msg == "RightButton" then
-					if LibStub("AceConfigDialog-3.0").OpenFrames[addonName] then
-						-- PlaySound("GAMEGENERICBUTTONPRESS")
-						PlaySound(624)
-						LibStub("AceConfigDialog-3.0"):Close(addonName)
-					else
-						-- PlaySound("GAMEDIALOGOPEN")
-						PlaySound(88)
-						LibStub("AceConfigDialog-3.0"):Open(addonName)
-					end
-				end
-			end,
-			icon = "Interface\\AddOns\\"..addonName.."\\Images\\locked",
-			OnTooltipShow = function(tooltip)
-				if not tooltip or not tooltip.AddLine then return end
-				tooltip:ClearLines() 
-				tooltip:AddLine(addonName, 0, 0.75, 1)
-				tooltip:AddLine("Right Click - Toggle Options", 0.75, 0.75, 0.75)				
-			end,
-		})
+addon.OutOfCombatQueue = {}
 
-		if LDBIcon then
-			LDBIcon:Register(addonName, self.LDBObj, self.db.profile.minimapIcon)
-		end
-	end
-	
-	self:SetupOptions()
-end
+addon.infoMessages = {
+	enableModuleInCombat = "Module %s will be enabled when combat ends.",
+	disableModuleInCombat = "Module %s will be disabled when combat ends.",
+}
 
-function addon:OnEnable()
-	if LDB and LDBIcon then
-		LDBIcon:Refresh(addonName, addon.db.profile.minimapIcon)
-	end
-	
-	self:RegisterEvent("PLAYER_ENTERING_WORLD")
-end
-
-function addon:UpdateConfigs()
-	if LDB and LDBIcon then
-		LDBIcon:Refresh(addonName, addon.db.profile.minimapIcon)
-	end
-	LibStub("AceConfigRegistry-3.0"):NotifyChange(addonName)
-end
-
-function addon:SetupOptions()
-	self.options.plugins.profiles = { profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db) }
-	self.options.name = addonName
-	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(addonName, self.options)
-	-- LibStub("AceConfigDialog-3.0"):AddToBlizOptions(addonName, addonName)
-end
+addon.colors = {
+	addonName = {r = 0, g = 0.75, b = 1},
+	moduleName = {r = 0, g = 1, b = 0},
+	tooltipLine = {r = 0.75, g = 0.75, b = 0.75},
+}
 
 addon.options = {
 	childGroups = "tree",
@@ -97,12 +41,6 @@ addon.options = {
 			-- disabled = function() return not LDBIcon end,
 			disabled = function() return not LDBTitan end,
 		},
-		general = {
-			order = 2,
-			type = "group",
-			name = "General",
-			args = {},
-		},
 		modules = {
 			order = 2,
 			type = "group",
@@ -113,8 +51,99 @@ addon.options = {
 	},
 }
 
+function addon:SetupOptions()
+	self.options.plugins.profiles = { profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db) }
+	self.options.name = addonName
+	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable(addonName, self.options)
+	
+	-- Was getting a bit of taint using the following line:
+	-- LibStub("AceConfigDialog-3.0"):AddToBlizOptions(addonName, addonName)
+end
+
+function addon:OnInitialize()
+	-- Create the DB
+	self.db = LibStub("AceDB-3.0"):New(addonName.."DB", defaults)
+	
+	-- Register callbacks
+	self.db.RegisterCallback(self, "OnProfileChanged", "UpdateConfigs")
+	self.db.RegisterCallback(self, "OnProfileCopied", "UpdateConfigs")
+	self.db.RegisterCallback(self, "OnProfileReset", "UpdateConfigs")
+	
+	-- Get the options created in the modules.
+	for name, mod in self:IterateModules() do
+		if mod.options then
+			if not self.options.args[name] then
+				self.options.args.modules.args[name] = mod.options
+			end
+		end
+	end
+	
+	-- Create the LibDataBroker object. This is used to create the minimap icon later on.
+	self.LDBObj = LibStub("LibDataBroker-1.1"):NewDataObject(addonName, {
+		type = "launcher",
+		OnClick = function(frame, msg)
+			if msg == "RightButton" then
+				if LibStub("AceConfigDialog-3.0").OpenFrames[addonName] then
+					-- PlaySound("GAMEGENERICBUTTONPRESS")
+					PlaySound(624)
+					LibStub("AceConfigDialog-3.0"):Close(addonName)
+				else
+					-- PlaySound("GAMEDIALOGOPEN")
+					PlaySound(88)
+					LibStub("AceConfigDialog-3.0"):Open(addonName)
+				end
+			end
+		end,
+		icon = "Interface\\AddOns\\"..addonName.."\\Images\\locked",
+		OnTooltipShow = function(tooltip)
+			if not tooltip or not tooltip.AddLine then return end
+			tooltip:ClearLines()
+			tooltip:AddDoubleLine(addonName, addon:WrapTextInColorCode(GetAddOnMetadata(addonName, "Version"), addon.colors.tooltipLine), addon:UnpackColorTable(addon.colors.addonName))
+			tooltip:AddLine("Right Click - Toggle Options", addon:UnpackColorTable(addon.colors.tooltipLine))				
+		end,
+	})
+
+	-- Create the minimap icon
+	LDBIcon:Register(addonName, self.LDBObj, self.db.profile.minimapIcon)
+	
+	self:SetupOptions()
+end
+
+function addon:OnEnable()
+	LDBIcon:Refresh(addonName, addon.db.profile.minimapIcon)
+	self:RegisterEvent("PLAYER_ENTERING_WORLD")
+	self:RegisterEvent("PLAYER_REGEN_ENABLED")
+end
+
+function addon:UpdateConfigs()
+	LDBIcon:Refresh(addonName, addon.db.profile.minimapIcon)
+	LibStub("AceConfigRegistry-3.0"):NotifyChange(addonName)
+end
+
 function addon:Transliterate(str, mark)
 	return LibStub("LibTranslit-1.0"):Transliterate(str, mark)
+end
+
+function addon:WrapTextInColorCode(str, colorStr)
+	if type(colorStr) == "table" then
+		colorStr = self:ColorStr(colorStr)
+	end
+	return WrapTextInColorCode(str, colorStr)
+end
+
+function addon:UnpackColorTable(tbl)
+	return tbl.r or 1, tbl.g or 1, tbl.b or 1
+end
+
+function addon:ColorStr(r, g, b)
+	if type(r) == "table" then
+		if r.r then
+			r, g, b = r.r, r.g, r.b
+		else
+			r, g, b = unpack(r)
+		end
+	end
+	return string.format("ff%02x%02x%02x", (r or 1) * 255, (g or 1) * 255, (b or 1) * 255)
 end
 
 function addon:rgbhex(r, g, b)
@@ -125,7 +154,7 @@ function addon:rgbhex(r, g, b)
 			r, g, b = unpack(r)
 		end
 	end
-	return string.format("|cff%02x%02x%02x", (r or 1) * 255, (g or 1) * 255, (b or 1) * 255)
+	return string.format("|c%s", addon:ColorStr(r, g, b))
 end
 
 function addon:CommaNumber(n)
@@ -159,6 +188,11 @@ function addon:print(msg, out, r, g, b, ...)
 	out:AddMessage(msg, (type(r) == "number" and r or 1), (type(g) == "number" and g or 1), (type(b) == "number" and b or 1))
 end
 
+function addon:InfoMessage(msg)
+	local name = string.format("<%s>", addonName)
+	addon:print(string.format("%1$s %2$s", addon:WrapTextInColorCode(name, addon.colors.addonName), msg))
+end
+
 function addon:Binding(bind)
 	local bind = bind or ""
 	bind = bind:upper(bind)
@@ -181,92 +215,43 @@ function addon:Binding(bind)
 	return bind
 end
 
-----------------------------------------------------------------------
--- This should eventually be moved over to the individual unitframe and create enable/disable-functions. This is not the place for this.
 function addon:PLAYER_ENTERING_WORLD()
-	CompactRaidFrameManager:SetFrameLevel(4)
 	UIErrorsFrame:SetPoint("TOP", UIParent,0,-140)
 	-- CameraPanelOptions.cameraDistanceMaxFactor.maxValue = 4
 	ConsoleExec("cameraDistanceMaxFactor 2.6")
 	ConsoleExec("cameraDistanceMax 50")
-	
-	TargetFrame:UnregisterAllEvents()
-	TargetFrame:SetScript("OnEvent", nil)
-	UnregisterUnitWatch(TargetFrame)
-	TargetFrame:Hide()
-	function TargetFrame_Update() end
-	function TargetFrame_OnEvent() end
-	
-	if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
-		TargetFrameNumericalThreat:UnregisterAllEvents()
-		TargetFrameNumericalThreat:SetScript("OnShow", nil)
-		TargetFrameNumericalThreat:SetScript("OnHide", nil)
-		TargetFrameNumericalThreat:SetScript("OnEvent", nil)
-		TargetFrameNumericalThreat:Hide()
-		function UnitFrameThreatIndicator_Initialize() end
-		function UnitFrameThreatIndicator_OnEvent() end
-	end
-	
-	ComboFrame:UnregisterAllEvents()
-	ComboFrame:SetScript("OnEvent", nil)
-	ComboFrame:Hide()
-	function ComboFrame_Update() end
-	function ComboFrame_OnEvent() end
-	
-	PetFrame:UnregisterAllEvents()
-	PetFrame:SetScript("OnEvent", nil)
-	PetFrame:Hide()
-	function PetFrame_Update() end
-	function PetFrame_OnEvent() end
-	
-	PlayerFrame:UnregisterAllEvents()
-	UnregisterUnitWatch(PlayerFrame)
-	PlayerFrame:Hide()
-	function PlayerFrame_Update() end
-	function PlayerFrame_OnEvent() end
-	
-	for i = 1, MAX_PARTY_MEMBERS do
-		local party = _G["PartyMemberFrame"..i]
-		party:UnregisterAllEvents()
-		party:SetScript("OnEnter", nil)
-		party:SetScript("OnEvent", nil)
-		party:SetScript("OnUpdate", nil)
-		party:ClearAllPoints()
-		party:SetPoint("BOTTOMLEFT", UIParent, "TOPLEFT", -400, 500)
-		UnregisterUnitWatch(party)
-		party:Hide()
-	end
-	
-	function PartyMemberFrame_OnEvent() end
-	function PartyMemberFrame_OnUpdate() end
-	function PartyMemberFrame_UpdateMemberHealth() end
-	
-	for i = 1, MAX_BOSS_FRAMES do 
-		local bossframe = _G["Boss"..i.."TargetFrame"]
-		bossframe:UnregisterAllEvents()
-		bossframe:SetScript("OnEvent", nil)
-		bossframe:SetScript("OnUpdate", nil)
-		UnregisterUnitWatch(bossframe)
-		bossframe:Hide()
-	end
+end
 
-	if WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC then
-		UnregisterUnitWatch(FocusFrame)
-		FocusFrame:UnregisterAllEvents()
-		FocusFrame:SetScript("OnEvent", nil)
-		FocusFrame:Hide()
-		function FocusFrame_Update() end
-		function FocusFrame_OnEvent() end
+function addon:AddOutOfCombatQueue(func, tbl)
+	if type(func) == "function" then
+		table.insert(self.OutOfCombatQueue, func)
+	elseif type(func) == "string" then
+		-- Name of method. Will need the table where it is located.
+		if type(tbl)  ~= "table" then
+			error(string.format("Please provide the table where the method '%s' is located.", func))
+			return
+		end
+		if not tbl[func] then
+			error(string.format("The method '%1$s' doesn't exist in the the provided table.", func))
+			return
+		end
+		table.insert(self.OutOfCombatQueue, {tbl, func})
 	end
-	
-	CastingBarFrame:UnregisterAllEvents()
-	CastingBarFrame:SetScript("OnLoad", nil)
-	CastingBarFrame:SetScript("OnEvent", nil)
-	CastingBarFrame:SetScript("OnUpdate", nil)
-	CastingBarFrame:SetScript("OnShow", nil)
-	CastingBarFrame:Hide()
-	-- function CastingBarFrame_OnShow() end
-	-- function CastingBarFrame_OnEvent() end
-	-- function CastingBarFrame_OnUpdate() end
-	
+end
+
+local function EmptyOutOfCombatQueue()
+	for i, entry in pairs(addon.OutOfCombatQueue) do 
+		if type(entry) == "function" then
+			entry()
+		elseif type(entry) == "table" then
+			local tbl = entry[1]
+			local funcName = entry[2]
+			tbl[funcName](tbl)
+		end
+		addon.OutOfCombatQueue[i] = nil
+	end
+end
+
+function addon:PLAYER_REGEN_ENABLED()
+	EmptyOutOfCombatQueue()
 end

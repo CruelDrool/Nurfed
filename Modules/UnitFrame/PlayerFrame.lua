@@ -8,8 +8,8 @@ local unit = "player"
 
 module.defaults = {
 	enabled = true,
+	disableBlizzCastBar = true,
 	formats = {
-		name = "$name",
 		infoline = "$level ($g)",
 		xp = "$cur/$max ($rest)",
 		azerite = "$cur/$max ($level)",
@@ -26,7 +26,6 @@ module.defaults = {
 
 module.options = {
 	type = "group",
-	name = moduleName,
 	name = displayName,
 	-- desc = "",
 	-- icon = "Interface\\GossipFrame\\FooIconThatDoesntExist",
@@ -36,8 +35,73 @@ module.options = {
 			type = "toggle",
 			name = "Enabled",
 			-- desc = "",
-			get = function() return module:IsEnabled() end,
-			set = function() if module:IsEnabled() then module:Disable() else module:Enable() end end,
+			width = "full",
+			get = function() return module.db.enabled end,
+			set = function() if UnitFrames:IsEnabled() then if module.db.enabled then module:Disable() else module:Enable() end end; if module.db.enabled then module.db.enabled = false else module.db.enabled = true end end,
+		},
+		formats = {
+			order = 2,
+			type = "group",
+			width = "full",
+			name = "Text formats",
+			guiInline = true,
+			args = {
+				name = {
+					order = 1,
+					type = "input",
+					name = "Name",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("name", module.frame) end,
+					set = function(info, value) module.db.formats.name = value;UnitFrames:UpdateInfo(module.frame) end,
+				},
+				infoline = {
+					order = 2,
+					type = "input",
+					name = "Infoline",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("infoline", module.frame) end,
+					set = function(info, value) module.db.formats.infoline = value;UnitFrames:UpdateInfo(module.frame) end,
+				},
+				health = {
+					order = 3,
+					type = "input",
+					name = "Health",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("health", module.frame) end,
+					set = function(info, value) module.db.formats.health = value end,
+				},
+				power = {
+					order = 4,
+					type = "input",
+					name = "Power",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("power", module.frame) end,
+					set = function(info, value) module.db.formats.power = value end,
+				},
+				xp = {
+					order = 5,
+					type = "input",
+					name = "Experience",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("xp", module.frame) end,
+					set = function(info, value) module.db.formats.xp = value;module:XPbar_Update(module.frame.xp) end,
+				},
+				azerite = {
+					order = 6,
+					type = "input",
+					name = "Azerite",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("azerite", module.frame) end,
+					set = function(info, value) module.db.formats.azerite = value;module:AzeriteBar_Update(module.frame.azerite) end,
+				},
+			},
+		},
+		blizzCastBar = {
+			order = 3,
+			type = "toggle",
+			name = "Disable Blizzard Castbar",
+			get = function() return module.db.disableBlizzCastBar end,
+			set = function(info, value) module.db.disableBlizzCastBar = value; if value == true then module:DisableBlizzCastBar() else module:EnableBlizzCastBar() end end,
 		},
 	},
 }
@@ -115,9 +179,10 @@ end
 local function Update(frame)
 	UnitFrames:PowerBar_Update(frame.powerBar)
 	UnitFrames:HealthBar_Update(frame.health)
+	UnitFrames:ShowHideHighlight(frame)
+		
+	if frame.model then UnitFrames:UpdateModel(frame.model, frame.unit) end
 	if UnitExists(frame.unit) then
-		if frame.model then frame.model:SetUnit(frame.unit) end
-		if frame.model then frame.model:SetPortraitZoom(1) end
 		UpdateStatus(frame)
 		UpdatePlaytime(frame.playTime)
 		UnitFrames:UpdateInfo(frame)
@@ -130,6 +195,9 @@ local function Update(frame)
 end
 
 local function OnEvent(frame, event, ...)
+
+	if not frame.isEnabled then return end
+	
 	local arg1, arg2, arg3, arg4, arg5 = ...
 	if event == "PLAYER_ENTERING_WORLD" then
 	    frame.inCombat = nil;
@@ -163,11 +231,7 @@ local function OnEvent(frame, event, ...)
 		frame.onHateList = nil
 		UpdateStatus(frame)
 	elseif event == "PLAYER_TARGET_CHANGED" then
-		if UnitExists("target") and UnitIsUnit("target", frame.unit) then
-			frame:LockHighlight()
-		else
-			frame:UnlockHighlight()
-		end
+		UnitFrames:ShowHideHighlight(frame)
 	elseif event == "PLAYER_UPDATE_RESTING" then
 		UpdateStatus(frame)
 	elseif event == "PLAYTIME_CHANGED" then
@@ -193,7 +257,7 @@ local function OnEvent(frame, event, ...)
 	end
 end
 
-local function AzeriteBar_Update(frame)
+function module:AzeriteBar_Update(frame)
 	local currValue, maxValue, currLevel, r, g, b
 	local text, perc = ""
 	local azeriteItemLocation = C_AzeriteItem.FindActiveAzeriteItem()
@@ -214,8 +278,8 @@ local function AzeriteBar_Update(frame)
 		frame:SetValue(1)
 		text = LEVEL.." "..currLevel
 	else
-		text = UnitFrames:GetTextFormat(frame:GetParent(), "azerite")
-		perc = UnitFrames:GetTextFormat(frame:GetParent(), "perc")
+		text = UnitFrames:GetTextFormat("azerite", frame:GetParent())
+		perc = UnitFrames:GetTextFormat("perc", frame:GetParent())
 		
 		currValue, maxValue = C_AzeriteItem.GetAzeriteItemXPInfo(azeriteItemLocation)
 		
@@ -235,7 +299,7 @@ local function AzeriteBar_Update(frame)
 end
 
 local function AzeriteBar_OnEvent(frame)
-	AzeriteBar_Update(frame)
+	module:AzeriteBar_Update(frame)
 end
 
 local function AzeriteBar_OnLoad(frame)
@@ -246,7 +310,8 @@ local function AzeriteBar_OnLoad(frame)
 	frame:SetScript("OnEvent", AzeriteBar_OnEvent)
 end
 
-local function XPbar_Update(frame)
+function module:XPbar_Update(frame)
+
 	local unit = frame.unit
 	local currValue, maxValue, rest, r, g, b
 	local text, perc = ""
@@ -255,8 +320,8 @@ local function XPbar_Update(frame)
 
 	-- text = frame:GetAttribute("textFormat")
 	-- perc = frame:GetAttribute("percFormat")
-	text = UnitFrames:GetTextFormat(frame:GetParent(), "xp")
-	perc = UnitFrames:GetTextFormat(frame:GetParent(), "perc")
+	text = UnitFrames:GetTextFormat("xp", frame:GetParent())
+	perc = UnitFrames:GetTextFormat("perc", frame:GetParent())
 	if name then
 		if friendshipID then
 			local _, friendRep, friendMaxRep, friendName, friendText, friendTexture, friendTextLevel, friendThreshold, nextFriendThreshold = GetFriendshipReputation(factionID)
@@ -328,7 +393,8 @@ local function XPbar_Update(frame)
 end
 
 local function XPbar_OnEvent(frame,event,...)
-	XPbar_Update(frame)
+	if not frame:GetParent().isEnabled then return end
+	module:XPbar_Update(frame)
 end
 
 local function XPbar_OnLoad(frame, unit)
@@ -350,16 +416,96 @@ local function XPbar_OnLoad(frame, unit)
 	frame:SetScript("OnEvent", XPbar_OnEvent)
 end
 
-function module:OnInitialize()
+
+local function AdditionalPowerBar_OnLoad(frame, unit)
+	local _, class = UnitClass(unit)
+	if class == "DRUID" or class == "SHAMAN" or class == "PRIEST" then
+		local statusbar
+		if frame.statusbar then
+			statusbar = frame.statusbar
+			statusbar.isChild = true
+		else
+			statusbar = frame
+		end
+
+		statusbar.powerType = 0 -- ADDITIONAL_POWER_BAR_INDEX only defined in Retail
+		statusbar.updateFunc = function(statusbar)
+			local unit = statusbar.unit
+			local frame
+			if statusbar.isChild then
+				frame = statusbar:GetParent()
+			else
+				frame = statusbar
+			end
+			if UnitPowerType(unit) ~= statusbar.powerType and UnitPowerMax(unit, statusbar.powerType) ~= 0 and (not statusbar.specRestriction or statusbar.specRestriction == GetSpecialization()) then
+				statusbar.pauseUpdates = false
+				frame:Show()
+		
+			else
+				statusbar.pauseUpdates = true
+				frame:Hide()
+			end
+		end
+		
+		UnitFrames:PowerBar_OnLoad(statusbar, unit)
+		UnitFrames:PowerBar_Update(statusbar)
+	end
+end
+
+
+function module:DisableBlizzCastBar()
+	if self.db.disableBlizzCastBar then
+		CastingBarFrame:SetScript("OnEvent", nil)
+		CastingBarFrame:SetScript("OnUpdate", nil)
+		CastingBarFrame:SetScript("OnShow", nil)
+		CastingBarFrame:Hide()
+	end
+end
+
+function module:EnableBlizzCastBar()
+	CastingBarFrame:SetScript("OnEvent", CastingBarFrame_OnEvent)
+	CastingBarFrame:SetScript("OnUpdate", CastingBarFrame_OnUpdate)
+	CastingBarFrame:SetScript("OnShow", CastingBarFrame_OnShow)
+end
+
+local function DisableBlizz()
+	module:DisableBlizzCastBar()
 	
+	PlayerFrame:SetScript("OnEvent", nil)
+	PlayerFrame:SetScript("OnUpdate", nil)
+	PlayerFrame:Hide()
+end
+
+local function EnableBlizz()
+	module:EnableBlizzCastBar()
+	PlayerFrame:SetScript("OnEvent", PlayerFrame_OnEvent)
+	PlayerFrame:SetScript("OnUpdate", PlayerFrame_OnUpdate)
+	PlayerFrame_Update()
+	UnitFrame_Update(PlayerFrame)
+	PlayerFrame:Show()
+end
+
+function module:OnInitialize()
+	-- Enable if we're supposed to be enabled
+	if self.db and self.db.enabled and UnitFrames:IsEnabled() then
+		self:Enable()
+	end
 end
 
 function module:OnEnable()
-	self.db = UnitFrames.db.profile[moduleName]
-	
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnEnable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
+	DisableBlizz()
+	if WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then
+		self.options.args.formats.args.azerite = nil;
+	end
 	if not self.frame then
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PlayerFrameDropDown)
 		if self.frame.xp then XPbar_OnLoad(self.frame.xp, unit) end
+		if self.frame.additionalPowerBar then AdditionalPowerBar_OnLoad(self.frame.additionalPowerBar, unit) end
 		if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE and self.frame.azerite then 
 			AzeriteBar_OnLoad(self.frame.azerite)
 		else
@@ -370,8 +516,28 @@ function module:OnEnable()
 		end
 	end
 	
+	if self.frame then
+		UnitFrames:EnableFrame(self.frame)
+		self.frame.inCombat = nil
+		self.frame.onHateList = nil
+		Update(self.frame)
+
+		if self.frame.xp then
+			module:XPbar_Update(self.frame.xp)
+		end
+		
+		if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE and self.frame.azerite then 
+			self:AzeriteBar_Update(self.frame.azerite)
+		end
+	end
 end
 
 function module:OnDisable()
-
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnDisable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+		return
+	end
+	EnableBlizz()
+	UnitFrames:DisableFrame(module.frame)
 end

@@ -7,13 +7,17 @@ local module = addon:NewModule(moduleName)
 local defaults = {
 	profile = {
 		enabled = true,
+		summaries = {
+			itemsSold = true,
+			moneyReceived = true,
+		},
 	}
 }
 
 module.options = {
 	type = "group",
 	name = displayName,
-	desc = "Automatically sell your scrap to vendors.",
+	desc = "Automatically sell your trash loot to vendors.",
 	icon = "Interface\\GossipFrame\\VendorGossipIcon",
 	args = {
 		enabled = {
@@ -23,6 +27,31 @@ module.options = {
 			-- desc = "",
 			get = function() return module:IsEnabled() end,
 			set = function() if module:IsEnabled() then module:Disable() else module:Enable() end end,
+		},
+		summaries = {
+			order = 2,
+			type = "group",
+			width = "full",
+			name = "Summaries",
+			guiInline = true,
+			args = {
+				itemssold = {
+					order = 2,
+					type = "toggle",
+					name = "Items sold",
+					width = "full",
+					get = function() return module.db.profile.summaries.itemsSold end,
+					set = function(info, value) module.db.profile.summaries.itemsSold = value end,
+				},
+				moneyreceived = {
+					order = 2,
+					type = "toggle",
+					name = "Money received",
+					width = "full",
+					get = function() return module.db.profile.summaries.moneyReceived end,
+					set = function(info, value) module.db.profile.summaries.moneyReceived = value end,
+				},
+			},
 		},
 	},
 }
@@ -35,24 +64,29 @@ local dnsLst = {
 		[32823] = true,
 }
 function module:MERCHANT_SHOW()
-	local soldNum, soldItems, sold, startMoney = 0, "", nil, GetMoney()
+	-- local soldNum, soldItems, sold, startMoney = 0, "", nil, GetMoney()
+	local soldNum, soldItems, sold = 0, "", false
 	local soldLst = {}
+	local earned = 0
 	for bag=0,4,1 do
 		for slot=1, GetContainerNumSlots(bag), 1 do
 			if GetContainerItemLink(bag, slot) then
-				local name, link, rarity = GetItemInfo(GetContainerItemLink(bag, slot))
+				local name, link, rarity,_,_,_,_,_,_, _, sellPrice = GetItemInfo(GetContainerItemLink(bag, slot))
 				if name and not dnsLst[link:find("Hitem:(%d+)")] and rarity == 0 then
+					local itemCount = GetItemCount(link)
 					if not soldLst[name] then
-						if GetItemCount(link) ~= 1 then
-							soldNum = soldNum + GetItemCount(link)
-							soldItems = soldItems == "" and link or soldItems..", "..link.."x"..GetItemCount(link)
+						if itemCount > 1 then
+							soldNum = soldNum + itemCount
+							earned = earned + sellPrice * itemCount
+							soldItems = soldItems == "" and link.."x"..itemCount or soldItems..", "..link.."x"..itemCount
 						else
 							soldNum = soldNum + 1
+							earned = earned + sellPrice
 							soldItems = soldItems == "" and link or soldItems..", "..link
 						end
 						soldLst[name] = true
 					else
-						soldItems = soldItems:gsub(link, link.."x"..GetItemCount(link))
+						soldItems = soldItems:gsub(link, link.."x"..itemCount)
 					end
 					UseContainerItem(bag, slot)
 					sold = true
@@ -61,29 +95,39 @@ function module:MERCHANT_SHOW()
 		end
 	end
 	if sold then
-		if soldNum == 1 then
-			addon:print("|cffffffffSold |r"..soldNum.." |cffffffffItem: |r"..soldItems)
-		else
-			addon:print("|cffffffffSold |r"..soldNum.." |cffffffffItems: |r"..soldItems)
-		end
-		local timer = 1
-		-- self.sellFrame:Show()
-		self.sellFrame:SetScript("OnUpdate", function()
-			timer=timer+1
-			if timer >= 15 then
-				local money = GetMoney() - startMoney
-				if money == 0 then 
-					timer = 0
-					return
-				end
-
-				local gold = math.floor(money / (COPPER_PER_SILVER * SILVER_PER_GOLD))
-				local silver = math.floor((money - (gold * COPPER_PER_SILVER * SILVER_PER_GOLD)) / COPPER_PER_SILVER)
-				local copper = math.fmod(money, COPPER_PER_SILVER)
-				addon:print("|cffffffffReceived|r |c00ffff66"..gold.."g|r |c00c0c0c0"..silver.."s|r |c00cc9900"..copper.."c|r |cfffffffffrom selling trash loot.|r")
-				self.sellFrame:SetScript("OnUpdate", nil)
+		if module.db.profile.summaries.itemsSold then
+			if soldNum == 1 then
+				-- addon:print("|cffffffffSold |r"..soldNum.." |cffffffffItem: |r"..soldItems)
+				ChatFrame_DisplaySystemMessageInPrimary(string.format("Sold %s item: %s.", soldNum, soldItems))
+			else
+				-- addon:print("|cffffffffSold |r"..soldNum.." |cffffffffItems: |r"..soldItems)
+				ChatFrame_DisplaySystemMessageInPrimary(string.format("Sold %s items: %s.", soldNum, soldItems))
 			end
-		end)
+		end
+	
+		if module.db.profile.summaries.moneyReceived then
+			earned = GetMoneyString(earned, true)
+			ChatFrame_DisplaySystemMessageInPrimary(string.format("Received %s from selling trash loot.", addon:WrapTextInColorCode(earned, {1,1,1})))
+			-- local timer = 0
+			-- local timerMax = GetFramerate() * 3
+			-- -- self.sellFrame:Show()
+			-- self.sellFrame:SetScript("OnUpdate", function()
+			-- 	timer=timer+1
+			-- 	if timer >= timerMax then
+			-- 		local money = GetMoney() - startMoney
+			-- 		if money == 0 then 
+			-- 			timer = 0
+			-- 			return
+			-- 		end
+
+			-- 		local gold = math.floor(money / (COPPER_PER_SILVER * SILVER_PER_GOLD))
+			-- 		local silver = math.floor((money - (gold * COPPER_PER_SILVER * SILVER_PER_GOLD)) / COPPER_PER_SILVER)
+			-- 		local copper = math.fmod(money, COPPER_PER_SILVER)
+			-- 		addon:print("|cffffffffReceived|r |c00ffff66"..gold.."g|r |c00c0c0c0"..silver.."s|r |c00cc9900"..copper.."c|r |cfffffffffrom selling trash loot.|r")
+			-- 		self.sellFrame:SetScript("OnUpdate", nil)
+			-- 	end
+			-- end)
+		end
 	end
 end
 
@@ -105,15 +149,15 @@ end
 
 function module:OnEnable()
 	self.db.profile.enabled = true
-	if not self.sellFrame then
-		self.sellFrame = CreateFrame("Frame")
-	end
+	-- if not self.sellFrame then
+	-- 	self.sellFrame = CreateFrame("Frame")
+	-- end
 	self:RegisterEvent("MERCHANT_SHOW")
 end
 
 function module:OnDisable()
 	self.db.profile.enabled = false
-	self:UnregisterEvent("MERCHANT_SHOW")
+	self:UnregisterAllEvents()
 end
 
 function module:UpdateConfigs()

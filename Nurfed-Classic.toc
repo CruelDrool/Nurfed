@@ -28,14 +28,18 @@ Libs\LibClassicCasterino\LibClassicCasterino.lua
 Libs\LibClassicDurations\LibClassicDurations.xml
 
 Nurfed.lua
+
+Modules\ShamanClassColor\ShamanClassColor.lua
+
 Modules\UnitFrame\UnitFrame.lua
 Modules\UnitFrame\Templates.xml
 Modules\UnitFrame\PlayerFrame.xml
 Modules\UnitFrame\TargetFrame.xml
 Modules\UnitFrame\PartyFrames.xml
 Modules\UnitFrame\PetFrame.xml
-Modules\UnitFrame\BossFrames.xml
 
+Modules\MoneyReceipt\MoneyReceipt.lua
 Modules\MicroMenu\MicroMenu.lua
 Modules\Chat\Chat.lua
 Modules\AutoSell\AutoSell.lua
+Modules\CustomTimeAbbreviation\CustomTimeAbbreviation.lua
