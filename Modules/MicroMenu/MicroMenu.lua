@@ -32,10 +32,10 @@ local function GetMenuButtonText(text, binding, textFormat, abbr)
 	if not binding then return text end
 	if not abbr then abbr = true end
 	if not textFormat then textFormat = "$t |cffffd200($b)|r" end
-	
+
 	textFormat = textFormat:gsub("$t", text, 1)
 	textFormat = textFormat:gsub("$b", "%%s", 1)
-	
+
 	if GetBindingKey(binding) then
 		-- binding = GetBindingText(GetBindingKey(binding), false)
 		binding = GetBindingKey(binding)
@@ -49,7 +49,7 @@ local function GetMenuButtonText(text, binding, textFormat, abbr)
 				return w
 			end)
 		end
-		
+
 		text = string.format(textFormat, binding)
 	end
 
@@ -243,7 +243,7 @@ local function ButtonsArray()
 		BLANK = { isTitle = 1, notClickable = 1},
 		CANCEL = { text = CANCEL },
 		TITLE = { text = displayName, isTitle = 1, notClickable = 1 },
-		
+
 		SOCIAL_MENU = { text = GetMenuButtonText(SOCIAL_BUTTON, "TOGGLESOCIAL"), func = function() ToggleFriendsFrame() end, nested = 1, },
 
 		FRIENDS_MENU = { text = GetMenuButtonText(FRIENDS, "TOGGLEFRIENDSTAB"), func = function() ToggleFriendsFrame(1) end, nested = 1, },
@@ -256,13 +256,13 @@ local function ButtonsArray()
 		QUICK_JOIN = { text = GetMenuButtonText(QUICK_JOIN, "TOGGLEQUICKJOINTAB"), func = function() ToggleFriendsFrame(4) end, },
 
 		CHARACTER = { text = GetMenuButtonText(CHARACTER_BUTTON, "TOGGLECHARACTER0"), func = function() ToggleCharacter("PaperDollFrame"); end, },
-		
+
 		-- SPELLBOOK_ABILITIES = { text = GetMenuButtonText(SPELLBOOK_ABILITIES_BUTTON, "TOGGLESPELLBOOK"), func = function() SpellbookMicroButton:Click() end, },
 		SPELLBOOK_ABILITIES_MENU = { text = GetMenuButtonText(SPELLBOOK_ABILITIES_BUTTON), nested = 1, },
 		SPELLBOOK = { text = GetMenuButtonText(SPELLBOOK, "TOGGLESPELLBOOK"), func = function() ToggleSpellBook(BOOKTYPE_SPELL) end, },
 		PROFESSIONSBOOK = { text = GetMenuButtonText(TRADE_SKILLS, "TOGGLEPROFESSIONBOOK"), func = function() ToggleSpellBook(BOOKTYPE_PROFESSION) end, },
 		PETBOOK = { text = GetMenuButtonText(PET, "TOGGLEPETBOOK"), func = function() ToggleSpellBook(BOOKTYPE_PET ) end, disabled = true, },
-		
+
 		TALENTS = { text = GetMenuButtonText(talentsText, "TOGGLETALENTS"), func = function() TalentMicroButton:Click() end, },
 		ACHIEVEMENTS = { text = GetMenuButtonText(ACHIEVEMENT_BUTTON, "TOGGLEACHIEVEMENT"), func = function() ToggleAchievementFrame() end, },
 		QUESTLOG = { text = GetMenuButtonText(QUESTLOG_BUTTON, "TOGGLEQUESTLOG"), func = function() ToggleQuestLog() end, },
@@ -271,7 +271,7 @@ local function ButtonsArray()
 		COLLECTIONS = { text = GetMenuButtonText(COLLECTIONS, "TOGGLECOLLECTIONS"), func = function() CollectionsMicroButton:Click() end, },
 		ADVENTURE_JOURNAL = { text = GetMenuButtonText(ADVENTURE_JOURNAL, "TOGGLEENCOUNTERJOURNAL"), func = function() EJMicroButton:Click() end },
 		BLIZZARD_STORE = { text = BLIZZARD_STORE, func = function() ToggleStoreUI() end, },
-		
+
 		GAME_MENU = { text = GetMenuButtonText(MAINMENU_BUTTON, "TOGGLEGAMEMENU"), func = function() 
 			if GameMenuFrame:IsShown() then
 				PlaySound(SOUNDKIT.IG_MAINMENU_QUIT)
@@ -290,43 +290,39 @@ local function ButtonsArray()
 		KEY_BINDINGS = { text = KEY_BINDINGS, func = function() GameMenuButtonKeybindings:Click() end, },
 		MACROS = { text = MACROS, func = function() ShowMacroFrame() end, },
 		ADDONS = { text = ADDONS, func = function() GameMenuButtonAddons:Click() end, },
-		
+
 		MAP = { text = GetMenuButtonText(WORLDMAP_BUTTON, "TOGGLEWORLDMAP"), func = function() ToggleWorldMap() end, },
-		
+
 		-- The functions for the buttons below are now restricted by Blizzard. The buttons are now disabled.
 		LOGOUT = { text = LOGOUT, func = function() Logout() end, disabled = true, },
 		EXIT_GAME = { text = EXIT_GAME, func = function() Quit() end, disabled = true, },
 	}
-	
+
 	local level = UnitLevel("player")
 
 	if level < minLevelSpec then
 		buttons["TALENTS"]["disabled"] = true
 		buttons["TALENTS"]["text"] = GetMenuButtonText(string.format('%s (%s)', talentsText, string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, minLevelSpec)), "TOGGLETALENTS")
 	end
-	
+
 	if IsTrialAccount() then
 		buttons["BLIZZARD_STORE"]["disabled"] = true
 		buttons["BLIZZARD_STORE"]["text"] = string.format('%s (%s)', BLIZZARD_STORE, ERR_RESTRICTED_ACCOUNT_TRIAL)
 	end
-	
+
 	if UnitFactionGroup("player") ~= "Neutral" then
 		local disabled, text = false, ""
 		if IsTrialAccount() then
 			disabled = true
 			text = string.format('%s (%s)', LOOKINGFORGUILD, ERR_RESTRICTED_ACCOUNT_TRIAL)
-		elseif IsInGuild() then
+		else
 			if WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then
+				if not IsInGuild() then
+					disabled = true
+				end
 				text = GUILD
 			else
 				text = GUILD_AND_COMMUNITIES
-			end
-		else
-			if WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then
-				disabled = true
-				text = GUILD
-			else
-				text = LOOKINGFORGUILD
 			end
 		end
 		buttons["GUILD"]["disabled"] = disabled
@@ -339,20 +335,20 @@ local function ButtonsArray()
 	else
 		buttons["GUILD"]["disabled"] = true
 		buttons["GUILD"]["text"] = GetMenuButtonText(string.format('%s (%s)', LOOKINGFORGUILD, FEATURE_NOT_AVAILBLE_PANDAREN), "TOGGLEGUILDTAB")
-		
+
 		buttons["DUNGEONS"]["disabled"] = true
 		buttons["DUNGEONS"]["text"] = GetMenuButtonText(string.format('%s (%s)', DUNGEONS_BUTTON, FEATURE_NOT_AVAILBLE_PANDAREN), "TOGGLEGROUPFINDER")		
 	end
-	
+
 	if not (C_AdventureJournal and C_AdventureJournal.CanBeShown()) then
 		buttons["ADVENTURE_JOURNAL"]["disabled"] = true
 		buttons["ADVENTURE_JOURNAL"]["text"] = GetMenuButtonText(string.format('%s (%s)', ADVENTURE_JOURNAL, FEATURE_NOT_YET_AVAILABLE), "TOGGLEENCOUNTERJOURNAL")
 	end
-	
+
 	if HasPetSpells() or PetHasSpellbook() then
-		buttons["PETBOOK"]["disabled"] = false	
+		buttons["PETBOOK"]["disabled"] = false
 	end
-	
+
 	return buttons
 end
 
@@ -361,27 +357,27 @@ local function MenuInit(frame, level)
 	local buttons = ButtonsArray()
 	local menu
 	-- local info = UIDropDownMenu_CreateInfo() -- is it needed?
-	
+
 	if level == 1 then
 		menu = mainMenu
 	else
 		menu = subMenus[UIDROPDOWNMENU_MENU_VALUE]
 	end
-	
+
 	for _, button in ipairs(menu) do 
 		local info = buttons[button]
-		
+
 		info.value = button
-		
+
 		if info.nested then
 			info.hasArrow = true
 			info.keepShownOnClick = true
 		end
-		
+
 		if not info.checkable then 
 			info.notCheckable = true
 		end
-		
+
 		if info.iconOnly then
 			info.hasArrow = false
 			info.iconInfo = { tCoordLeft = info.tCoordLeft,
@@ -394,7 +390,7 @@ local function MenuInit(frame, level)
 		else
 			info.iconInfo = nil
 		end
-		
+
 		UIDropDownMenu_AddButton(info,level)
 	end
 end
@@ -403,12 +399,12 @@ end
 function module:OnInitialize()
 	-- Register DB namespace
 	self.db = addon.db:RegisterNamespace(moduleName, defaults)
-	
+
 	-- Register callbacks
 	self.db.RegisterCallback(self, "OnProfileChanged", "UpdateConfigs")
 	self.db.RegisterCallback(self, "OnProfileCopied", "UpdateConfigs")
 	self.db.RegisterCallback(self, "OnProfileReset", "UpdateConfigs")
-	
+
 	-- Enable if we're supposed to be enabled
 	if self.db.profile.enabled then
 		self:Enable()
@@ -428,7 +424,7 @@ function module:OnEnable()
 	end)
 
 	self:SecureHook(addon.LDBObj,"OnTooltipShow", function(tooltip) tooltip:AddLine("Middle Click - "..displayName, 0.75, 0.75, 0.75) end)
-	
+
 	if LDBTitan and _G["TitanPanel"..addonName.."Button"] then
 		LDBTitan:TitanLDBHandleScripts("OnTooltipShow", addonName, nil, addon.LDBObj.OnTooltipShow, addon.LDBObj)
 		LDBTitan:TitanLDBHandleScripts("OnClick", addonName, nil, addon.LDBObj.OnClick)
