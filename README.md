@@ -46,20 +46,23 @@ This whole project is somewhat of an on and off thing, so the likelihood of it g
 			* Show milliseconds.
 		* Outputformats.
 	* Auto sell (sells your grey trash loot)
-	* Wow micro menu:
+	* WoW micro menu:
 		* All buttons are added and working.
 		* Keybindings displayed.
 		* Some buttons greyed out if the the features aren't available to the player.
 	* Custom time abbreviation: Custom function to convert seconds into days, hours and minutes.
 	* Shaman class color (Classic): set the color to blue like in TBC and later.
 	* Money receipt (Classic and BCC): the money receipt feature that exists Retail. Tells you how much you've gained at the vendor/mailbox.
+	* Auto repair:
+		* Set limit for how much can be used each time.
+		* Use guild bank when possible (Retail).
+		* Output amount spent on repairs.
 	
 
 ### What's missing/incomplete
 * Options are incomplete, but improving.
 * Skins.
 * Missing features (that I can think of):
-	* Auto-repair.
 	* Showing who is pinging the minimap.
 	* When ready check is completed, output to chat if everyone is ready or if someone is away.
 	* Invite features:
