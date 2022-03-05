@@ -54,12 +54,10 @@ module.ShamanClassColorCopy = {
 }
 
 function module:SetShamanBlueClassColor()
-	if self.db.profile.shamancolor then
-		RAID_CLASS_COLORS["SHAMAN"].r = module.ShamanClassColorBlue.r
-		RAID_CLASS_COLORS["SHAMAN"].g = module.ShamanClassColorBlue.g
-		RAID_CLASS_COLORS["SHAMAN"].b = module.ShamanClassColorBlue.b
-		RAID_CLASS_COLORS["SHAMAN"].colorStr = module.ShamanClassColorBlue.colorStr
-	end
+	RAID_CLASS_COLORS["SHAMAN"].r = module.ShamanClassColorBlue.r
+	RAID_CLASS_COLORS["SHAMAN"].g = module.ShamanClassColorBlue.g
+	RAID_CLASS_COLORS["SHAMAN"].b = module.ShamanClassColorBlue.b
+	RAID_CLASS_COLORS["SHAMAN"].colorStr = module.ShamanClassColorBlue.colorStr
 end
 
 function module:UnsetShamanBlueClassColor()
