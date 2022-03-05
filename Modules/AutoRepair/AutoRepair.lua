@@ -13,7 +13,7 @@ local defaults = {
 			silver = 0,
 			copper = 0,
 		},
-		guildBank = WOW_PROJECT_ID == WOW_PROJECT_MAINLINE,
+		guildBank = WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC,
 		summary = true,
 	}
 }
@@ -103,7 +103,7 @@ module.options = {
 			type = "toggle",
 			name = "Use guild bank when possible.",
 			width = "full",
-			hidden =  WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE,
+			hidden =  WOW_PROJECT_ID == WOW_PROJECT_CLASSIC,
 			get = function() return module.db.profile.guildBank end,
 			set = function(info, value) module.db.profile.guildBank = value end,
 		},
@@ -132,7 +132,7 @@ function module:MERCHANT_SHOW()
 	if canRepair and repairAllCost <= limit then
 		local cost = GetMoneyString(repairAllCost, true)
 		local message
-		if module.db.profile.guildBank and CanGuildBankRepair() and min(GetGuildBankWithdrawMoney(), GetGuildBankMoney()) > repairAllCost then
+		if module.db.profile.guildBank and IsInGuild() and CanGuildBankRepair() and min(GetGuildBankWithdrawMoney(), GetGuildBankMoney()) > repairAllCost then
 			RepairAllItems(1)
 			message = string.format("Spent %s on repairs (guild).", addon:WrapTextInColorCode(cost, {1,1,1}))
 		else

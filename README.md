@@ -55,7 +55,7 @@ This whole project is somewhat of an on and off thing, so the likelihood of it g
 	* Money receipt (Classic and BCC): the money receipt feature that exists Retail. Tells you how much you've gained at the vendor/mailbox.
 	* Auto repair:
 		* Set limit for how much can be used each time.
-		* Use guild bank when possible (Retail).
+		* Use guild bank when possible (BCC and later).
 		* Output amount spent on repairs.
 	
 
