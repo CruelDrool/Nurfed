@@ -48,15 +48,15 @@ local defaults = {
 			enabled = true,
 			warning = {
 				perc = 0.3,
-				freq = 0.7,
+				interval = 1.5,
 			},
 			dangerous = {
 				perc = 0.2,
-				freq = 0.5,
+				interval = 1,
 			},
 			critical = {
 				perc = 0.1,
-				freq = 0.3,
+				interval = 0.5,
 			},
 		},
 		transliterate = {
@@ -151,21 +151,21 @@ module.options = {
 						perc = {
 							order = 1,
 							name = "Percent",
-							-- desc = "",
+							desc = "Health threshold.",
 							type = "range",
 							isPercent = true,
 							min = 0.01, max = 1, step = 0.01,
 							get = function() return module.db.profile.lowHealthFlash.warning.perc end,
 							set = function(info, value) module.db.profile.lowHealthFlash.warning.perc = value end,
 						},
-						freq = {
+						interval = {
 							order = 2,
-							name = "Frequency",
-							-- desc = "",
+							name = "Interval length/duration",
+							desc = "How many seconds to complete a full flash cycle (from full opacity to none and back to full again).",
 							type = "range",
-							min = 0.1, max = 1, step = 0.1,
-							get = function() return module.db.profile.lowHealthFlash.warning.freq end,
-							set = function(info, value) module.db.profile.lowHealthFlash.warning.freq = value end,
+							min = 0.1, max = 5, step = 0.05,
+							get = function() return module.db.profile.lowHealthFlash.warning.interval end,
+							set = function(info, value) module.db.profile.lowHealthFlash.warning.interval = value end,
 						},
 					},
 				},
@@ -179,21 +179,21 @@ module.options = {
 						perc = {
 							order = 1,
 							name = "Percent",
-							-- desc = "",
+							desc = "Health threshold.",
 							type = "range",
 							isPercent = true,
 							min = 0.01, max = 1, step = 0.01,
 							get = function() return module.db.profile.lowHealthFlash.dangerous.perc end,
 							set = function(info, value) module.db.profile.lowHealthFlash.dangerous.perc = value end,
 						},
-						freq = {
+						interval = {
 							order = 2,
-							name = "Frequency",
-							-- desc = "",
+							name = "Interval length/duration",
+							desc = "How many seconds to complete a full flash cycle (from full opacity to none and back to full again).",
 							type = "range",
-							min = 0.1, max = 1, step = 0.1,
-							get = function() return module.db.profile.lowHealthFlash.dangerous.freq end,
-							set = function(info, value) module.db.profile.lowHealthFlash.dangerous.freq = value end,
+							min = 0.1, max = 5, step = 0.05,
+							get = function() return module.db.profile.lowHealthFlash.dangerous.interval end,
+							set = function(info, value) module.db.profile.lowHealthFlash.dangerous.interval = value end,
 						},
 					},
 				},
@@ -207,21 +207,21 @@ module.options = {
 						perc = {
 							order = 1,
 							name = "Percent",
-							-- desc = "",
+							desc = "Health threshold.",
 							type = "range",
 							isPercent = true,
 							min = 0.01, max = 1, step = 0.01,
 							get = function() return module.db.profile.lowHealthFlash.critical.perc end,
 							set = function(info, value) module.db.profile.lowHealthFlash.critical.perc = value end,
 						},
-						freq = {
+						interval = {
 							order = 2,
-							name = "Frequency",
-							-- desc = "",
+							name = "Interval length/duration",
+							desc = "How many seconds to complete a full flash cycle (from full opacity to none and back to full again).",
 							type = "range",
-							min = 0.1, max = 1, step = 0.1,
-							get = function() return module.db.profile.lowHealthFlash.critical.freq end,
-							set = function(info, value) module.db.profile.lowHealthFlash.critical.freq = value end,
+							min = 0.1, max = 5, step = 0.05,
+							get = function() return module.db.profile.lowHealthFlash.critical.interval end,
+							set = function(info, value) module.db.profile.lowHealthFlash.critical.interval = value end,
 						},
 					},
 				},
@@ -333,23 +333,23 @@ function module:OnInitialize()
 				self.options.args[name] = m.options
 			end
 		end
-		-- Need to do this part because we have modules to this module and 
+		-- Need to do this part because we have modules to this module and
 		-- the child-databases (created by :RegisterNamespace) only have :RegisterDefaults and :ResetProfile available.
 		if m.defaults then
 			defaults.profile[name] = m.defaults
 		end
 	end
-	
+
 	-- Register DB namespace
 	self.db = addon.db:RegisterNamespace(moduleName, defaults)
-	
+
 	-- Register callbacks
 	self.db.RegisterCallback(self, "OnProfileChanged", "UpdateConfigs")
 	self.db.RegisterCallback(self, "OnProfileCopied", "UpdateConfigs")
 	self.db.RegisterCallback(self, "OnProfileReset", "UpdateConfigs")
-	
+
 	self.locked = true
-	
+
 	-- Enable if we're supposed to be enabled
 	if self.db.profile.enabled then
 		self:Enable()
@@ -361,7 +361,7 @@ function module:ToggleModules()
 	for name, m in self:IterateModules() do
 		-- Give the module access to its database.
 		m.db = self.db.profile[name]
-		
+
 		if m.db.enabled then
 			m:Enable()
 		else
@@ -377,7 +377,7 @@ function module:OnEnable()
 			addon.LDBObj.OnTooltipShow(LibDBIconTooltip)
 		end
 	end)
-	
+
 	self:SecureHook(addon.LDBObj,"OnTooltipShow", function(tooltip)
 		if module.locked then
 			tooltip:AddLine(string.format("Left Click - %s UI", addon:WrapTextInColorCode("Unlock", {1, 0, 0})), addon:UnpackColorTable(addon.colors.tooltipLine))
@@ -385,14 +385,14 @@ function module:OnEnable()
 			tooltip:AddLine(string.format("Left Click - %s UI", addon:WrapTextInColorCode("Lock", {0, 1, 0})), addon:UnpackColorTable(addon.colors.tooltipLine))
 		end
 	end)
-	
+
 	if LDBTitan and _G["TitanPanel"..addonName.."Button"] then
 		LDBTitan:TitanLDBHandleScripts("OnTooltipShow", addonName, nil, addon.LDBObj.OnTooltipShow, addon.LDBObj)
 		LDBTitan:TitanLDBHandleScripts("OnClick", addonName, nil, addon.LDBObj.OnClick)
 	end
-	
+
 	self:RegisterEvent("PLAYER_REGEN_DISABLED")
-	
+
 	self.db.profile.enabled = true
 	self:ToggleModules()
 end
@@ -401,7 +401,7 @@ function module:OnDisable()
 	if not self.locked then
 		self:Lock()
 	end
-	
+
 	self:UnhookAll()
 	self:UnregisterAllEvents()
 	self.db.profile.enabled = false
@@ -430,7 +430,7 @@ function module:DisableUnitframes()
 end
 
 function module:UpdateConfigs()
-	if self.db.profile.enabled then 
+	if self.db.profile.enabled then
 		-- If profile says that the module is supposed to enabled, but it isn't already, then go ahead and enable it.
 		if not self:IsEnabled() then
 			self:Enable()
@@ -444,14 +444,14 @@ function module:UpdateConfigs()
 			self:Disable()
 		end
 	end
-	
+
 	for f, modName in pairs(self.frames) do
 		if f then
 			local frame = _G[f]
 			local db = self.db.profile[modName].frames[frame.unit]
 			-- The reference to where the frame stores its positioning data has been removed.
 			-- Need to re-register the config/storage.
-			frame.RegisterConfig(frame, db) 
+			frame.RegisterConfig(frame, db)
 			frame:RestorePosition(frame)
 			if frame.model then
 				frame.model:RefreshUnit()
@@ -465,38 +465,38 @@ function module:CreateFrame(modName, unit, events, oneventfunc, dropdownMenu, is
 	if not type(unit) == "string" then return end
 	if not type(events) == "table" then return end
 	if not id then id = 0 end
-	
+
 	local name = addonName.."_"..unit
 	local template = self.db.profile.templatePrefix..unit
-	
+
 	if id > 0 then name = name..id end
-	
+
 	if self.frames[name] then return end
-	
+
 	local frame = CreateFrame("Button", name, UIParent, template, id)
 
-	if id > 0 then  
+	if id > 0 then
 		frame.unit = unit..id
 	else
 		frame.unit = unit
 	end
 
-	if isWatched then 
-		-- RegisterUnitWatch(frame); 
-		frame.isWatched = true 
+	if isWatched then
+		-- RegisterUnitWatch(frame);
+		frame.isWatched = true
 	end
-		
+
 	for _, event in pairs(events) do
 		if type(event) == "string" then
 			frame:RegisterEvent(event)
 		end
 	end
-	
+
 	if frame.health then self:HealthBar_OnLoad(frame.health) end
 	if frame.powerBar then self:PowerBar_OnLoad(frame.powerBar, frame.unit) end
 	if frame.cast then self:CastBar_OnLoad(frame.cast, frame.unit) end
 	if frame.threat then self:ThreatBar_OnLoad(frame.threat, unit) end
-	
+
 	if frame.target then self:TargetofTarget_Onload(frame.target, frame.unit.."target") end
 	if frame.targettarget then self:TargetofTarget_Onload(frame.targettarget, frame.unit.."targettarget") end
 	if frame.pet then self:TargetofTarget_Onload(frame.pet, unit.."pet"..id) end -- partypetN, not partyNpet!
@@ -505,24 +505,24 @@ function module:CreateFrame(modName, unit, events, oneventfunc, dropdownMenu, is
 	if type(oneventfunc) == "function" then
 		frame:SetScript("OnEvent", oneventfunc)
 	end
-		
+
 	frame:SetScript("OnMouseWheel", function(frame, delta) module:OnMouseWheel(frame, delta) end)
-	
+
 	frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-	
+
 	if type(dropdownMenu) == "table" then
-		
+
 		local showmenu = function()
 			ToggleDropDownMenu(1, nil, dropdownMenu, "cursor")
 		end
 		SecureUnitButton_OnLoad(frame, frame.unit, showmenu)
 	end
-	
+
 	local db = self.db.profile[modName].frames[frame.unit]
 	LibStub("LibWindow-1.1"):Embed(frame)
 	frame.RegisterConfig(frame, db)
 	frame:RestorePosition(frame)
-	
+
 	self.frames[name] = modName
 
 	return frame
@@ -564,7 +564,7 @@ function module:Lock()
 		addon:InfoMessage("Unlocking the UI when combat ends.")
 		return
 	end
-	
+
 	-- if module.locked and not InCombatLockdown() then
 	if module.locked then
 		module.locked = false
@@ -610,7 +610,7 @@ end
 
 function module:GetTextFormat(f,frame, modName)
 	modName = modName or frame and self.frames[frame:GetName()]
-	
+
 	if modName ~= nil then
 		if self.db.profile[modName].formats then
 			if self.db.profile[modName].formats[f] then
@@ -653,7 +653,7 @@ local Colour_Gradients = {
 		midHP = {1.0, 1.0, 0.0},
 		maxHP = {0.0, 1.0, 0.0},
 	},
-	[1] = { 
+	[1] = {
 		minHP = { 0.8078431372549, 0.66666666666667, 0.66666666666667 },
 		midHP = { 0.43137254901961, 0.32843137254902, 0.42745098039216 },
 		maxHP = { 0.30588235294118, 0.4156862745098, 0.56078431372549 },
@@ -752,7 +752,7 @@ function module:Replace(unit, textFormat)
 				-- color = "ffff00ff"
 				color = {1,0,1}
 			end
-			
+
 			if self.db.profile.transliterate.enabled then
 				guildName = addon:Transliterate(guildName, self.db.profile.transliterate.mark)
 			end
@@ -762,7 +762,7 @@ function module:Replace(unit, textFormat)
 			out = out:gsub("%S*$guild%S*%s?", "")
 		end
 	end
-	
+
 	if string.find(textFormat,"$level") then
 		local level = UnitEffectiveLevel(unit)
 		-- local level = UnitLevel(unit)
@@ -785,7 +785,7 @@ function module:Replace(unit, textFormat)
 		elseif level > 0 and (classification == "rareelite" or classification == "elite" or classification == "rare") then
 			level = level.."+"
 		end
-		
+
 		if classification == "worldboss" then
 			level = BOSS
 			r, g, b = 1, 0, 0
@@ -814,7 +814,7 @@ function module:Replace(unit, textFormat)
 		level = addon:WrapTextInColorCode(level, {r, g, b})
 		out = out:gsub("$level", level)
 	end
-	
+
 	if string.find(textFormat,"$class") then
 		local class = ""
 		if UnitIsPlayer(unit) then
@@ -837,9 +837,9 @@ function module:Replace(unit, textFormat)
 			elseif UnitCreatureType(unit) then
 				class = UnitCreatureType(unit)
 			end
-			
+
 			local classification = UnitClassification(unit)
-			
+
 			if classification == "rareelite" then
 				class = ITEM_QUALITY3_DESC.."-"..ELITE.." "..class
 			elseif classification == "rare" then
@@ -847,10 +847,10 @@ function module:Replace(unit, textFormat)
 			elseif classification == "elite" then
 				class = ELITE.." "..class
 			end
-		end	
+		end
 		out = out:gsub("$class", class)
 	end
-	
+
 	if string.find(textFormat,"$race") then
 		if UnitIsPlayer(unit) then
 			local race = UnitRace(unit)
@@ -859,7 +859,7 @@ function module:Replace(unit, textFormat)
 			out = out:gsub("%S*$race%S*%s?", "")
 		end
 	end
-	
+
 	if string.find(textFormat,"$sex") then
 		local sex = UnitSex(unit)
 		if sex > 1 then
@@ -870,7 +870,7 @@ function module:Replace(unit, textFormat)
 			out = out:gsub("$sex", NONE)
 		end
 	end
-	
+
 	if string.find(textFormat,"$group") then
 		if UnitIsPlayer(unit) and UnitPlayerOrPetInParty(unit) and IsInRaid() then
 			local groupNumber = RaidInfo(unit)
@@ -920,7 +920,7 @@ function module:Replace(unit, textFormat)
 		if keyBindingsMap[unit] then
 			binding = addon:Binding(GetBindingKey(keyBindingsMap[unit]))
 		end
-		
+
 		if binding ~= "" then
 			out = out:gsub("$key", binding)
 		else
@@ -957,13 +957,13 @@ function module:UpdateLoot(frame)
 			end
 		end
 	end
-	
+
 	if showIcon then
 		icon:Show()
 	else
 		icon:Hide()
 	end
-	
+
 end
 
 function module:UpdatePartyLeader(frame)
@@ -997,7 +997,7 @@ function module:UpdateRoles(frame)
     else
         LFGicon:Hide()
     end
-	
+
 	local _, raidRole = RaidInfo(frame.unit)
 	local raidIcon = frame.raidRole
 	if raidRole == "MAINASSIST" then
@@ -1026,7 +1026,7 @@ function module:UpdateLevel(frame)
 	if textFormat ~= nil then
 		level = self:Replace(frame.unit, textFormat)
 	end
-	
+
 	frame.level:SetText(level)
 end
 
@@ -1048,7 +1048,7 @@ function module:UpdateInfo(frame)
 	if frame.name then self:UpdateName(frame) end
 	if frame.level then self:UpdateLevel(frame) end
 	if frame.group then self:UpdateGroupIndicator(frame) end
-	if frame.infoline then 
+	if frame.infoline then
 		local textFormat = self:GetTextFormat("infoline", frame)
 		local infoline
 		if textFormat ~= nil then
@@ -1162,7 +1162,7 @@ HEALTHBAR functions
 
 local function HealthBar_Text(frame)
 	local unit = frame:GetParent().unit
-	
+
 	local text = module:GetTextFormat("health", frame:GetParent())
 	local miss = module:GetTextFormat("miss", frame:GetParent())
 	local perc = module:GetTextFormat("perc", frame:GetParent())
@@ -1196,56 +1196,57 @@ local function HealthBar_Text(frame)
 			perc = perc:gsub("$perc", module:FormatPercentage(percent))
 		end
 	end
-	
+
 	if text ~= nil then
 		text = text:gsub("$cur", addon:CommaNumber(frame.currValue))
 		text = text:gsub("$max", addon:FormatNumber(frame.maxValue))
 	end
-	
+
 	if frame.miss then frame.miss:SetText(miss) end
 	if frame.text then frame.text:SetText(text) end
 	if frame.perc then frame.perc:SetText(perc) end
-		
+
 end
 
 function HealthBar_Gradient(frame, elapsed, gradient)
 	if not gradient then gradient = 0 end
-	
+
 	-- local unit = frame:GetParent().unit
+	local alpha = 1;
 	local perc = frame.currValue / frame.maxValue
 
-	local alpha = 255;
-	local perc = frame.currValue / frame.maxValue
-	-- Blinking healthbar at low HP!
 	if module.db.profile.lowHealthFlash.enabled and UnitIsFriend("player", frame:GetParent().unit) and perc <= module.db.profile.lowHealthFlash.warning.perc then
-		local divisor =  module.db.profile.lowHealthFlash.warning.freq
-				
-		if perc <= module.db.profile.lowHealthFlash.dangerous.perc then
-			divisor = module.db.profile.lowHealthFlash.dangerous.freq
-		elseif perc <= module.db.profile.lowHealthFlash.critical.perc then
-			divisor = module.db.profile.lowHealthFlash.critical.freq
-		end
-		
-		if elapsed then
-			local counter = frame.statusCounter + elapsed;
-			local sign    = frame.statusSign;
-	 
-			if ( counter > divisor ) then
-				sign = -sign;
-				frame.statusSign = sign;
-			end
-			counter = mod(counter, divisor);
-			frame.statusCounter = counter;
+		local interval = module.db.profile.lowHealthFlash.warning.interval
 
-			if ( sign == 1 ) then
-				alpha = (55  + (counter * 400)) / 255;
-			else
-				alpha = (255 - (counter * 400)) / 255;
+		if perc <= module.db.profile.lowHealthFlash.dangerous.perc then
+			interval = module.db.profile.lowHealthFlash.dangerous.interval
+		end
+
+		if perc <= module.db.profile.lowHealthFlash.critical.perc then
+			interval = module.db.profile.lowHealthFlash.critical.interval
+		end
+
+		-- Safety measure to avoid dividing by zero later on.
+		interval = interval > 0 and interval or 1
+
+		if elapsed then
+			-- Get current alpha value.
+			local a = select(4, frame:GetStatusBarColor())
+
+			-- Calculate how much to reduce/increase the alpha value by.
+			-- Half the interval duration is spent reducing the alpha, the other half is spent increasing it.
+			local step = elapsed / (interval * 0.5)
+
+			-- frame.statusSign determines whether the alpha is reduced or increased.
+			alpha = a - step * frame.statusSign
+
+			-- If the alpha value goes under 0 or over 1, switch frame.statusSign to either 1 or -1. Initially it's set to -1 in the OnLoad function.
+			if alpha <= 0 or alpha >= 1 then
+				frame.statusSign = -frame.statusSign;
 			end
-			--frame:SetAlpha(alpha)
 		end
 	end
-	
+
 	local r1, g1, b1
 	local r2, g2, b2
 	if perc <= 0.5 then
@@ -1263,7 +1264,7 @@ function HealthBar_Gradient(frame, elapsed, gradient)
 		-- return 1, .5, .8
 	-- end
 	local r, g, b = r1 + (r2-r1)*perc, g1 + (g2-g1)*perc, b1 + (b2-b1)*perc
-	
+
 	-- frame:SetStatusBarColor(r, g, b)
 
 	frame:SetStatusBarColor(r, g, b, alpha)
@@ -1274,82 +1275,82 @@ local function HealPredictionBar_Fill(frame, previousTexture, bar, amount, barOf
 		bar:Hide()
 		return previousTexture
 	end
-	
+
 	local barOffsetX = 0
 	if barOffsetXPercent then
 		barOffsetX = frame:GetWidth() * barOffsetXPercent
 	end
-	
+
 	bar:SetPoint("TOPLEFT", previousTexture, "TOPRIGHT", barOffsetX, 0)
 	bar:SetPoint("BOTTOMLEFT", previousTexture, "BOTTOMRIGHT", barOffsetX, 0)
-	
+
 	local totalWidth, totalHeight = frame:GetSize()
 	local _, totalMax = frame:GetMinMaxValues()
 
 	local barSize = (amount / totalMax) * totalWidth
-	
+
 	bar:SetWidth(barSize)
 	bar:Show()
 	return bar
 end
 
 local function HealPredictionBar_Update(frame)
-	
+
 	if not frame.myHealPrediction or not frame.otherHealPrediction or not frame.totalAbsorb or not frame.healAbsorb then
 		return
 	end
 	local unit = frame:GetParent().unit
 	local health = frame:GetValue()
     local _, maxHealth = frame:GetMinMaxValues()
-	
+
 	-- Returns the incoming healing from Player/oneself.
 	local myIncomingHeal = UnitGetIncomingHeals and UnitGetIncomingHeals(unit, "player") or 0
-	
+
 	-- Returns the incoming healing from all sources (including Player/oneself).
 	local allIncomingHeal = UnitGetIncomingHeals and UnitGetIncomingHeals(unit) or 0
-	
+
 	-- Returns the total amount of healing the unit can absorb without gaining health.
 	local healAbsorb = UnitGetTotalHealAbsorbs and  UnitGetTotalHealAbsorbs(unit) or 0
-	
+
 	-- Returns the total amount of damage the unit can absorb before losing health.
 	local totalAbsorb = UnitGetTotalAbsorbs and UnitGetTotalAbsorbs(unit) or 0
-	
+
 	-- We don't fill outside the health bar with healAbsorbs.  Instead, an overHealAbsorbGlow is shown.
 	if ( health < healAbsorb ) then
 		frame.overHealAbsorbGlow:Show()
 		healAbsorb = health
 	else
 		frame.overHealAbsorbGlow:Hide()
-	end	
-	
+	end
+
 	-- See how far we're going over the health bar and make sure we don't go too far out of the frame.
 	if ( health - healAbsorb + allIncomingHeal > maxHealth ) then
 		allIncomingHeal = maxHealth - health + healAbsorb;
 	end
-	
+
 	local otherIncomingHeal = 0;
-	
+
 	-- Split up incoming heals.
 	if ( allIncomingHeal >= myIncomingHeal ) then
 		otherIncomingHeal = allIncomingHeal - myIncomingHeal;
 	else
 		myIncomingHeal = allIncomingHeal;
 	end
-	
+
 	-- We don't fill the outside of the health bar with absorbs.  Instead, an overAbsorbGlow is shown.
 	local overAbsorb = false;
 	if health - healAbsorb + allIncomingHeal + totalAbsorb >= maxHealth or health + totalAbsorb >= maxHealth then
 		if totalAbsorb > 0 then
 			overAbsorb = true
 		end
-		
+
 		if allIncomingHeal > healAbsorb then
 			totalAbsorb = max(0,maxHealth - (health - healAbsorb + allIncomingHeal))
 		else
 			totalAbsorb = max(0,maxHealth - health)
 		end
 	end
-	
+
 	if overAbsorb then
 		frame.overAbsorbGlow:Show()
 	else
@@ -1359,23 +1360,23 @@ local function HealPredictionBar_Update(frame)
 	local healthTexture = frame:GetStatusBarTexture();
 	local healAbsorbPercent = 0;
 	local healAbsorbTexture = nil;
-	
+
 	healAbsorbPercent = healAbsorb / maxHealth;
-	
+
 	-- If allIncomingHeal is greater than healAbsorb, then the current heal absorb will be completely overlayed by the incoming heals so we don't show it.
 	if healAbsorb > allIncomingHeal then
 		local shownHealAbsorb = healAbsorb - allIncomingHeal
 		local shownHealAbsorbPercent = shownHealAbsorb / maxHealth
-		
+
 		healAbsorbTexture = HealPredictionBar_Fill(frame, healthTexture, frame.healAbsorb, shownHealAbsorb, -shownHealAbsorbPercent)
-		
+
 		-- If there are incoming heals the left shadow would be overlayed by the incoming heals so it isn't shown.
 		if ( allIncomingHeal > 0 ) then
 			frame.healAbsorb.leftShadow:Hide();
 		else
 			frame.healAbsorb.leftShadow:Show();
 		end
-		
+
 		-- The right shadow is only shown if there are absorbs on the health bar.
 		if ( totalAbsorb > 0 ) then
 			frame.healAbsorb.rightShadow:Show();
@@ -1387,17 +1388,17 @@ local function HealPredictionBar_Update(frame)
 		-- frame.healAbsorbLeftShadow:Hide()
 		-- frame.healAbsorbRightShadow:Hide()
 	end
-	
+
 	-- Show myIncomingHeal on the health bar.
 	local incomingHealTexture = HealPredictionBar_Fill(frame, healthTexture, frame.myHealPrediction, myIncomingHeal, -healAbsorbPercent);
-	
+
 	-- Append otherIncomingHeal on the health bar
 	if (myIncomingHeal > 0) then
 		incomingHealTexture = HealPredictionBar_Fill(frame, incomingHealTexture, frame.otherHealPrediction, otherIncomingHeal);
 	else
 		incomingHealTexture = HealPredictionBar_Fill(frame, healthTexture, frame.otherHealPrediction, otherIncomingHeal, -healAbsorbPercent);
 	end
-	
+
 	-- Append absorbs to the correct section of the health bar.
 	local appendTexture = nil;
 	if ( healAbsorbTexture ) then
@@ -1408,7 +1409,7 @@ local function HealPredictionBar_Update(frame)
 		appendTexture = incomingHealTexture;
 	end
 	HealPredictionBar_Fill(frame, appendTexture, frame.totalAbsorb, totalAbsorb)
-	
+
 end
 
 local function HealthBar_OnUpdate(frame, e)
@@ -1417,12 +1418,12 @@ local function HealthBar_OnUpdate(frame, e)
 		--if not frame.pauseUpdates then
 			local currValue = UnitHealth(unit)
 			local maxValue = UnitHealthMax(unit)
-			
+
 			if maxValue ~= frame.maxValue then
 				frame:SetMinMaxValues(0, maxValue)
 				frame.maxValue = maxValue
 			end
-			
+
 			frame.endvalue = currValue
 			if currValue ~= frame.currValue then
 				frame.currValue = currValue
@@ -1446,19 +1447,18 @@ function module:HealthBar_Update(frame)
 		--- For Glide animation!
 		frame.startvalue = currValue
 		frame.endvalue = currValue
-		
+
 		frame.currValue = currValue
 		frame.maxValue = maxValue
-		
+
 		frame:SetMinMaxValues(0, maxValue)
 		frame:SetValue(currValue)
-		
+
 		HealthBar_Text(frame)
 		HealPredictionBar_Update(frame)
-		
+
 		if UnitExists(frame.unit) then
 			HealthBar_Gradient(frame)
-			
 		end
 	-- end
 end
@@ -1466,9 +1466,10 @@ end
 function module:HealthBar_OnLoad(frame)
 
 	frame.pauseUpdates = false
-	frame.statusCounter = 0
+
+	-- This is used for the low health flashing. See HealthBar_Gradient() for more info
 	frame.statusSign = -1
-	
+
 	frame:SetScript("OnUpdate", HealthBar_OnUpdate)
 end
 
@@ -1494,12 +1495,12 @@ local function PowerBar_Text(frame)
 	-- elseif (UnitIsDead(frame.unit) or UnitIsCorpse(frame.unit)) then
 		-- text = ""
 	-- end
-	
+
 	if text ~= nil then
 		text = text:gsub("$cur", addon:CommaNumber(frame.currValue))
 		text = text:gsub("$max", addon:FormatNumber(frame.maxValue))
 	end
-	
+
 	if frame.text then frame.text:SetText(text) end
 end
 
@@ -1508,15 +1509,15 @@ local function PowerBar_OnEvent(frame, event, ...)
 
 	local arg1 = ...
 	local unit = frame:GetParent().unit or frame:GetParent():GetParent().unit
-	
+
 	-- if event == "PLAYER_ENTERING_WORLD" then
 		-- module:PowerBar_Update(frame, unit)
 	-- end
-	
+
 	if ( arg1 ~= unit ) then
          return
     end
-	
+
 	if event == "UNIT_DISPLAYPOWER" or event == "PLAYER_SPECIALIZATION_CHANGED" then
 		module:PowerBar_Update(frame)
 	end
@@ -1531,19 +1532,19 @@ local function PowerBar_OnUpdate(frame, e)
 			local powerType = frame.powerType or UnitPowerType(unit)
 			local maxValue = UnitPowerMax(unit, powerType)
 			local currValue = UnitPower(unit, powerType)
-			
+
 			if maxValue ~= frame.maxValue then
 				frame:SetMinMaxValues(0, maxValue)
 				frame.maxValue = maxValue
 			end
-			
+
 			frame.endvalue = currValue
 			if currValue ~= frame.currValue then
 				frame.currValue = currValue
 			end
 
 			Glide(frame, e)
-	
+
 			PowerBar_Text(frame);
 		end
     -- end
@@ -1563,37 +1564,37 @@ function module:PowerBar_Update(frame)
 
 		frame:SetStatusBarColor(powerBarColor.r, powerBarColor.g,powerBarColor.b)
 		frame.bg:SetVertexColor(powerBarColor.r, powerBarColor.g,powerBarColor.b)
-		
+
 		--- For Glide animation!
 		frame.startvalue = currValue
 		frame.endvalue = currValue
-		
+
 		frame.currValue = currValue
 		frame.maxValue = maxValue
-		
+
 		frame:SetMinMaxValues(0, maxValue);
 		frame:SetValue(currValue)
-		
+
 		if maxValue == 0 and powerType == 1 then
 			frame:Hide()
 		else
 			frame:Show()
 		end
-		
+
 		PowerBar_Text(frame)
 	-- end
 end
 
 function module:PowerBar_OnLoad(frame, unit)
 	frame.pauseUpdates = false
-	frame.unit = unit	
+	frame.unit = unit
 	-- if frame.additional then
 		-- AdditionalPowerBar_ShowHide(frame)
 	-- end
-	
+
 	-- frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 	frame:RegisterEvent("UNIT_DISPLAYPOWER")
-	
+
 	frame:SetScript("OnEvent", PowerBar_OnEvent)
 	frame:SetScript("OnUpdate", PowerBar_OnUpdate)
 end
@@ -1643,7 +1644,7 @@ local function CastBar_Text(text, statusbar, short)
 end
 
 local function CastBar_OnEvent(frame, event, unit,...)
-	
+
 	local frameUnit = frame:GetParent().unit
 	if event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_TARGET_CHANGED" or event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_FOCUS_CHANGED" then
 		local nameChannel  = UnitChannelInfo(frameUnit)
@@ -1659,13 +1660,13 @@ local function CastBar_OnEvent(frame, event, unit,...)
 			frame:Clear()
 		end
 	end
-	
+
 	if ( unit ~= frameUnit ) then
          return
     end
-	
+
 	local _
-	
+
 	if event == "UNIT_SPELLCAST_START" or event == "UNIT_SPELLCAST_CHANNEL_START" then
 		local name, texture, startTime, endTime, castID, notInterruptible
 		local r, g, b
@@ -1744,7 +1745,7 @@ local function CastBar_OnEvent(frame, event, unit,...)
 				frame.statusbar:SetValue(0)
 				frame.channeling = false
 			end
-						
+
 			frame.fadeOut = true
 			frame.holdTime =  0
 		end
@@ -1774,7 +1775,7 @@ local function CastBar_OnEvent(frame, event, unit,...)
 				-- frame.maxValue = (endTime - startTime) / 1000
 				frame.channeling = false
 				frame.casting = true
-			elseif event == "UNIT_SPELLCAST_CHANNEL_UPDATE" then		
+			elseif event == "UNIT_SPELLCAST_CHANNEL_UPDATE" then
 				_, _, _, startTime, endTime = UnitChannelInfo(unit)
 				if not endTime then frame:Hide(); frame:Clear(); return end
 				frame.startTime = (endTime / 1000) - GetTime()
@@ -1789,7 +1790,7 @@ local function CastBar_OnEvent(frame, event, unit,...)
 			frame.holdTime = 0
 		end
 	end
-	
+
 end
 
 local function CastBar_OnUpdate(frame, e)
@@ -1838,8 +1839,8 @@ function module:CastBar_OnLoad(frame, unit)
 			return
 		end
 	end
-	
-	if not frame.statusbar then 
+
+	if not frame.statusbar then
 		frame.statusbar = frame -- A bit silly?
 	else
 		frame.icon = frame.statusbar.icon
@@ -1858,14 +1859,14 @@ function module:CastBar_OnLoad(frame, unit)
 		frame.fadeOut = false
 		frame.holdTime = 0
 	end
-	
-	frame:Clear()
-	
 
-	frame:RegisterEvent("PLAYER_ENTERING_WORLD")	
+	frame:Clear()
+
+
+	frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 	frame:RegisterEvent("GROUP_ROSTER_UPDATE")
 	frame:RegisterEvent("PLAYER_TARGET_CHANGED")
-	
+
 	if LibCC then
 		local CastbarEventHandler = function(event, ...)
 			CastBar_OnEvent(frame, event, ...)
@@ -1888,7 +1889,7 @@ function module:CastBar_OnLoad(frame, unit)
 		frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
 		frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_UPDATE")
 		frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
-		
+
 		if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
 			frame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTIBLE")
 			frame:RegisterEvent("UNIT_SPELLCAST_NOT_INTERRUPTIBLE")
@@ -1930,14 +1931,14 @@ function module:TargetofTarget_Onload(frame, unit)
 	-- self:RegisterEvent("UNIT_FACTION")
 	-- frame:RegisterEvent("UNIT_TARGET")
 
-	 
+
 	frame:RegisterForClicks("LeftButtonUp");
 	SecureUnitButton_OnLoad(frame, frame.unit)
 	self:HealthBar_OnLoad(frame.hp, frame.unit)
 
 	-- Uncomment the next line to use Glide animation on the Target of Target hp bar.
 	-- self:HealthBar_Update(frame.hp)
-	
+
 	-- frame:SetScript("OnEvent", TargetofTarget_OnEvent)
 	frame:SetScript("OnUpdate", TargetofTarget_Update)
 end
@@ -1977,11 +1978,11 @@ end
 local function ThreatBar_Text(frame)
 	local text = module:GetTextFormat("threat", frame:GetParent())
 	local perc = module:GetTextFormat("perc", frame:GetParent())
-	
+
 	if text ~= nil then
 		text = text:gsub("$cur", addon:CommaNumber(frame.currValue))
 	end
-	
+
 	if perc ~= nil then
 		local percent
 		if frame.currValue > 0 then
@@ -1991,7 +1992,7 @@ local function ThreatBar_Text(frame)
 		end
 		perc = perc:gsub("$perc", module:FormatPercentage(percent))
 	end
-	
+
 	if frame.text then frame.text:SetText(text) end
 	if frame.perc then frame.perc:SetText(perc) end
 end
@@ -2005,26 +2006,26 @@ function module:ThreatBar_Update(frame)
 		frame:Hide()
 		return
 	end
-	
+
 	if UnitIsDead(frame.unit) then
 		frame:Hide()
 		return
 	end
-	
+
 	local isTanking, status, _, rawPercent, threatValue = UnitDetailedThreatSituation(frame.threatUnit, frame.unit)
-	
+
 	if not threatValue then
 		frame:Hide()
 		return
 	end
-	
+
 	if threatValue == 0 then
 		frame:Hide()
 		return
 	end
-	
+
 	local currValue, maxValue
-	
+
 	if isTanking then
 		currValue = threatValue
 		maxValue = threatValue
@@ -2036,16 +2037,16 @@ function module:ThreatBar_Update(frame)
 			maxValue = threatValue
 		end
 	end
-	
+
 	frame.startvalue = currValue
 	frame.endvalue = currValue
-	
+
 	frame.currValue = currValue
 	frame.maxValue = maxValue
-		
+
 	frame:SetMinMaxValues(0, maxValue)
 	frame:SetValue(currValue)
-		
+
 	ThreatBar_Text(frame)
 	frame:SetStatusBarColor(GetThreatStatusColor(status))
 	frame:Show()
@@ -2064,9 +2065,9 @@ local function ThreatBar_OnUpdate(frame, e)
 			if threatValue == 0 then
 				return
 			end
-			
+
 			local maxValue, currValue
-			
+
 			if isTanking then
 				currValue = threatValue
 				maxValue = threatValue
@@ -2078,7 +2079,7 @@ local function ThreatBar_OnUpdate(frame, e)
 				maxValue = threatValue
 			end
 			end
-			
+
 			if maxValue ~= frame.maxValue then
 				frame:SetMinMaxValues(0, maxValue)
 				frame.maxValue = maxValue
@@ -2088,9 +2089,9 @@ local function ThreatBar_OnUpdate(frame, e)
 				-- frame:SetMinMaxValues(0, maxValue)
 				frame.currValue = currValue
 			end
-			
+
 			Glide(frame, e)
-			
+
 			ThreatBar_Text(frame)
 			frame:SetStatusBarColor(GetThreatStatusColor(status))
 	end
@@ -2152,12 +2153,12 @@ function module:UpdateAuras(frame)
 	-- local name, rank, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, spellId, _
 	local playerIsTarget = UnitIsUnit("player", frame.unit)
 	local canAssist = UnitCanAssist("player", frame.unit)
-	
+
 	local filter;
 	if SHOW_CASTABLE_BUFFS == "1" and canAssist then
 		filter = "RAID";
 	end
-	
+
 	local maxBuffs = frame.maxBuffs or MAX_TARGET_BUFFS
 	auraFrame = frame.buffs
 	auraFrameHeight = normalSize
@@ -2167,9 +2168,9 @@ function module:UpdateAuras(frame)
 			if not auraFrame["aura"..i] then
 				auraFrame["aura"..i] = CreateFrame("Button", _, auraFrame, self.db.profile.templatePrefix.."Buff")
 			end
-			
+
 			aura = auraFrame["aura"..i]
-			
+
 			aura.unit = frame.unit
 			aura:SetID(i)
 
@@ -2183,7 +2184,7 @@ function module:UpdateAuras(frame)
 			else
 				aura.count:Hide()
 			end
-			
+
 			if LibClassicDurations then
 				local durationNew, expirationTimeNew = LibClassicDurations:GetAuraDurationByUnit(frame.unit, spellId, caster, buffName)
 				if duration == 0 and durationNew then
@@ -2201,24 +2202,24 @@ function module:UpdateAuras(frame)
 
 			-- set the buff to be big if the buff is cast by the player or the player's pet
 			local size
-			if PLAYER_UNITS[caster] then 
+			if PLAYER_UNITS[caster] then
 				size = largeSize
 				auraFrameHeight = largeSize
 			else
 				size = normalSize
 			end
 			aura:SetSize(size, size)
-			
+
 			-- Show stealable frame if the target is not the current player and the buff is stealable.
 			if ( not playerIsTarget and canStealOrPurge ) then
 				aura.stealable:Show()
 			else
 				aura.stealable:Hide()
 			end
-			
+
 			aura:ClearAllPoints()
 			UpdateAuraAnchor(auraFrame, i)
-			
+
 			aura:Show()
 		else
 			if auraFrame["aura"..i] then
@@ -2228,36 +2229,36 @@ function module:UpdateAuras(frame)
 			end
 		end
 	end
-		
+
 	auraFrame:SetHeight(auraFrameHeight)
-		
+
 	if SHOW_DISPELLABLE_DEBUFFS == "1" and canAssist then
 		filter = "RAID";
 	else
 		filter = nil;
 	end
-	
+
 	local frameNum = 1;
 	local index = 1;
 	local maxDebuffs = frame.maxDebuffs or MAX_TARGET_DEBUFFS
 	auraFrame = frame.debuffs
 	auraFrameHeight = normalSize
-	
+
 	while frameNum <= maxDebuffs do
 		-- local debuffName = UnitDebuff(frame.unit, index, filter)
 		local debuffName, icon, count, debuffType, duration, expirationTime, caster, _, _, spellId, _, _, casterIsPlayer, nameplateShowAll = UnitDebuff(frame.unit, index, "INCLUDE_NAME_PLATE_ONLY");
 		if debuffName then
 			if ShouldShowDebuffs(frame.unit, caster, nameplateShowAll, casterIsPlayer) then
 				-- name, rank, icon, count, debuffType, duration, expirationTime, caster = UnitDebuff(frame.unit, index, filter)
-				
+
 				if icon then
 					if not auraFrame["aura"..frameNum] then
 						auraFrame["aura"..frameNum] = CreateFrame("Button", _, auraFrame, self.db.profile.templatePrefix.."Debuff")
 					end
-					
+
 					aura = auraFrame["aura"..frameNum]
 					aura.unit = frame.unit
-					
+
 					aura:SetID(index)
 
 					-- set the icon
@@ -2270,7 +2271,7 @@ function module:UpdateAuras(frame)
 					else
 						aura.count:Hide()
 					end
-					
+
 					if LibClassicDurations then
 						local durationNew, expirationTimeNew = LibClassicDurations:GetAuraDurationByUnit(frame.unit, spellId, caster, debuffName)
 						if duration == 0 and durationNew then
@@ -2288,7 +2289,7 @@ function module:UpdateAuras(frame)
 
 					-- set the debuff to be big if the buff is cast by the player or the player's pet
 					local size
-					if PLAYER_UNITS[caster] then 
+					if PLAYER_UNITS[caster] then
 						size = largeSize
 						-- largeAuras = true
 						auraFrameHeight = largeSize
@@ -2296,7 +2297,7 @@ function module:UpdateAuras(frame)
 						size = normalSize
 					end
 					aura:SetSize(size, size)
-					
+
 					-- set debuff type color
 					local color
 					if debuffType then
@@ -2305,12 +2306,12 @@ function module:UpdateAuras(frame)
 						color = DebuffTypeColor["none"]
 					end
 					aura.border:SetVertexColor(color.r, color.g, color.b)
-					
+
 					aura:ClearAllPoints()
 					UpdateAuraAnchor(auraFrame, frameNum)
-					
+
 					aura:Show()
-					
+
 					frameNum = frameNum + 1
 				end
 			end
@@ -2328,6 +2329,6 @@ function module:UpdateAuras(frame)
 			break
 		end
 	end
-	
+
 	auraFrame:SetHeight(auraFrameHeight)
 end
