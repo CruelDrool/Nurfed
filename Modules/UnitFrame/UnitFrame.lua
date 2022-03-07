@@ -1240,7 +1240,7 @@ function HealthBar_Gradient(frame, elapsed, gradient)
 			-- frame.statusSign determines whether the alpha is reduced or increased.
 			alpha = a - step * frame.statusSign
 
-			-- If the alpha value goes under 0 or over 1, switch frame.statusSign to either 1 or -1. Initially it's set to -1 in the OnLoad function.
+			-- If the alpha value goes under 0 or over 1, switch frame.statusSign to either 1 or -1. Initially it's set to 1 in the OnLoad function.
 			if alpha <= 0 or alpha >= 1 then
 				frame.statusSign = -frame.statusSign;
 			end
@@ -1468,7 +1468,7 @@ function module:HealthBar_OnLoad(frame)
 	frame.pauseUpdates = false
 
 	-- This is used for the low health flashing. See HealthBar_Gradient() for more info
-	frame.statusSign = -1
+	frame.statusSign = 1
 
 	frame:SetScript("OnUpdate", HealthBar_OnUpdate)
 end
