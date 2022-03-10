@@ -468,21 +468,39 @@ function module:EnableBlizzCastBar()
 	CastingBarFrame:SetScript("OnShow", CastingBarFrame_OnShow)
 end
 
+local blizzFrame = {}
+
 local function DisableBlizz()
 	module:DisableBlizzCastBar()
-	
-	PlayerFrame:SetScript("OnEvent", nil)
-	PlayerFrame:SetScript("OnUpdate", nil)
-	PlayerFrame:Hide()
+	local frame = PlayerFrame
+	local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint()
+	blizzFrame = {
+			[1] = point,
+			[2] = relativeTo:GetName(),
+			[3] = relativePoint,
+			[4] = xOfs,
+			[5] = yOfs,
+	}
+
+	frame:ClearAllPoints()
+	frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -500, 500)
+	frame:SetScript("OnEvent", nil)
+	frame:SetScript("OnUpdate", nil)
+	frame:Hide()
 end
 
 local function EnableBlizz()
 	module:EnableBlizzCastBar()
-	PlayerFrame:SetScript("OnEvent", PlayerFrame_OnEvent)
-	PlayerFrame:SetScript("OnUpdate", PlayerFrame_OnUpdate)
+	local frame = PlayerFrame
+	frame:SetScript("OnEvent", PlayerFrame_OnEvent)
+	frame:SetScript("OnUpdate", PlayerFrame_OnUpdate)
 	PlayerFrame_Update()
 	UnitFrame_Update(PlayerFrame)
-	PlayerFrame:Show()
+	frame:Show()
+
+	local point, relativeTo, relativePoint, xOfs, yOfs = unpack(blizzFrame)
+	frame:ClearAllPoints()
+	frame:SetPoint(point, _G[relativeTo], relativePoint, xOfs, yOfs)
 end
 
 function module:OnInitialize()
