@@ -95,38 +95,13 @@ function module:MERCHANT_SHOW()
 		end
 	end
 	if sold then
-		if module.db.profile.summaries.itemsSold then
-			if soldNum == 1 then
-				-- addon:print("|cffffffffSold |r"..soldNum.." |cffffffffItem: |r"..soldItems)
-				ChatFrame_DisplaySystemMessageInPrimary(string.format("Sold %s item: %s.", soldNum, soldItems))
-			else
-				-- addon:print("|cffffffffSold |r"..soldNum.." |cffffffffItems: |r"..soldItems)
-				ChatFrame_DisplaySystemMessageInPrimary(string.format("Sold %s items: %s.", soldNum, soldItems))
-			end
+		if self.db.profile.summaries.itemsSold then
+			ChatFrame_DisplaySystemMessageInPrimary(string.format("Sold %d |4item:items;: %s", soldNum, soldItems))
 		end
-	
-		if module.db.profile.summaries.moneyReceived then
+
+		if self.db.profile.summaries.moneyReceived then
 			earned = GetMoneyString(earned, true)
 			ChatFrame_DisplaySystemMessageInPrimary(string.format("Received %s from selling trash loot.", addon:WrapTextInColorCode(earned, {1,1,1})))
-			-- local timer = 0
-			-- local timerMax = GetFramerate() * 3
-			-- -- self.sellFrame:Show()
-			-- self.sellFrame:SetScript("OnUpdate", function()
-			-- 	timer=timer+1
-			-- 	if timer >= timerMax then
-			-- 		local money = GetMoney() - startMoney
-			-- 		if money == 0 then 
-			-- 			timer = 0
-			-- 			return
-			-- 		end
-
-			-- 		local gold = math.floor(money / (COPPER_PER_SILVER * SILVER_PER_GOLD))
-			-- 		local silver = math.floor((money - (gold * COPPER_PER_SILVER * SILVER_PER_GOLD)) / COPPER_PER_SILVER)
-			-- 		local copper = math.fmod(money, COPPER_PER_SILVER)
-			-- 		addon:print("|cffffffffReceived|r |c00ffff66"..gold.."g|r |c00c0c0c0"..silver.."s|r |c00cc9900"..copper.."c|r |cfffffffffrom selling trash loot.|r")
-			-- 		self.sellFrame:SetScript("OnUpdate", nil)
-			-- 	end
-			-- end)
 		end
 	end
 end
@@ -149,9 +124,6 @@ end
 
 function module:OnEnable()
 	self.db.profile.enabled = true
-	-- if not self.sellFrame then
-	-- 	self.sellFrame = CreateFrame("Frame")
-	-- end
 	self:RegisterEvent("MERCHANT_SHOW")
 end
 
