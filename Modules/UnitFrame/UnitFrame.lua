@@ -694,12 +694,6 @@ local function RaidInfo(unit)
 	return group, role
 end
 
-local UnitEffectiveLevel = _G.UnitEffectiveLevel
-
-if not UnitEffectiveLevel then
-	UnitEffectiveLevel = _G.UnitLevel
-end
-
 function module:Replace(unit, textFormat)
 	if textFormat == nil then return "" end
 	if not UnitExists(unit) then return textFormat end
@@ -764,13 +758,13 @@ function module:Replace(unit, textFormat)
 	end
 
 	if string.find(textFormat,"$level") then
-		local level = UnitEffectiveLevel(unit)
+		local level = UnitEffectiveLevel and UnitEffectiveLevel(unit) or UnitLevel(unit)
 		-- local level = UnitLevel(unit)
 		local classification = UnitClassification(unit)
 		local r, g, b
 		if level > 0 then
 			-- r, g, b = GetRelativeDifficultyColor(UnitLevel("player"), level)
-			r, g, b = addon:UnpackColorTable(GetRelativeDifficultyColor(UnitEffectiveLevel("player"), level))
+			r, g, b = addon:UnpackColorTable(GetRelativeDifficultyColor(UnitEffectiveLevel and UnitEffectiveLevel("player") or UnitLevel("player"), level))
 		end
 
 		if level == 0 then
@@ -1949,30 +1943,26 @@ THREATBAR functions
 
 ]]
 
-local GetThreatStatusColor = _G.GetThreatStatusColor
-
-if not GetThreatStatusColor then
-	GetThreatStatusColor = function(status)
-		local r, g, b
-		if status == 0 then
-			r = 0.69
-			g = 0.69
-			b = 0.69
-		elseif status == 1 then
-			r = 1
-			g = 1
-			b = 0.47
-		elseif status == 2 then
-			r = 1
-			g = 0.6
-			b = 0
-		elseif status == 3 then
-			r = 1
-			g = 0
-			b = 0
-		end
-		return r, g, b
+local GetThreatStatusColor = _G.GetThreatStatusColor or function(status)
+	local r, g, b
+	if status == 0 then
+		r = 0.69
+		g = 0.69
+		b = 0.69
+	elseif status == 1 then
+		r = 1
+		g = 1
+		b = 0.47
+	elseif status == 2 then
+		r = 1
+		g = 0.6
+		b = 0
+	elseif status == 3 then
+		r = 1
+		g = 0
+		b = 0
 	end
+	return r, g, b
 end
 
 local function ThreatBar_Text(frame)
