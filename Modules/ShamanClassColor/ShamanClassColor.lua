@@ -54,17 +54,17 @@ module.ShamanClassColorCopy = {
 }
 
 function module:SetShamanBlueClassColor()
-	RAID_CLASS_COLORS["SHAMAN"].r = module.ShamanClassColorBlue.r
-	RAID_CLASS_COLORS["SHAMAN"].g = module.ShamanClassColorBlue.g
-	RAID_CLASS_COLORS["SHAMAN"].b = module.ShamanClassColorBlue.b
-	RAID_CLASS_COLORS["SHAMAN"].colorStr = module.ShamanClassColorBlue.colorStr
+	RAID_CLASS_COLORS["SHAMAN"].r = self.ShamanClassColorBlue.r
+	RAID_CLASS_COLORS["SHAMAN"].g = self.ShamanClassColorBlue.g
+	RAID_CLASS_COLORS["SHAMAN"].b = self.ShamanClassColorBlue.b
+	RAID_CLASS_COLORS["SHAMAN"].colorStr = self.ShamanClassColorBlue.colorStr
 end
 
 function module:UnsetShamanBlueClassColor()
-	RAID_CLASS_COLORS["SHAMAN"].r = module.ShamanClassColorCopy.r
-	RAID_CLASS_COLORS["SHAMAN"].g = module.ShamanClassColorCopy.g
-	RAID_CLASS_COLORS["SHAMAN"].b = module.ShamanClassColorCopy.b
-	RAID_CLASS_COLORS["SHAMAN"].colorStr = module.ShamanClassColorCopy.colorStr
+	RAID_CLASS_COLORS["SHAMAN"].r = self.ShamanClassColorCopy.r
+	RAID_CLASS_COLORS["SHAMAN"].g = self.ShamanClassColorCopy.g
+	RAID_CLASS_COLORS["SHAMAN"].b = self.ShamanClassColorCopy.b
+	RAID_CLASS_COLORS["SHAMAN"].colorStr = self.ShamanClassColorCopy.colorStr
 end
 
 function module:OnInitialize()
