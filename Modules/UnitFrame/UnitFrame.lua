@@ -694,6 +694,8 @@ local function RaidInfo(unit)
 	return group, role
 end
 
+local CreatureTypeReverseLocalisation = LibStub("LibBabble-CreatureType-3.0"):GetReverseLookupTable()
+
 function module:Replace(unit, textFormat)
 	if textFormat == nil then return "" end
 	if not UnitExists(unit) then return textFormat end
@@ -723,7 +725,7 @@ function module:Replace(unit, textFormat)
 					color = {UnitSelectionColor(unit)}
 				end
 			else
-				local creatureType = UnitCreatureType(unit)
+				local creatureType = CreatureTypeReverseLocalisation[UnitCreatureType(unit)]
 				if UnitPlayerControlled(unit) and (creatureType == "Beast" or creatureType == "Demon" or creatureType == "Elemental" or creatureType == "Undead") then
 					-- unit is a pet/minion
 					-- color = "ff005500"
@@ -821,7 +823,7 @@ function module:Replace(unit, textFormat)
 				class = addon:WrapTextInColorCode(class, {UnitSelectionColor(unit)})
 			end
 		else
-			if UnitCreatureType(unit) == "Humanoid" and UnitIsFriend("player", unit) then
+			if CreatureTypeReverseLocalisation[UnitCreatureType(unit)] == "Humanoid" and UnitIsFriend("player", unit) then
 				class = "NPC"
 			elseif UnitCreatureFamily(unit) then
 				class = UnitCreatureFamily(unit)

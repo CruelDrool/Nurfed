@@ -23,8 +23,10 @@ Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
 Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 Libs\LibWindow-1.1\LibWindow-1.1.lua
 Libs\LibTranslit-1.0\LibTranslit-1.0.lua
+Libs\LibBabble-CreatureType-3.0\lib.xml
 
 Nurfed.lua
+
 Modules\UnitFrame\UnitFrame.lua
 Modules\UnitFrame\Templates.xml
 Modules\UnitFrame\PlayerFrame.xml
