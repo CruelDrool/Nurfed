@@ -128,7 +128,7 @@ function addon:WrapTextInColorCode(str, colorStr)
 	if type(colorStr) == "table" then
 		colorStr = self:ColorStr(colorStr)
 	end
-	return WrapTextInColorCode(str, colorStr)
+	return colorStr and string.format("|c%s%s|r", colorStr, str) or str
 end
 
 function addon:UnpackColorTable(tbl)
@@ -176,11 +176,11 @@ function addon:FormatNumber(n)
 	end
 	if n < 0 then
 		text = "-"..text
-	end	
+	end
 	return text
 end
 
-function addon:print(msg, out, r, g, b, ...)
+function addon:Print(msg, out, r, g, b, ...)
 	if type(out) == "string" then
 		msg = msg:format(out, r, g, b, ...)
 	end
@@ -190,11 +190,16 @@ end
 
 function addon:InfoMessage(msg)
 	local name = string.format("<%s>", addonName)
-	addon:print(string.format("%1$s %2$s", addon:WrapTextInColorCode(name, addon.colors.addonName), msg))
+	addon:Print(string.format("%1$s %2$s", addon:WrapTextInColorCode(name, addon.colors.addonName), msg))
+end
+
+function addon:SystemMessageInPrimary(msg)
+	local color = ChatTypeInfo["SYSTEM"]
+	addon:Print(msg, 1, color.r, color.g, color.b)
 end
 
 function addon:Binding(bind)
-	local bind = bind or ""
+	bind = bind or ""
 	bind = bind:upper(bind)
 	bind = bind:gsub("CTRL%-", "C-")
 	bind = bind:gsub("ALT%-", "A-")
