@@ -96,12 +96,12 @@ function module:MERCHANT_SHOW()
 	end
 	if sold then
 		if self.db.profile.summaries.itemsSold then
-			ChatFrame_DisplaySystemMessageInPrimary(string.format("Sold %d |4item:items;: %s", soldNum, soldItems))
+			addon:SystemMessageInPrimary(string.format("Sold %d |4item:items;: %s", soldNum, soldItems))
 		end
 
 		if self.db.profile.summaries.moneyReceived then
 			earned = GetMoneyString(earned, true)
-			ChatFrame_DisplaySystemMessageInPrimary(string.format("Received %s from selling trash loot.", addon:WrapTextInColorCode(earned, {1,1,1})))
+			addon:SystemMessageInPrimary(string.format("Received %s from selling trash loot.", addon:WrapTextInColorCode(earned, {1,1,1})))
 		end
 	end
 end

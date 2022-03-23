@@ -120,7 +120,7 @@ module.options = {
 
 function module:MERCHANT_SHOW()
 	local limit = GetMoney()
-	if module.db.profile.limit.enabled then
+	if self.db.profile.limit.enabled then
 		local gold = module.db.profile.limit.gold
 		local silver = module.db.profile.limit.silver
 		local copper = module.db.profile.limit.copper
@@ -132,7 +132,7 @@ function module:MERCHANT_SHOW()
 	if canRepair and repairAllCost <= limit then
 		local cost = GetMoneyString(repairAllCost, true)
 		local message
-		if module.db.profile.guildBank and IsInGuild() and CanGuildBankRepair() and min(GetGuildBankWithdrawMoney(), GetGuildBankMoney()) > repairAllCost then
+		if self.db.profile.guildBank and IsInGuild() and CanGuildBankRepair() and min(GetGuildBankWithdrawMoney(), GetGuildBankMoney()) > repairAllCost then
 			RepairAllItems(1)
 			message = string.format("Spent %s on repairs (guild).", addon:WrapTextInColorCode(cost, {1,1,1}))
 		else
@@ -140,8 +140,8 @@ function module:MERCHANT_SHOW()
 			message = string.format("Spent %s on repairs.", addon:WrapTextInColorCode(cost, {1,1,1}))
 			
 		end
-		if module.db.profile.summary then
-			ChatFrame_DisplaySystemMessageInPrimary(message)
+		if self.db.profile.summary then
+			addon:SystemMessageInPrimary(message)
 		end
 	end
 end

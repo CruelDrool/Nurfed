@@ -44,7 +44,7 @@ function module:Display()
 		if delta > 0 then
 			local gain = GetMoneyString(delta, true)
 			local message = string.format("You gained: %s", addon:WrapTextInColorCode(gain, {1,1,1}))
-			ChatFrame_DisplaySystemMessageInPrimary(message)
+			addon:SystemMessageInPrimary(message)
 		end
 	end
 end
