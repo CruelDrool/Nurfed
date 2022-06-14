@@ -1669,12 +1669,7 @@ local function CastBar_OnEvent(frame, event, unit,...)
 		-- frame:Clear() will be called everytime the player changes target. Hmmmm...
 		frame:Clear()
 		if event == "UNIT_SPELLCAST_START" then
-			if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
-				name, _, texture, startTime, endTime, _, castID, notInterruptible = UnitCastingInfo(unit)
-			else
-				name, _, texture, startTime, endTime, _, castID = UnitCastingInfo(unit)
-			end
-
+			name, _, texture, startTime, endTime, _, castID, notInterruptible = UnitCastingInfo(unit)
 			if not endTime then frame:Hide(); frame:Clear(); return end
 			frame.castID = castID
 			frame.startTime = GetTime() - (startTime / 1000)
@@ -1685,11 +1680,7 @@ local function CastBar_OnEvent(frame, event, unit,...)
 			frame.channeling = false
 			frame.casting = true
 		elseif event == "UNIT_SPELLCAST_CHANNEL_START" then
-			if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
-				name, _, texture, startTime, endTime, _, notInterruptible = UnitChannelInfo(unit)
-			else
-				name, _, texture, startTime, endTime = UnitChannelInfo(unit)
-			end
+			name, _, texture, startTime, endTime, _, notInterruptible = UnitChannelInfo(unit)
 			if not endTime then frame:Hide(); frame:Clear(); return end
 			frame.startTime = (endTime / 1000) - GetTime()
 			-- frame.maxValue = (endTime - startTime) / 1000
