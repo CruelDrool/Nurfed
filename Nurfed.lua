@@ -111,7 +111,6 @@ end
 
 function addon:OnEnable()
 	LDBIcon:Refresh(addonName, addon.db.profile.minimapIcon)
-	self:RegisterEvent("PLAYER_ENTERING_WORLD")
 	self:RegisterEvent("PLAYER_REGEN_ENABLED")
 end
 
@@ -218,13 +217,6 @@ function addon:Binding(bind)
 	bind = bind:gsub("CAPSLOCK", "Cps Lck")
 	bind = bind:gsub("%s$", "")
 	return bind
-end
-
-function addon:PLAYER_ENTERING_WORLD()
-	UIErrorsFrame:SetPoint("TOP", UIParent,0,-140)
-	-- CameraPanelOptions.cameraDistanceMaxFactor.maxValue = 4
-	ConsoleExec("cameraDistanceMaxFactor 2.6")
-	ConsoleExec("cameraDistanceMax 50")
 end
 
 function addon:AddOutOfCombatQueue(func, tbl)
