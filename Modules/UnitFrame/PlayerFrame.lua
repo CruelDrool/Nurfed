@@ -517,14 +517,14 @@ function module:OnEnable()
 		return
 	end
 	DisableBlizz()
-	if WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then
+	if addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_MAINLINE then
 		self.options.args.formats.args.azerite = nil;
 	end
 	if not self.frame then
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PlayerFrameDropDown)
 		if self.frame.xp then XPbar_OnLoad(self.frame.xp, unit) end
 		if self.frame.additionalPowerBar then AdditionalPowerBar_OnLoad(self.frame.additionalPowerBar, unit) end
-		if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE and self.frame.azerite then 
+		if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE and self.frame.azerite then 
 			AzeriteBar_OnLoad(self.frame.azerite)
 		else
 			self.frame.health:SetPoint("BOTTOMRIGHT", self.frame, "BOTTOMRIGHT", -5, 25)
@@ -544,7 +544,7 @@ function module:OnEnable()
 			module:XPbar_Update(self.frame.xp)
 		end
 		
-		if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE and self.frame.azerite then 
+		if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE and self.frame.azerite then 
 			self:AzeriteBar_Update(self.frame.azerite)
 		end
 	end
