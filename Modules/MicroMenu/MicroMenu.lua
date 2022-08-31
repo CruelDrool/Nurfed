@@ -63,7 +63,7 @@ local mainMenu
 -- Level 2 and up
 local subMenus
 
-if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
+if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
 	 mainMenu = {
 		"TITLE",
 		"BLANK",
@@ -85,7 +85,7 @@ if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
 	}
 
 	subMenus = {
-		GAME_MENU = { 
+		GAME_MENU = {
 			"SUPPORT",
 			"BLIZZARD_STORE",
 			"WHATS_NEW",
@@ -99,7 +99,7 @@ if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
 			-- "LOGOUT",
 			-- "EXIT_GAME",
 		},
-		SOCIAL_MENU = { 
+		SOCIAL_MENU = {
 			"FRIENDS_MENU", -- Submenu
 			"WHO",
 			"RAID",
@@ -116,7 +116,7 @@ if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
 			"PETBOOK",
 		},
 	}
-elseif WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
+elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CLASSIC then
 	mainMenu = {
 		"TITLE",
 		"BLANK",
@@ -132,7 +132,7 @@ elseif WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
 		"CANCEL"
 	}
 	subMenus = {
-		GAME_MENU = { 
+		GAME_MENU = {
 			"HELP",
 			"SEPARATOR",
 			"SYSTEMOPTIONS",
@@ -159,7 +159,7 @@ elseif WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
 			"PETBOOK",
 		},
 	}
-elseif WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC then
+elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_THE_BURNING_CRUSADE_CLASSIC then
 	mainMenu = {
 		"TITLE",
 		"BLANK",
@@ -175,7 +175,7 @@ elseif WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC then
 		"CANCEL"
 	}
 	subMenus = {
-		GAME_MENU = { 
+		GAME_MENU = {
 			"SUPPORT",
 			"SEPARATOR",
 			"SYSTEMOPTIONS",
@@ -187,7 +187,52 @@ elseif WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC then
 			-- "LOGOUT",
 			-- "EXIT_GAME",
 		},
-		SOCIAL_MENU = { 
+		SOCIAL_MENU = {
+			"FRIENDS_MENU", -- Submenu
+			"WHO",
+			"GUILD",
+			"RAID",
+		},
+		FRIENDS_MENU = {
+			"FRIENDS_LIST",
+			"IGNORE_LIST",
+		},
+		SPELLBOOK_ABILITIES_MENU = {
+			"SPELLBOOK",
+			"PETBOOK",
+		},
+	}
+elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_WRATH_OF_THE_LICH_KING_CLASSIC then
+	mainMenu = {
+		"TITLE",
+		"BLANK",
+		"CHARACTER",
+		"SPELLBOOK_ABILITIES_MENU", -- Submenu
+		"TALENTS",
+		"ACHIEVEMENTS",
+		"QUESTLOG",
+		"SOCIAL_MENU", -- Submenu
+		"PLAYER_V_PLAYER",
+		"DUNGEONS",
+		"GAME_MENU", -- Submenu
+		"HELP_REQUEST",
+		"SEPARATOR",
+		"CANCEL"
+	}
+	subMenus = {
+		GAME_MENU = {
+			"SUPPORT",
+			"SEPARATOR",
+			"SYSTEMOPTIONS",
+			"UIOPTIONS",
+			"KEY_BINDINGS",
+			"MACROS",
+			"ADDONS",
+			-- "SEPARATOR",
+			-- "LOGOUT",
+			-- "EXIT_GAME",
+		},
+		SOCIAL_MENU = {
 			"FRIENDS_MENU", -- Submenu
 			"WHO",
 			"GUILD",
@@ -208,17 +253,18 @@ end
 
 -- This functions returns an array the contains the available buttons that can be used in main menu itself and submenus.
 local function ButtonsArray()
-	local minLevelSpec, minLevelLFD, talentsText, toggleRaidTabFunc, toggleGuildFrameFunc, toggleLFDFunc, LFDtext, LFDKeybind
-	if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
+	local minLevelSpec, minLevelLFD, minLevelAchi, talentsText, toggleRaidTabFunc, toggleGuildFrameFunc, toggleLFDFunc, LFDtext, LFDKeybind
+	if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
 		minLevelSpec = 10
 		minLevelLFD = 10
+		minLevelAchi = 1
 		talentsText = TALENTS_BUTTON
 		toggleRaidTabFunc = function() ToggleFriendsFrame(3) end
 		toggleGuildFrameFunc = function() GuildMicroButton:Click() end
 		toggleLFDFunc = function() LFDMicroButton:Click() end
 		LFDtext = DUNGEONS_BUTTON
 		LFDKeybind = "TOGGLEGROUPFINDER"
-	elseif WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
+	elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CLASSIC then
 		minLevelSpec = SHOW_SPEC_LEVEL
 		minLevelLFD = SHOW_LFD_LEVEL
 		talentsText = TALENTS
@@ -227,7 +273,7 @@ local function ButtonsArray()
 		toggleLFDFunc = function() end
 		LFDtext = ""
 		LFDKeybind = ""
-	elseif WOW_PROJECT_ID == WOW_PROJECT_BURNING_CRUSADE_CLASSIC then
+	elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_THE_BURNING_CRUSADE_CLASSIC then
 		minLevelSpec = SHOW_SPEC_LEVEL
 		minLevelLFD = 1
 		talentsText = TALENTS
@@ -235,6 +281,16 @@ local function ButtonsArray()
 		toggleGuildFrameFunc = function() ToggleFriendsFrame(3) end
 		toggleLFDFunc = function() LFGMicroButton:Click() end
 		LFDtext = string.format("%s/%s", LFG_TITLE, LFM_TITLE)
+		LFDKeybind = "TOGGLELFGPARENT"
+	elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_WRATH_OF_THE_LICH_KING_CLASSIC then
+		minLevelSpec = SHOW_SPEC_LEVEL
+		minLevelLFD = 1
+		minLevelAchi = 10
+		talentsText = TALENTS
+		toggleRaidTabFunc = function() ToggleFriendsFrame(4) end
+		toggleGuildFrameFunc = function() ToggleFriendsFrame(3) end
+		toggleLFDFunc = function() LFGMicroButton:Click() end
+		LFDtext = DUNGEONS_BUTTON
 		LFDKeybind = "TOGGLELFGPARENT"
 	end
 
@@ -257,14 +313,15 @@ local function ButtonsArray()
 
 		CHARACTER = { text = GetMenuButtonText(CHARACTER_BUTTON, "TOGGLECHARACTER0"), func = function() ToggleCharacter("PaperDollFrame"); end, },
 
-		-- SPELLBOOK_ABILITIES = { text = GetMenuButtonText(SPELLBOOK_ABILITIES_BUTTON, "TOGGLESPELLBOOK"), func = function() SpellbookMicroButton:Click() end, },
-		SPELLBOOK_ABILITIES_MENU = { text = GetMenuButtonText(SPELLBOOK_ABILITIES_BUTTON), nested = 1, },
+		-- SPELLBOOK_ABILITIES = { text = GetMenuButtonText(SPELLBOOK_ABILITIES_BUTTON, "TOGGLESPELLBOOK"), func = function() ToggleSpellBook(BOOKTYPE_SPELL) end, },
+		SPELLBOOK_ABILITIES_MENU = { text = GetMenuButtonText(SPELLBOOK_ABILITIES_BUTTON, "TOGGLESPELLBOOK"), func = function() ToggleSpellBook(BOOKTYPE_SPELL) end, nested = 1, },
 		SPELLBOOK = { text = GetMenuButtonText(SPELLBOOK, "TOGGLESPELLBOOK"), func = function() ToggleSpellBook(BOOKTYPE_SPELL) end, },
 		PROFESSIONSBOOK = { text = GetMenuButtonText(TRADE_SKILLS, "TOGGLEPROFESSIONBOOK"), func = function() ToggleSpellBook(BOOKTYPE_PROFESSION) end, },
-		PETBOOK = { text = GetMenuButtonText(PET, "TOGGLEPETBOOK"), func = function() ToggleSpellBook(BOOKTYPE_PET ) end, disabled = true, },
+		PETBOOK = { text = GetMenuButtonText(PET, "TOGGLEPETBOOK"), func = function() ToggleSpellBook(BOOKTYPE_PET ) end, skip = not (HasPetSpells() or PetHasSpellbook()), },
 
 		TALENTS = { text = GetMenuButtonText(talentsText, "TOGGLETALENTS"), func = function() TalentMicroButton:Click() end, },
-		ACHIEVEMENTS = { text = GetMenuButtonText(ACHIEVEMENT_BUTTON, "TOGGLEACHIEVEMENT"), func = function() ToggleAchievementFrame() end, },
+		ACHIEVEMENTS = { text = ACHIEVEMENT_BUTTON, func = function() ToggleAchievementFrame() end, disabled = true },
+		PLAYER_V_PLAYER = { text = PLAYER_V_PLAYER, func = function() TogglePVPFrame() end, disabled = true },
 		QUESTLOG = { text = GetMenuButtonText(QUESTLOG_BUTTON, "TOGGLEQUESTLOG"), func = function() ToggleQuestLog() end, },
 		GUILD = { func = toggleGuildFrameFunc, },
 		DUNGEONS = { text = GetMenuButtonText(LFDtext, LFDKeybind), func = toggleLFDFunc, },
@@ -272,7 +329,7 @@ local function ButtonsArray()
 		ADVENTURE_JOURNAL = { text = GetMenuButtonText(ADVENTURE_JOURNAL, "TOGGLEENCOUNTERJOURNAL"), func = function() EJMicroButton:Click() end },
 		BLIZZARD_STORE = { text = BLIZZARD_STORE, func = function() ToggleStoreUI() end, },
 
-		GAME_MENU = { text = GetMenuButtonText(MAINMENU_BUTTON, "TOGGLEGAMEMENU"), func = function() 
+		GAME_MENU = { text = GetMenuButtonText(MAINMENU_BUTTON, "TOGGLEGAMEMENU"), func = function()
 			if GameMenuFrame:IsShown() then
 				PlaySound(SOUNDKIT.IG_MAINMENU_QUIT)
 				HideUIPanel(GameMenuFrame)
@@ -284,7 +341,7 @@ local function ButtonsArray()
 		SUPPORT = { text = GAMEMENU_SUPPORT, func = function() ToggleHelpFrame() end, },
 		HELP = { text = GAMEMENU_HELP, func = function() ToggleHelpFrame() end, },
 		HELP_REQUEST = { text = HELP_BUTTON, func = function() ToggleHelpFrame() end, },
-		WHATS_NEW = { text = GAMEMENU_NEW_BUTTON, func = function() GameMenuButtonWhatsNew:Click() end, },
+		WHATS_NEW = { text = GAMEMENU_NEW_BUTTON, func = function() GameMenuButtonWhatsNew:Click() end, skip = IsTrialAccount() },
 		SYSTEMOPTIONS = { text = SYSTEMOPTIONS_MENU, func = function() GameMenuButtonOptions:Click() end, },
 		UIOPTIONS = { text = UIOPTIONS_MENU, func = function() GameMenuButtonUIOptions:Click() end, },
 		KEY_BINDINGS = { text = KEY_BINDINGS, func = function() GameMenuButtonKeybindings:Click() end, },
@@ -305,9 +362,9 @@ local function ButtonsArray()
 		buttons["TALENTS"]["text"] = GetMenuButtonText(string.format('%s (%s)', talentsText, string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, minLevelSpec)), "TOGGLETALENTS")
 	end
 
-	if IsTrialAccount() then
+	if not C_StorePublic.IsEnabled() then
 		buttons["BLIZZARD_STORE"]["disabled"] = true
-		buttons["BLIZZARD_STORE"]["text"] = string.format('%s (%s)', BLIZZARD_STORE, ERR_RESTRICTED_ACCOUNT_TRIAL)
+		buttons["BLIZZARD_STORE"]["text"] = string.format('%s (%s)',  BLIZZARD_STORE, BLIZZARD_STORE_ERROR_UNAVAILABLE )
 	end
 
 	if UnitFactionGroup("player") ~= "Neutral" then
@@ -316,7 +373,7 @@ local function ButtonsArray()
 			disabled = true
 			text = string.format('%s (%s)', LOOKINGFORGUILD, ERR_RESTRICTED_ACCOUNT_TRIAL)
 		else
-			if WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then
+			if addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_MAINLINE then
 				if not IsInGuild() then
 					disabled = true
 				end
@@ -337,7 +394,7 @@ local function ButtonsArray()
 		buttons["GUILD"]["text"] = GetMenuButtonText(string.format('%s (%s)', LOOKINGFORGUILD, FEATURE_NOT_AVAILBLE_PANDAREN), "TOGGLEGUILDTAB")
 
 		buttons["DUNGEONS"]["disabled"] = true
-		buttons["DUNGEONS"]["text"] = GetMenuButtonText(string.format('%s (%s)', DUNGEONS_BUTTON, FEATURE_NOT_AVAILBLE_PANDAREN), "TOGGLEGROUPFINDER")		
+		buttons["DUNGEONS"]["text"] = GetMenuButtonText(string.format('%s (%s)', DUNGEONS_BUTTON, FEATURE_NOT_AVAILBLE_PANDAREN), "TOGGLEGROUPFINDER")
 	end
 
 	if not (C_AdventureJournal and C_AdventureJournal.CanBeShown()) then
@@ -345,8 +402,32 @@ local function ButtonsArray()
 		buttons["ADVENTURE_JOURNAL"]["text"] = GetMenuButtonText(string.format('%s (%s)', ADVENTURE_JOURNAL, FEATURE_NOT_YET_AVAILABLE), "TOGGLEENCOUNTERJOURNAL")
 	end
 
-	if HasPetSpells() or PetHasSpellbook() then
-		buttons["PETBOOK"]["disabled"] = false
+	if ToggleAchievementFrame and addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE or addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_WRATH_OF_THE_LICH_KING_CLASSIC then
+		local text
+		local binding = "TOGGLEACHIEVEMENT"
+		if  level < minLevelAchi then
+			text = GetMenuButtonText(string.format('%s (%s)', ACHIEVEMENT_BUTTON, string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, minLevelAchi)), binding)
+		else
+			buttons["ACHIEVEMENTS"]["disabled"] = false
+			text = GetMenuButtonText(ACHIEVEMENT_BUTTON, binding)
+		end
+		buttons["ACHIEVEMENTS"]["text"] = text
+	end
+
+	if TogglePVPFrame and addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_WRATH_OF_THE_LICH_KING_CLASSIC then
+		local text
+		local binding = "TOGGLECHARACTER4"
+		if level < SHOW_PVP_LEVEL then
+			text = GetMenuButtonText(string.format('%s (%s)', PLAYER_V_PLAYER, string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, SHOW_PVP_LEVEL)), binding)
+		else
+			buttons["PLAYER_V_PLAYER"]["disabled"] = false
+			text = GetMenuButtonText(PLAYER_V_PLAYER, binding)
+		end
+		buttons["PLAYER_V_PLAYER"]["text"] = text
+	end
+
+	if not (HasPetSpells() or PetHasSpellbook()) and addon.WOW_PROJECT_ID > addon.WOW_PROJECT_ID_MAINLINE then
+		buttons["SPELLBOOK_ABILITIES_MENU"]["nested"] = nil
 	end
 
 	return buttons
@@ -364,34 +445,35 @@ local function MenuInit(frame, level)
 		menu = subMenus[UIDROPDOWNMENU_MENU_VALUE]
 	end
 
-	for _, button in ipairs(menu) do 
+	for _, button in ipairs(menu) do
 		local info = buttons[button]
+		if not info.skip then
+			info.value = button
 
-		info.value = button
+			if info.nested then
+				info.hasArrow = true
+				info.keepShownOnClick = true
+			end
 
-		if info.nested then
-			info.hasArrow = true
-			info.keepShownOnClick = true
+			if not info.checkable then 
+				info.notCheckable = true
+			end
+
+			if info.iconOnly then
+				info.hasArrow = false
+				info.iconInfo = { tCoordLeft = info.tCoordLeft,
+						tCoordRight = info.tCoordRight,
+						tCoordTop = info.tCoordTop,
+						tCoordBottom = info.tCoordBottom,
+						tSizeX = info.tSizeX,
+						tSizeY = info.tSizeY,
+						tFitDropDownSizeX = info.tFitDropDownSizeX }
+			else
+				info.iconInfo = nil
+			end
+
+			UIDropDownMenu_AddButton(info,level)
 		end
-
-		if not info.checkable then 
-			info.notCheckable = true
-		end
-
-		if info.iconOnly then
-			info.hasArrow = false
-			info.iconInfo = { tCoordLeft = info.tCoordLeft,
-					  tCoordRight = info.tCoordRight,
-					  tCoordTop = info.tCoordTop,
-					  tCoordBottom = info.tCoordBottom,
-					  tSizeX = info.tSizeX,
-					  tSizeY = info.tSizeY,
-					  tFitDropDownSizeX = info.tFitDropDownSizeX }
-		else
-			info.iconInfo = nil
-		end
-
-		UIDropDownMenu_AddButton(info,level)
 	end
 end
 
