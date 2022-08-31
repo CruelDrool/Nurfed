@@ -51,6 +51,13 @@ addon.options = {
 	},
 }
 
+--  Setting our own WoW project IDs by using GetClassicExpansionLevel().
+addon.WOW_PROJECT_ID = GetClassicExpansionLevel and GetClassicExpansionLevel() + 2 or 1
+addon.WOW_PROJECT_ID_MAINLINE = 1
+addon.WOW_PROJECT_ID_CLASSIC = 2
+addon.WOW_PROJECT_ID_THE_BURNING_CRUSADE_CLASSIC = 3
+addon.WOW_PROJECT_ID_WRATH_OF_THE_LICH_KING_CLASSIC = 4
+
 function addon:SetupOptions()
 	self.options.plugins.profiles = { profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db) }
 	self.options.name = addonName
