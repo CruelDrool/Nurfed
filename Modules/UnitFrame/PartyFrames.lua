@@ -372,7 +372,7 @@ function module:OnInitialize()
 end
 
 function module:OnEnable()
-	if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
+	if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
 		table.insert(events, "INCOMING_SUMMON_CHANGED")
 		table.insert(events, "UNIT_CTR_OPTIONS")
 	end
