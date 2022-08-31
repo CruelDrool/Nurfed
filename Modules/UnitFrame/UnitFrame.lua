@@ -1606,7 +1606,7 @@ local LibCC
 local UnitCastingInfo
 local UnitChannelInfo
 
-if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
+if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CLASSIC then
 	LibCC = LibStub("LibClassicCasterino", true)
 	UnitCastingInfo = function(unit)
 		return LibCC:UnitCastingInfo(unit)
@@ -1877,7 +1877,8 @@ function module:CastBar_OnLoad(frame, unit)
 		frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_UPDATE")
 		frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
 
-		if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE then
+		if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
+			-- According to Wowpedia these events were added in patch 3.2.0 (2009-08-04). However, it's currently not working in the WotLK Classic client.
 			frame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTIBLE")
 			frame:RegisterEvent("UNIT_SPELLCAST_NOT_INTERRUPTIBLE")
 		end
@@ -2108,7 +2109,7 @@ Buffs, debuffs and stuffs.
 
 local LibClassicDurations
 
-if WOW_PROJECT_ID == WOW_PROJECT_CLASSIC then
+if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CLASSIC then
 	LibClassicDurations = LibStub("LibClassicDurations")
 	LibClassicDurations:Register(addon)
 end
