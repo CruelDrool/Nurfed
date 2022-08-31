@@ -13,7 +13,7 @@ local defaults = {
 			silver = 0,
 			copper = 0,
 		},
-		guildBank = WOW_PROJECT_ID ~= WOW_PROJECT_CLASSIC,
+		guildBank = addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_CLASSIC,
 		summary = true,
 	}
 }
@@ -103,7 +103,7 @@ module.options = {
 			type = "toggle",
 			name = "Use guild bank when possible.",
 			width = "full",
-			hidden =  WOW_PROJECT_ID == WOW_PROJECT_CLASSIC,
+			hidden =  addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CLASSIC,
 			get = function() return module.db.profile.guildBank end,
 			set = function(info, value) module.db.profile.guildBank = value end,
 		},
