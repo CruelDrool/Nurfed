@@ -1691,8 +1691,11 @@ local function CastBar_OnEvent(frame, event, unit,...)
 			frame.casting = false
 		end
 		if notInterruptible then
-			-- r, g, b = 1.0, 0.0, 0.0
-			r, g, b = CastingBarFrame.nonInterruptibleColor:GetRGB()
+			if CastingBarFrame.nonInterruptibleColor then
+				r, g, b = CastingBarFrame.nonInterruptibleColor:GetRGB()
+			else
+				r, g, b = 0.7, 0.7, 0.7
+			end
 		end
 
 		frame.statusbar:SetStatusBarColor(r, g, b)
