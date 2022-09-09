@@ -1720,8 +1720,13 @@ local function CastBar_OnEvent(frame, event, unit,...)
 		end
 		frame.statusbar:SetStatusBarColor(r, g, b)
 	elseif event == "UNIT_SPELLCAST_NOT_INTERRUPTIBLE" then
-		-- frame.statusbar:SetStatusBarColor(1.0, 0.0, 0.0)
-		frame.statusbar:SetStatusBarColor(CastingBarFrame.nonInterruptibleColor:GetRGB())
+		local r, g, b
+		if CastingBarFrame.nonInterruptibleColor then
+			r, g, b = CastingBarFrame.nonInterruptibleColor:GetRGB()
+		else
+			r, g, b = 0.7, 0.7, 0.7
+		end
+		frame.statusbar:SetStatusBarColor(r, g, b)
 	elseif event  == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP" then
 		if ( frame.casting and select(1,...) == frame.castID ) or frame.channeling then
 			if frame.casting then
