@@ -9,10 +9,12 @@ local unit = "player"
 module.defaults = {
 	enabled = true,
 	disableBlizzCastBar = true,
+	shortenFactionRepName = false,
+	shortenStandingRepName = false,
 	formats = {
 		infoline = "$level ($g)",
-		xp = "$cur/$max ($rest)",
-		azerite = "$cur/$max ($level)",
+		xp = "$cur/$max ($rest) $perc",
+		reputation = "$cur/$max - $faction ($standing) $perc",
 	},
 	frames = {
 		[unit] = {
@@ -86,18 +88,34 @@ module.options = {
 					get = function() return UnitFrames:GetTextFormat("xp", module.frame) end,
 					set = function(info, value) module.db.formats.xp = value;module:XPbar_Update(module.frame.xp) end,
 				},
-				azerite = {
+				reputation = {
 					order = 6,
 					type = "input",
-					name = "Azerite",
+					name = "Reputation",
 					-- desc = "",
-					get = function() return UnitFrames:GetTextFormat("azerite", module.frame) end,
-					set = function(info, value) module.db.formats.azerite = value;module:AzeriteBar_Update(module.frame.azerite) end,
+					get = function() return UnitFrames:GetTextFormat("reputation", module.frame) end,
+					set = function(info, value) module.db.formats.reputation = value;module:RepBar_Update(module.frame.reputation) end,
 				},
 			},
 		},
-		blizzCastBar = {
+		shortenFactionRepName = {
 			order = 3,
+			type = "toggle",
+			name = "Shorten faction name on the reputation bar",
+			width = "full",
+			get = function() return module.db.shortenFactionRepName end,
+			set = function(info, value) module.db.shortenFactionRepName = value; module:RepBar_Update(module.frame.reputation) end,
+		},
+		shortenStandingRepName = {
+			order = 4,
+			type = "toggle",
+			name = "Shorten faction standing on the reputation bar",
+			width = "full",
+			get = function() return module.db.shortenStandingRepName end,
+			set = function(info, value) module.db.shortenStandingRepName = value; module:RepBar_Update(module.frame.reputation) end,
+		},
+		blizzCastBar = {
+			order = 5,
 			type = "toggle",
 			name = "Disable Blizzard Castbar",
 			get = function() return module.db.disableBlizzCastBar end,
@@ -257,72 +275,18 @@ local function OnEvent(frame, event, ...)
 	end
 end
 
-function module:AzeriteBar_Update(frame)
-	local currValue, maxValue, currLevel, r, g, b
-	local text, perc = ""
-	local azeriteItemLocation = C_AzeriteItem.FindActiveAzeriteItem()
- 
-	if not azeriteItemLocation then
-		frame:Hide()
-		return
-	end
-	
-	currLevel = C_AzeriteItem.GetPowerLevel(azeriteItemLocation)
-	
-	r, g, b = ARTIFACT_BAR_COLOR:GetRGB()
-	
-	frame:SetStatusBarColor(r, g, b)
-	frame.bg:SetVertexColor(r, g, b, frame.bg:GetAlpha())
-	if C_AzeriteItem.IsAzeriteItemAtMaxLevel() then
-		frame:SetMinMaxValues(0,1)
-		frame:SetValue(1)
-		text = LEVEL.." "..currLevel
-	else
-		text = UnitFrames:GetTextFormat("azerite", frame:GetParent())
-		perc = UnitFrames:GetTextFormat("perc", frame:GetParent())
-		
-		currValue, maxValue = C_AzeriteItem.GetAzeriteItemXPInfo(azeriteItemLocation)
-		
-		frame:SetMinMaxValues(0, maxValue)	
-		frame:SetValue(currValue)
+function module:RepBar_Update(frame)
+	local factionName, standingID, barMin, barMax, barValue, factionID = GetWatchedFactionInfo()
+	local currValue, maxValue = 0, 0
+	local r, g, b = addon:UnpackColorTable(FACTION_BAR_COLORS[4])
+	local text = ""
 
-		text = text:gsub("$cur", addon:CommaNumber(currValue))
-		text = text:gsub("$max", addon:FormatNumber(maxValue))
-		text = text:gsub("$level", LEVEL.." "..currLevel)
-		
-		perc = perc:gsub("$perc", UnitFrames:FormatPercentage(currValue / maxValue*100))
-	end
-	
-	frame.text:SetText(text)
-	frame.perc:SetText(perc)
-	frame:Show()
-end
+	if factionName then
+		local friendshipID = GetFriendshipReputation and GetFriendshipReputation(factionID) or nil
+		local paragonID = C_Reputation and C_Reputation.IsFactionParagon and C_Reputation.IsFactionParagon(factionID) or nil
 
-local function AzeriteBar_OnEvent(frame)
-	module:AzeriteBar_Update(frame)
-end
+		local standing = _G["FACTION_STANDING_LABEL"..standingID]
 
-local function AzeriteBar_OnLoad(frame)
-	frame:RegisterEvent("PLAYER_ENTERING_WORLD")
-	frame:RegisterEvent("AZERITE_ITEM_EXPERIENCE_CHANGED")
-	frame:RegisterEvent("AZERITE_ITEM_POWER_LEVEL_CHANGED")
-	
-	frame:SetScript("OnEvent", AzeriteBar_OnEvent)
-end
-
-function module:XPbar_Update(frame)
-
-	local unit = frame.unit
-	local currValue, maxValue, rest, r, g, b
-	local text, perc = ""
-	local name, standingID, barMin, barMax, barValue, factionID = GetWatchedFactionInfo()
-	local friendshipID = GetFriendshipReputation and GetFriendshipReputation(factionID) or nil
-
-	-- text = frame:GetAttribute("textFormat")
-	-- perc = frame:GetAttribute("percFormat")
-	text = UnitFrames:GetTextFormat("xp", frame:GetParent())
-	perc = UnitFrames:GetTextFormat("perc", frame:GetParent())
-	if name then
 		if friendshipID then
 			local _, friendRep, friendMaxRep, friendName, friendText, friendTexture, friendTextLevel, friendThreshold, nextFriendThreshold = GetFriendshipReputation(factionID)
 			if nextFriendThreshold then
@@ -330,65 +294,106 @@ function module:XPbar_Update(frame)
 			else
 				barMin, barMax, barValue = 0, 1, 1
 			end
+			standing = friendTextLevel
 			standingID = 5
+		end
+
+		if paragonID then
+			local currentValue, threshold, _, hasRewardPending = C_Reputation.GetFactionParagonInfo(factionID)
+			barMin, barMax = 0, threshold
+			barValue = currentValue % threshold
+			if hasRewardPending then
+				barValue = barValue + threshold
+			end
 		end
 
 		currValue = barValue  - barMin
 		maxValue = barMax - barMin
-		
-		if currValue == 0 then
+
+		if currValue == 0 and maxValue == 0 then
 			currValue = 1
-		end
-		
-		if maxValue == 0 then
 			maxValue = 1
 		end
-		
-		if FACTION_BAR_COLORS[standingID] then
-			r, g, b = FACTION_BAR_COLORS[standingID].r, FACTION_BAR_COLORS[standingID].g, FACTION_BAR_COLORS[standingID].b
-		-- else
-			-- r, g, b = 1.0, 1.0, 1.0
+
+		if paragonID then
+			r, g, b = 0, .5 ,.9
+		elseif FACTION_BAR_COLORS[standingID] then
+			r, g, b = addon:UnpackColorTable(FACTION_BAR_COLORS[standingID])
 		end
-		
-		if string.len(name) > 13 then
-			name = name:gsub("[A-Za-z']*%s?", function(s) 
+
+		if self.db.shortenFactionRepName then
+			factionName = factionName:gsub("[A-Za-z']*%s?", function(s)
 				return s:sub(0,1)
 			end)
 		end
-		rest = name
-	else
-		-- -- GetMaxPlayerLevel()
-		if UnitLevel(unit) == MAX_PLAYER_LEVEL or (IsXPUserDisabled and IsXPUserDisabled()) then
-			frame:Hide()
-			return
+
+		if self.db.shortenStandingRepName then
+			standing = standing:gsub("[A-Za-z']*%s?", function(s)
+				return s:sub(0,1)
+			end)
 		end
-		if GetRestState() == 1 then
-			r, g, b = 0.0, 0.39, 0.88
-		else
-			r, g, b = 0.58, 0.0, 0.55
-		end
-		currValue, maxValue = UnitXP(unit), UnitXPMax(unit)
-		rest = GetXPExhaustion()
-		if rest then rest = addon:FormatNumber(rest) end
+
+		text = UnitFrames:GetTextFormat("reputation", frame:GetParent())
+		text = text:gsub("$cur", addon:CommaNumber(currValue))
+		text = text:gsub("$max", addon:FormatNumber(maxValue))
+		text = text:gsub("$faction", factionName)
+		text = text:gsub("$standing", standing)
+		text = text:gsub("$perc", UnitFrames:FormatPercentage(currValue / maxValue*100))
+
 	end
-	
 	frame:SetMinMaxValues(0, maxValue)
 	frame:SetStatusBarColor(r, g, b)
 	frame.bg:SetVertexColor(r, g, b, frame.bg:GetAlpha())
 	frame:SetValue(currValue)
-
-	text = text:gsub("$cur", addon:CommaNumber(currValue))
-	text = text:gsub("$max", addon:FormatNumber(maxValue))
-	if rest then
-		
-		text = text:gsub("$rest", rest)
-	else
-		text = text:gsub("%S*$rest%S*%s?", "")
-	end
-	perc = perc:gsub("$perc", UnitFrames:FormatPercentage(currValue / maxValue*100))
-	
 	frame.text:SetText(text)
-	frame.perc:SetText(perc)
+	frame:Show()
+end
+
+local function RepBar_OnEvent(frame)
+	module:RepBar_Update(frame)
+end
+
+local function RepBar_OnLoad(frame)
+	frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+	frame:RegisterEvent("UPDATE_FACTION")
+	frame:RegisterEvent("QUEST_LOG_UPDATE")
+	frame:SetScript("OnEvent", RepBar_OnEvent)
+end
+
+function module:XPbar_Update(frame)
+	local XPDisabled = IsXPUserDisabled and IsXPUserDisabled()
+	local maxLevel = (IsTrialAccount() or IsVeteranTrialAccount()) and GetRestrictedAccountData() or GetMaxPlayerLevel()
+	local currValue, maxValue = 0, 0
+	local r, g, b = 0.58, 0.0, 0.55
+	local text = ""
+
+	if UnitLevel(frame.unit) < maxLevel and not XPDisabled then
+		text = UnitFrames:GetTextFormat("xp", frame:GetParent())
+
+		if GetRestState() == 1 then
+			r, g, b = 0.0, 0.39, 0.88
+		end
+
+		currValue, maxValue = UnitXP(frame.unit), UnitXPMax(frame.unit)
+
+		local rest = GetXPExhaustion()
+		if rest then rest = addon:FormatNumber(rest) end
+
+		text = text:gsub("$cur", addon:CommaNumber(currValue))
+		text = text:gsub("$max", addon:FormatNumber(maxValue))
+		if rest then
+			text = text:gsub("$rest", rest)
+		else
+			text = text:gsub("%S*$rest%S*%s?", "")
+		end
+		text = text:gsub("$perc", UnitFrames:FormatPercentage(currValue / maxValue*100))
+	end
+
+	frame:SetMinMaxValues(0, maxValue)
+	frame:SetStatusBarColor(r, g, b)
+	frame.bg:SetVertexColor(r, g, b, frame.bg:GetAlpha())
+	frame:SetValue(currValue)
+	frame.text:SetText(text)
 	frame:Show()
 end
 
@@ -407,12 +412,11 @@ local function XPbar_OnLoad(frame, unit)
 			return
 		end
 	end
-	
+
 	frame:RegisterEvent("PLAYER_ENTERING_WORLD")
-    frame:RegisterEvent("PLAYER_XP_UPDATE")
-    frame:RegisterEvent("UPDATE_EXHAUSTION")
-    frame:RegisterEvent("PLAYER_LEVEL_UP")
-    frame:RegisterEvent("UPDATE_FACTION")
+	frame:RegisterEvent("UPDATE_EXHAUSTION")
+	frame:RegisterEvent("PLAYER_XP_UPDATE")
+	frame:RegisterEvent("PLAYER_LEVEL_UP")
 	frame:SetScript("OnEvent", XPbar_OnEvent)
 end
 
@@ -517,23 +521,16 @@ function module:OnEnable()
 		return
 	end
 	DisableBlizz()
-	if addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_MAINLINE then
-		self.options.args.formats.args.azerite = nil;
-	end
+	-- if addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_MAINLINE then
+	-- 	self.options.args.formats.args.azerite = nil;
+	-- end
 	if not self.frame then
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PlayerFrameDropDown)
 		if self.frame.xp then XPbar_OnLoad(self.frame.xp, unit) end
 		if self.frame.additionalPowerBar then AdditionalPowerBar_OnLoad(self.frame.additionalPowerBar, unit) end
-		if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE and self.frame.azerite then 
-			AzeriteBar_OnLoad(self.frame.azerite)
-		else
-			self.frame.health:SetPoint("BOTTOMRIGHT", self.frame, "BOTTOMRIGHT", -5, 25)
-			self.frame.powerBar:SetPoint("BOTTOMRIGHT", self.frame, "BOTTOMRIGHT", -5, 14)
-			self.frame:SetHeight(59)
-			self.frame.overlay:SetHeight(90)
-		end
+		if self.frame.reputation then RepBar_OnLoad(self.frame.reputation) end
 	end
-	
+
 	if self.frame then
 		UnitFrames:EnableFrame(self.frame)
 		self.frame.inCombat = nil
@@ -541,11 +538,11 @@ function module:OnEnable()
 		Update(self.frame)
 
 		if self.frame.xp then
-			module:XPbar_Update(self.frame.xp)
+			self:XPbar_Update(self.frame.xp)
 		end
-		
-		if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE and self.frame.azerite then 
-			self:AzeriteBar_Update(self.frame.azerite)
+
+		if self.frame.reputation then
+			self:RepBar_Update(self.frame.reputation)
 		end
 	end
 end

@@ -41,7 +41,7 @@
 				</Attributes>
 			</StatusBar>
 
-			<StatusBar parentKey="azerite" frameStrata="LOW" hidden="true">
+			<StatusBar parentKey="reputation" frameStrata="LOW" hidden="true">
 				<Size x="170" y="8"/>
 				<Anchors>
 					<Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-5" y="14" />
@@ -54,12 +54,7 @@
 					</Layer>
 					<Layer level="OVERLAY">
 						<FontString parentKey="text" inherits="Nurfed_UnitFontSmall" justifyH="CENTER">
-							<Shadow x="-1" y="-1">
-								<Color r="0" g="0" b="0" a="0.75"/>
-								<!-- <Offset x="-1" y="-1"/> -->
-							</Shadow>
-						</FontString>
-						<FontString parentKey="perc" inherits="Nurfed_UnitFontSmall" justifyH="RIGHT">
+							<Size x="170" y="8"/>
 							<Shadow x="-1" y="-1">
 								<Color r="0" g="0" b="0" a="0.75"/>
 								<!-- <Offset x="-1" y="-1"/> -->
@@ -83,12 +78,7 @@
 					</Layer>
 					<Layer level="OVERLAY">
 						<FontString parentKey="text" inherits="Nurfed_UnitFontSmall" justifyH="CENTER">
-							<Shadow x="-1" y="-1">
-								<Color r="0" g="0" b="0" a="0.75"/>
-								<!-- <Offset x="-1" y="-1"/> -->
-							</Shadow>
-						</FontString>
-						<FontString parentKey="perc" inherits="Nurfed_UnitFontSmall" justifyH="RIGHT">
+							<Size x="170" y="8"/>
 							<Shadow x="-1" y="-1">
 								<Color r="0" g="0" b="0" a="0.75"/>
 								<!-- <Offset x="-1" y="-1"/> -->
