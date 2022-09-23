@@ -376,17 +376,18 @@ function module:XPbar_Update(frame)
 
 		currValue, maxValue = UnitXP(frame.unit), UnitXPMax(frame.unit)
 
-		local rest = GetXPExhaustion()
-		if rest then rest = addon:FormatNumber(rest) end
-
 		text = text:gsub("$cur", addon:CommaNumber(currValue))
 		text = text:gsub("$max", addon:FormatNumber(maxValue))
-		if rest then
-			text = text:gsub("$rest", rest)
+		text = text:gsub("$perc", UnitFrames:FormatPercentage(currValue / maxValue*100))
+		
+		local rest = GetXPExhaustion() or 0 -- Sometimes GetXPExhaustion() returns nil
+
+		if rest > 0 then
+			text = text:gsub("$rest", addon:FormatNumber(rest))
 		else
 			text = text:gsub("%S*$rest%S*%s?", "")
 		end
-		text = text:gsub("$perc", UnitFrames:FormatPercentage(currValue / maxValue*100))
+		
 	end
 
 	frame:SetMinMaxValues(0, maxValue)
