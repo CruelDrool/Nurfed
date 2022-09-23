@@ -1,4 +1,5 @@
 local addonName = ...
+local chatCommand = addonName:lower()
 local addon = LibStub("AceAddon-3.0"):NewAddon(addonName, "AceConsole-3.0", "AceEvent-3.0", "AceHook-3.0")
 addon:SetDefaultModuleLibraries("AceEvent-3.0", "AceHook-3.0")
 addon:SetDefaultModuleState(false)
@@ -39,7 +40,7 @@ addon.options = {
 			get = function() return not addon.db.profile.minimapIcon.hide end,
 			set = function(info, value) addon.db.profile.minimapIcon.hide = not value; LDBIcon[value and "Show" or "Hide"](LDBIcon, addonName) end,
 			-- disabled = function() return not LDBIcon end,
-			disabled = function() return not LDBTitan end,
+			-- disabled = function() return not LDBTitan end,
 		},
 		modules = {
 			order = 2,
@@ -75,6 +76,8 @@ function addon:OnInitialize()
 	self.db.RegisterCallback(self, "OnProfileChanged", "UpdateConfigs")
 	self.db.RegisterCallback(self, "OnProfileCopied", "UpdateConfigs")
 	self.db.RegisterCallback(self, "OnProfileReset", "UpdateConfigs")
+
+	self:RegisterChatCommand(chatCommand, "ToggleOptions")
 	
 	-- Get the options created in the modules.
 	for name, mod in self:IterateModules() do
@@ -90,15 +93,7 @@ function addon:OnInitialize()
 		type = "launcher",
 		OnClick = function(frame, msg)
 			if msg == "RightButton" then
-				if LibStub("AceConfigDialog-3.0").OpenFrames[addonName] then
-					-- PlaySound("GAMEGENERICBUTTONPRESS")
-					PlaySound(624)
-					LibStub("AceConfigDialog-3.0"):Close(addonName)
-				else
-					-- PlaySound("GAMEDIALOGOPEN")
-					PlaySound(88)
-					LibStub("AceConfigDialog-3.0"):Open(addonName)
-				end
+				self:ToggleOptions()
 			end
 		end,
 		icon = "Interface\\AddOns\\"..addonName.."\\Images\\locked",
@@ -124,6 +119,18 @@ end
 function addon:UpdateConfigs()
 	LDBIcon:Refresh(addonName, addon.db.profile.minimapIcon)
 	LibStub("AceConfigRegistry-3.0"):NotifyChange(addonName)
+end
+
+function addon:ToggleOptions()
+	if LibStub("AceConfigDialog-3.0").OpenFrames[addonName] then
+		-- PlaySound("GAMEGENERICBUTTONPRESS")
+		PlaySound(624)
+		LibStub("AceConfigDialog-3.0"):Close(addonName)
+	else
+		-- PlaySound("GAMEDIALOGOPEN")
+		PlaySound(88)
+		LibStub("AceConfigDialog-3.0"):Open(addonName)
+	end
 end
 
 function addon:Transliterate(str, mark)
