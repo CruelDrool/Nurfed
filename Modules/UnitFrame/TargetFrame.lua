@@ -48,23 +48,23 @@ module.options = {
 					type = "input",
 					name = "Name",
 					-- desc = "",
-					get = function() return UnitFrames:GetTextFormat("name", module.frame) end,
-					set = function(info, value) module.db.formats.name = value;UnitFrames:UpdateInfo(module.frame) end,
+					get = function() return UnitFrames:GetTextFormat("name", nil, moduleName) end,
+					set = function(info, value) module.db.formats.name = value;if module.frame then UnitFrames:UpdateInfo(module.frame) end end,
 				},
 				infoline = {
 					order = 2,
 					type = "input",
 					name = "Infoline",
 					-- desc = "",
-					get = function() return UnitFrames:GetTextFormat("infoline", module.frame) end,
-					set = function(info, value) module.db.formats.infoline = value;UnitFrames:UpdateInfo(module.frame) end,
+					get = function() return UnitFrames:GetTextFormat("infoline", nil, moduleName) end,
+					set = function(info, value) module.db.formats.infoline = value;if module.frame then UnitFrames:UpdateInfo(module.frame) end end,
 				},
 				health = {
 					order = 3,
 					type = "input",
 					name = "Health",
 					-- desc = "",
-					get = function() return UnitFrames:GetTextFormat("health", module.frame) end,
+					get = function() return UnitFrames:GetTextFormat("health", nil, moduleName) end,
 					set = function(info, value) module.db.formats.health = value end,
 				},
 				power = {
@@ -72,7 +72,7 @@ module.options = {
 					type = "input",
 					name = "Power",
 					-- desc = "",
-					get = function() return UnitFrames:GetTextFormat("power", module.frame) end,
+					get = function() return UnitFrames:GetTextFormat("power",nil, moduleName) end,
 					set = function(info, value) module.db.formats.power = value end,
 				},
 				threat = {
@@ -80,8 +80,8 @@ module.options = {
 					type = "input",
 					name = "Threat",
 					-- desc = "",
-					get = function() return UnitFrames:GetTextFormat("threat", module.frame) end,
-					set = function(info, value) module.db.formats.threat = value;UnitFrames:ThreatBar_Update(module.frame.threat) end,
+					get = function() return UnitFrames:GetTextFormat("threat", nil, moduleName) end,
+					set = function(info, value) module.db.formats.threat = value;if module.frame then UnitFrames:ThreatBar_Update(module.frame.threat) end end,
 				},
 			},
 		},
@@ -195,7 +195,10 @@ local function OnEvent(frame, event, ...)
 	if not frame.isEnabled then return end
 
 	local arg1, arg2, arg3, arg4, arg5 = ...
-	if event == "PLAYER_ENTERING_WORLD" or event == "DISPLAY_SIZE_CHANGED" then
+	if event == "PLAYER_ENTERING_WORLD" then
+		Update(frame)
+		module:DisableBlizz()
+	elseif event == "DISPLAY_SIZE_CHANGED" then
 		Update(frame)
 	elseif event == "PLAYER_TARGET_CHANGED" then
 			Update(frame)
@@ -269,26 +272,37 @@ end
 
 local blizzFrame = {}
 
-local function DisableBlizz()
+function module:DisableBlizz()
+	if #blizzFrame > 0 then return end
+
 	local frame = TargetFrame
-	local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint(frame:GetNumPoints())
+	local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint()
+
+	if not point then return end
+
 	blizzFrame = {
 			[1] = point,
 			[2] = relativeTo:GetName(),
 			[3] = relativePoint,
 			[4] = xOfs,
 			[5] = yOfs,
+			[6] = frame:IsClampedToScreen(),
 	}
+
+	frame:SetClampedToScreen(false)
 	frame:ClearAllPoints()
 	frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -500, 500)
 end
 
-local function EnableBlizz()
+function module:EnableBlizz()
+	if #blizzFrame == 0 then return end
 	local frame = TargetFrame
-	local point, relativeTo, relativePoint, xOfs, yOfs = unpack(blizzFrame)
+	local point, relativeTo, relativePoint, xOfs, yOfs, IsClampedToScreen = unpack(blizzFrame)
 	
 	frame:ClearAllPoints()
 	frame:SetPoint(point, _G[relativeTo], relativePoint, xOfs, yOfs)
+	frame:SetClampedToScreen(IsClampedToScreen)
+	blizzFrame = {}
 end
 
 function module:OnInitialize()
@@ -304,9 +318,11 @@ function module:OnEnable()
 		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
 		return
 	end
-	DisableBlizz()
+
+	self:DisableBlizz()
+
 	if not self.frame then
-		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, TargetFrameDropDown, true)
+		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, TargetFrameDropDown or TargetFrameDropDown_Initialize, true)
 	end
 
 	if self.frame then
@@ -321,6 +337,6 @@ function module:OnDisable()
 		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
 		return
 	end
-	EnableBlizz()
+	self:EnableBlizz()
 	UnitFrames:DisableFrame(self.frame)
 end

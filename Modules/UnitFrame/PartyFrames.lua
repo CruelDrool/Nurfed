@@ -67,7 +67,7 @@ module.options = {
 					name = "Name",
 					-- desc = "",
 					get = function() return UnitFrames:GetTextFormat("name", nil, moduleName) end,
-					set = function(info, value) module.db.formats.name = value;for _,v in pairs(module.frames) do UnitFrames:UpdateInfo(v) end end,
+					set = function(info, value) module.db.formats.name = value;if module.frames then for _,v in pairs(module.frames) do UnitFrames:UpdateInfo(v) end end end,
 				},
 				health = {
 					order = 2,
@@ -227,7 +227,10 @@ local function OnEvent(frame, event, ...)
 
 	local arg1, arg2, arg3, arg4, arg5 = ...
 
-	if event == "PLAYER_ENTERING_WORLD" or event == "CVAR_UPDATE" or event == "UPDATE_BINDINGS" or event == "DISPLAY_SIZE_CHANGED" then
+	if event == "PLAYER_ENTERING_WORLD" then
+		Update(frame)
+		module:DisableBlizz()
+	elseif event == "CVAR_UPDATE" or event == "UPDATE_BINDINGS" or event == "DISPLAY_SIZE_CHANGED" then
 		Update(frame)
 	elseif event == "UNIT_PHASE" or event == "PARTY_MEMBER_ENABLE" or event == "PARTY_MEMBER_DISABLE" or event == "UNIT_FLAGS" or event == "UNIT_CTR_OPTIONS" then
 		if event ~= "UNIT_PHASE" or arg1 == frame.unit then
@@ -323,10 +326,15 @@ end
 
 local blizzFrames = {}
 
-local function DisableBlizz()
+function module:DisableBlizz()
+	if #blizzFrames > 0 then return end
+
 	for i = 1, MAX_PARTY_MEMBERS do
 		local frame = _G["PartyMemberFrame"..i]
-		local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint(frame:GetNumPoints())
+		if not frame then return end
+		local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint()
+
+		if not point then return end
 		
 		blizzFrames[i] = { 
 				[1] = point,
@@ -334,11 +342,12 @@ local function DisableBlizz()
 				[3] = relativePoint,
 				[4] = xOfs,
 				[5] = yOfs,
+				[6] = frame:IsClampedToScreen(),
 		}
 		
 		-- frame:SetScript("OnEvent", nil)
 		-- frame:SetScript("OnUpdate", nil)
-		
+		frame:SetClampedToScreen(false)
 		frame:ClearAllPoints()
 		frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -500, 500)
 		frame:Hide()
@@ -346,13 +355,16 @@ local function DisableBlizz()
 	CompactRaidFrameManager:SetFrameLevel(4)
 end
 
-local function EnableBlizz()
-	for i = 1, MAX_PARTY_MEMBERS do
+function module:EnableBlizz()
+	if #blizzFrames == 0 then return end
+	for i = 1, #blizzFrames do
 		local frame = _G["PartyMemberFrame"..i]
-		local point, relativeTo, relativePoint, xOfs, yOfs = unpack(blizzFrames[i])
+		if not frame then return end
+		local point, relativeTo, relativePoint, xOfs, yOfs, IsClampedToScreen = unpack(blizzFrames[i])
 		
 		frame:ClearAllPoints()
 		frame:SetPoint(point, _G[relativeTo], relativePoint, xOfs, yOfs)
+		frame:SetClampedToScreen(IsClampedToScreen)
 		
 		-- frame:SetScript("OnEvent", PartyMemberFrame_OnEvent)
 		-- frame:SetScript("OnUpdate", PartyMemberFrame_OnUpdate)
@@ -362,6 +374,8 @@ local function EnableBlizz()
 		if PartyMemberFrame_UpdateAssignedRoles then PartyMemberFrame_UpdateAssignedRoles(frame) end
 	end
 	CompactRaidFrameManager:SetFrameLevel(1)
+
+	blizzFrames = {}
 end
 
 function module:OnInitialize()
@@ -382,10 +396,10 @@ function module:OnEnable()
 		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
 		return
 	end
-	DisableBlizz()
+	self:DisableBlizz()
 	if table.getn(self.frames) == 0 then
-		for i=1,4 do
-			local frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, _G["PartyMemberFrame"..i.."DropDown"], true, i)
+		for i=1,MAX_PARTY_MEMBERS do
+			local frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, _G["PartyMemberFrame"..i.."DropDown"] or "PARTY", true, i)
 			frame:SetScript("OnUpdate", OnUpdate)
 			table.insert(module.frames, frame)
 		end
@@ -400,8 +414,10 @@ function module:OnEnable()
 		HideParty()
 	end
 
-	self:SecureHook("HidePartyFrame", HideParty)
-	self:SecureHook("ShowPartyFrame", ShowParty)
+	if HidePartyFrame and ShowPartyFrame then
+		self:SecureHook("HidePartyFrame", HideParty)
+		self:SecureHook("ShowPartyFrame", ShowParty)
+	end
 end
 
 function module:OnDisable()
@@ -410,7 +426,7 @@ function module:OnDisable()
 		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
 		return
 	end
-	EnableBlizz()
+	self:EnableBlizz()
 	for _, frame in ipairs(self.frames) do
 		UnitFrames:DisableFrame(frame)
 	end

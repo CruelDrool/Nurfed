@@ -53,23 +53,23 @@ module.options = {
 					type = "input",
 					name = "Name",
 					-- desc = "",
-					get = function() return UnitFrames:GetTextFormat("name", module.frame) end,
-					set = function(info, value) module.db.formats.name = value;UnitFrames:UpdateInfo(module.frame) end,
+					get = function() return UnitFrames:GetTextFormat("name", nil, moduleName) end,
+					set = function(info, value) module.db.formats.name = value;if module.frame then UnitFrames:UpdateInfo(module.frame) end end,
 				},
 				infoline = {
 					order = 2,
 					type = "input",
 					name = "Infoline",
 					-- desc = "",
-					get = function() return UnitFrames:GetTextFormat("infoline", module.frame) end,
-					set = function(info, value) module.db.formats.infoline = value;UnitFrames:UpdateInfo(module.frame) end,
+					get = function() return UnitFrames:GetTextFormat("infoline", nil, moduleName) end,
+					set = function(info, value) module.db.formats.infoline = value;if module.frame then UnitFrames:UpdateInfo(module.frame) end end,
 				},
 				health = {
 					order = 3,
 					type = "input",
 					name = "Health",
 					-- desc = "",
-					get = function() return UnitFrames:GetTextFormat("health", module.frame) end,
+					get = function() return UnitFrames:GetTextFormat("health", nil, moduleName) end,
 					set = function(info, value) module.db.formats.health = value end,
 				},
 				power = {
@@ -77,7 +77,7 @@ module.options = {
 					type = "input",
 					name = "Power",
 					-- desc = "",
-					get = function() return UnitFrames:GetTextFormat("power", module.frame) end,
+					get = function() return UnitFrames:GetTextFormat("power",nil, moduleName) end,
 					set = function(info, value) module.db.formats.power = value end,
 				},
 				xp = {
@@ -85,16 +85,16 @@ module.options = {
 					type = "input",
 					name = "Experience",
 					-- desc = "",
-					get = function() return UnitFrames:GetTextFormat("xp", module.frame) end,
-					set = function(info, value) module.db.formats.xp = value;module:XPbar_Update(module.frame.xp) end,
+					get = function() return UnitFrames:GetTextFormat("xp", nil, moduleName) end,
+					set = function(info, value) module.db.formats.xp = value;if module.frame then module:XPbar_Update(module.frame.xp) end end,
 				},
 				reputation = {
 					order = 6,
 					type = "input",
 					name = "Reputation",
 					-- desc = "",
-					get = function() return UnitFrames:GetTextFormat("reputation", module.frame) end,
-					set = function(info, value) module.db.formats.reputation = value;module:RepBar_Update(module.frame.reputation) end,
+					get = function() return UnitFrames:GetTextFormat("reputation", nil, moduleName) end,
+					set = function(info, value) module.db.formats.reputation = value;if module.frame then module:RepBar_Update(module.frame.reputation) end end,
 				},
 			},
 		},
@@ -104,7 +104,7 @@ module.options = {
 			name = "Shorten faction name on the reputation bar",
 			width = "full",
 			get = function() return module.db.shortenFactionRepName end,
-			set = function(info, value) module.db.shortenFactionRepName = value; module:RepBar_Update(module.frame.reputation) end,
+			set = function(info, value) module.db.shortenFactionRepName = value;if module.frame then module:RepBar_Update(module.frame.reputation) end end,
 		},
 		shortenStandingRepName = {
 			order = 4,
@@ -112,15 +112,15 @@ module.options = {
 			name = "Shorten faction standing on the reputation bar",
 			width = "full",
 			get = function() return module.db.shortenStandingRepName end,
-			set = function(info, value) module.db.shortenStandingRepName = value; module:RepBar_Update(module.frame.reputation) end,
+			set = function(info, value) module.db.shortenStandingRepName = value;if module.frame then module:RepBar_Update(module.frame.reputation) end end,
 		},
-		blizzCastBar = {
+		blizzCastBar = CastingBarFrame and {
 			order = 5,
 			type = "toggle",
 			name = "Disable Blizzard Castbar",
 			get = function() return module.db.disableBlizzCastBar end,
-			set = function(info, value) module.db.disableBlizzCastBar = value; if value == true then module:DisableBlizzCastBar() else module:EnableBlizzCastBar() end end,
-		},
+			set = function(info, value) module.db.disableBlizzCastBar = value; if value == true and module.db.enabled and UnitFrames:IsEnabled() then module:DisableBlizzCastBar() else module:EnableBlizzCastBar() end end,
+		} or nil,
 	},
 }
 
@@ -221,6 +221,7 @@ local function OnEvent(frame, event, ...)
 	    frame.inCombat = nil;
         frame.onHateList = nil;
 		Update(frame)
+		module:DisableBlizz()
 	elseif event == "UNIT_LEVEL" or event == "UNIT_NAME_UPDATE" then
 		if arg1 == frame.unit then
 			UnitFrames:UpdateInfo(frame)
@@ -378,8 +379,8 @@ function module:XPbar_Update(frame)
 
 		text = text:gsub("$cur", addon:CommaNumber(currValue))
 		text = text:gsub("$max", addon:FormatNumber(maxValue))
-		text = text:gsub("$perc", UnitFrames:FormatPercentage(currValue / maxValue*100))
-		
+		text = text:gsub("$perc", UnitFrames:FormatPercentage(currValue / (maxValue > 0 and maxValue or 1)*100))
+
 		local rest = GetXPExhaustion() or 0 -- Sometimes GetXPExhaustion() returns nil
 
 		if rest > 0 then
@@ -459,7 +460,7 @@ end
 
 
 function module:DisableBlizzCastBar()
-	if self.db.disableBlizzCastBar then
+	if self.db.disableBlizzCastBar and CastingBarFrame then
 		CastingBarFrame:SetScript("OnEvent", nil)
 		CastingBarFrame:SetScript("OnUpdate", nil)
 		CastingBarFrame:SetScript("OnShow", nil)
@@ -468,25 +469,35 @@ function module:DisableBlizzCastBar()
 end
 
 function module:EnableBlizzCastBar()
-	CastingBarFrame:SetScript("OnEvent", CastingBarFrame_OnEvent)
-	CastingBarFrame:SetScript("OnUpdate", CastingBarFrame_OnUpdate)
-	CastingBarFrame:SetScript("OnShow", CastingBarFrame_OnShow)
+	if CastingBarFrame and CastingBarFrame then
+		CastingBarFrame:SetScript("OnEvent", CastingBarFrame_OnEvent)
+		CastingBarFrame:SetScript("OnUpdate", CastingBarFrame_OnUpdate)
+		CastingBarFrame:SetScript("OnShow", CastingBarFrame_OnShow)
+	end
 end
 
 local blizzFrame = {}
 
-local function DisableBlizz()
-	module:DisableBlizzCastBar()
+function module:DisableBlizz()
+	if #blizzFrame > 0 then return end
+
+	self:DisableBlizzCastBar()
+
 	local frame = PlayerFrame
 	local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint()
+
+	if not point then return end
+
 	blizzFrame = {
 			[1] = point,
 			[2] = relativeTo:GetName(),
 			[3] = relativePoint,
 			[4] = xOfs,
 			[5] = yOfs,
+			[6] = frame:IsClampedToScreen()
 	}
 
+	frame:SetClampedToScreen(false)
 	frame:ClearAllPoints()
 	frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -500, 500)
 	frame:SetScript("OnEvent", nil)
@@ -494,8 +505,9 @@ local function DisableBlizz()
 	frame:Hide()
 end
 
-local function EnableBlizz()
-	module:EnableBlizzCastBar()
+function module:EnableBlizz()
+	if #blizzFrame == 0 then return end
+	self:EnableBlizzCastBar()
 	local frame = PlayerFrame
 	frame:SetScript("OnEvent", PlayerFrame_OnEvent)
 	frame:SetScript("OnUpdate", PlayerFrame_OnUpdate)
@@ -503,16 +515,12 @@ local function EnableBlizz()
 	UnitFrame_Update(PlayerFrame)
 	frame:Show()
 
-	local point, relativeTo, relativePoint, xOfs, yOfs = unpack(blizzFrame)
+	local point, relativeTo, relativePoint, xOfs, yOfs, IsClampedToScreen = unpack(blizzFrame)
 	frame:ClearAllPoints()
 	frame:SetPoint(point, _G[relativeTo], relativePoint, xOfs, yOfs)
-end
+	frame:SetClampedToScreen(IsClampedToScreen)
 
-function module:OnInitialize()
-	-- Enable if we're supposed to be enabled
-	if self.db and self.db.enabled and UnitFrames:IsEnabled() then
-		self:Enable()
-	end
+	blizzFrame = {}
 end
 
 function module:OnEnable()
@@ -521,10 +529,9 @@ function module:OnEnable()
 		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
 		return
 	end
-	DisableBlizz()
-	-- if addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_MAINLINE then
-	-- 	self.options.args.formats.args.azerite = nil;
-	-- end
+
+	self:DisableBlizz()
+
 	if not self.frame then
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PlayerFrameDropDown)
 		if self.frame.xp then XPbar_OnLoad(self.frame.xp, unit) end
@@ -554,6 +561,6 @@ function module:OnDisable()
 		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
 		return
 	end
-	EnableBlizz()
+	self:EnableBlizz()
 	UnitFrames:DisableFrame(module.frame)
 end

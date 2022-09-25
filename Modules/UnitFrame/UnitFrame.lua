@@ -343,6 +343,11 @@ function module:OnInitialize()
 	-- Register DB namespace
 	self.db = addon.db:RegisterNamespace(moduleName, defaults)
 
+	-- And then go through the modules again to givem them access to their databases.
+	for name, m in self:IterateModules() do
+		m.db = self.db.profile[name]
+	end
+
 	-- Register callbacks
 	self.db.RegisterCallback(self, "OnProfileChanged", "UpdateConfigs")
 	self.db.RegisterCallback(self, "OnProfileCopied", "UpdateConfigs")
@@ -359,9 +364,6 @@ end
 -- Go through modules and enable/disable those that should be.
 function module:ToggleModules()
 	for name, m in self:IterateModules() do
-		-- Give the module access to its database.
-		m.db = self.db.profile[name]
-
 		if m.db.enabled then
 			m:Enable()
 		else
@@ -460,10 +462,82 @@ function module:UpdateConfigs()
 	end
 end
 
-function module:CreateFrame(modName, unit, events, oneventfunc, dropdownMenu, isWatched, id)
+local function FrameDropDown_Initialize(frame, menu)
+	local menu;
+	local name;
+	local id = nil;
+	if frame.unit == "focus" then
+		menu = "FOCUS"
+	elseif frame.unit == "player" or UnitIsUnit("target", "player") then
+		menu = "SELF";
+	elseif UnitIsUnit(frame.unit, "vehicle") then
+		-- NOTE: vehicle check must come before pet check for accuracy's sake because
+		-- a vehicle may also be considered your pet
+		menu = "VEHICLE";
+	elseif UnitIsUnit(frame.unit, "pet") then
+		menu = "PET";
+	elseif frame.unit:find("boss") then
+		menu = "BOSS"
+	elseif UnitIsOtherPlayersBattlePet and UnitIsOtherPlayersBattlePet(frame.unit) then
+		menu = "OTHERBATTLEPET";
+	elseif UnitIsBattlePet and UnitIsBattlePet(frame.unit) then
+		menu = "BATTLEPET";
+	elseif UnitIsOtherPlayersPet(frame.unit) then
+		menu = "OTHERPET";
+	elseif UnitIsPlayer(frame.unit) then
+		id = UnitInRaid(frame.unit);
+		if id then
+			menu = "RAID_PLAYER";
+		elseif UnitInParty(frame.unit) then
+			menu = "PARTY";
+		else
+			if not (UnitIsMercenary and UnitIsMercenary("player")) then
+				if UnitCanCooperate("player", frame.unit) then
+					menu = "PLAYER";
+				else
+					menu = "ENEMY_PLAYER"
+				end
+			else
+				if UnitCanAttack("player", frame.unit) then
+					menu = "ENEMY_PLAYER"
+				else
+					menu = "PLAYER";
+				end
+			end
+		end
+	else
+		menu = "TARGET";
+		name = RAID_TARGET_ICON;
+	end
+	if menu then
+		if UnitPopupManager then
+			local tmpMenu = UnitPopupManager:GetMenu(menu)
+			if tmpMenu then
+				local buttons = {}
+				for k,v in ipairs(tmpMenu:GetButtons()) do
+					local text = v:GetText()
+					if not (text == SET_FOCUS or text == CLEAR_FOCUS or text == COPY_CHARACTER_NAME or text == HUD_EDIT_MODE_MENU) then
+						table.insert(buttons, v)
+					end
+				end
+				local menuName = addonName..menu
+				local UnitPopupMenu = CreateFromMixins(UnitPopupTopLevelMenuMixin)
+				UnitPopupManager:RegisterMenu(menuName, UnitPopupMenu)
+				function UnitPopupMenu:GetMenuButtons()
+					return buttons
+				end
+				menu = menuName
+			end
+		end
+		UnitPopup_ShowMenu(frame, menu, frame.unit, name, id);
+	end
+end
+
+function module:CreateFrame(modName, unit, events, oneventfunc, dropDownMenu, isWatched, id)
 	if not self:GetModule(modName) then return end
 	if not type(unit) == "string" then return end
 	if not type(events) == "table" then return end
+	if not dropDownMenu then return end
 	if not id then id = 0 end
 
 	local name = addonName.."_"..unit
@@ -510,13 +584,26 @@ function module:CreateFrame(modName, unit, events, oneventfunc, dropdownMenu, is
 
 	frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 
-	if type(dropdownMenu) == "table" then
-
-		local showmenu = function()
-			ToggleDropDownMenu(1, nil, dropdownMenu, "cursor")
+	local dropdown
+	
+	if type(dropDownMenu) == "table" then
+		dropdown = dropDownMenu
+	elseif type(dropDownMenu) == "function" or type(dropDownMenu) == "string" then
+		dropdown = CreateFrame("Frame", frame, nil, nil, id)
+		dropdown.displayMode = "MENU"
+		local init
+		if type(dropDownMenu) == "function" then
+			init = dropDownMenu
+		elseif type(dropDownMenu) == "string" then
+			init = function() UnitPopup_ShowMenu(dropdown, dropDownMenu, frame.unit) end
 		end
-		SecureUnitButton_OnLoad(frame, frame.unit, showmenu)
+		dropdown.initialize = init
 	end
+	frame.dropdown = dropdown
+	local showmenu = function()
+		ToggleDropDownMenu(1, nil, dropdown, "cursor")
+	end
+	SecureUnitButton_OnLoad(frame, frame.unit, showmenu)
 
 	local db = self.db.profile[modName].frames[frame.unit]
 	LibStub("LibWindow-1.1"):Embed(frame)
@@ -1206,7 +1293,7 @@ end
 
 function HealthBar_Gradient(frame, elapsed, gradient)
 	if not gradient then gradient = 0 end
-
+	if frame.maxValue == 0 then return end
 	-- local unit = frame:GetParent().unit
 	local alpha = 1;
 	local perc = frame.currValue / frame.maxValue
@@ -1240,6 +1327,10 @@ function HealthBar_Gradient(frame, elapsed, gradient)
 			if alpha <= 0 or alpha >= 1 then
 				frame.statusSign = -frame.statusSign;
 			end
+
+			-- As of patch 10.0.0, we're not alllowed to set alpha values below 0 or above 1.
+			alpha = alpha >= 0 and alpha or 0
+			alpha = alpha <= 1 and alpha or 1
 		end
 	end
 
@@ -1262,7 +1353,6 @@ function HealthBar_Gradient(frame, elapsed, gradient)
 	local r, g, b = r1 + (r2-r1)*perc, g1 + (g2-g1)*perc, b1 + (b2-b1)*perc
 
 	-- frame:SetStatusBarColor(r, g, b)
-
 	frame:SetStatusBarColor(r, g, b, alpha)
 end
 
@@ -1298,6 +1388,7 @@ local function HealPredictionBar_Update(frame)
 	local unit = frame:GetParent().unit
 	local health = frame:GetValue()
     local _, maxHealth = frame:GetMinMaxValues()
+	if maxHealth == 0 then return end
 
 	-- Returns the incoming healing from Player/oneself.
 	local myIncomingHeal = UnitGetIncomingHeals and UnitGetIncomingHeals(unit, "player") or 0
@@ -1674,8 +1765,8 @@ local function CastBar_OnEvent(frame, event, unit,...)
 			frame.castID = castID
 			frame.startTime = GetTime() - (startTime / 1000)
 			-- frame.maxValue = (endTime - startTime) / 1000
-			-- r, g, b = 1.0, 0.7, 0.0
-			r, g, b = CastingBarFrame.startCastColor:GetRGB()
+			r, g, b = 1.0, 0.7, 0.0
+			-- r, g, b = CastingBarFrame.startCastColor:GetRGB()
 			-- frame.statusbar:SetMinMaxValues(0,frame.maxValue)
 			frame.channeling = false
 			frame.casting = true
@@ -1684,18 +1775,15 @@ local function CastBar_OnEvent(frame, event, unit,...)
 			if not endTime then frame:Hide(); frame:Clear(); return end
 			frame.startTime = (endTime / 1000) - GetTime()
 			-- frame.maxValue = (endTime - startTime) / 1000
-			-- r, g, b = 0.0, 1.0, 0.0
-			r, g, b = CastingBarFrame.startChannelColor:GetRGB()
+			r, g, b = 0.0, 1.0, 0.0
+			-- r, g, b = CastingBarFrame.startChannelColor:GetRGB()
 			-- frame.statusbar:SetMinMaxValues(0,frame.maxValue)
 			frame.channeling = true
 			frame.casting = false
 		end
 		if notInterruptible then
-			if CastingBarFrame.nonInterruptibleColor then
-				r, g, b = CastingBarFrame.nonInterruptibleColor:GetRGB()
-			else
-				r, g, b = 0.7, 0.7, 0.7
-			end
+			-- r, g, b = CastingBarFrame.nonInterruptibleColor:GetRGB()
+			r, g, b = 0.7, 0.7, 0.7
 		end
 
 		frame.statusbar:SetStatusBarColor(r, g, b)
@@ -1712,27 +1800,22 @@ local function CastBar_OnEvent(frame, event, unit,...)
 	elseif event  == "UNIT_SPELLCAST_INTERRUPTIBLE" then
 		local r, g, b
 		if frame.casting then
-			-- r, g, b = 1.0, 0.7, 0.0
-			r, g, b = CastingBarFrame.startCastColor:GetRGB()
+			r, g, b = 1.0, 0.7, 0.0
+			-- r, g, b = CastingBarFrame.startCastColor:GetRGB()
 		else -- Channeling
-			-- r, g, b = 0.0, 1.0, 0.0
-			r, g, b = CastingBarFrame.startChannelColor:GetRGB()
+			r, g, b = 0.0, 1.0, 0.0
+			-- r, g, b = CastingBarFrame.startChannelColor:GetRGB()
 		end
 		frame.statusbar:SetStatusBarColor(r, g, b)
 	elseif event == "UNIT_SPELLCAST_NOT_INTERRUPTIBLE" then
-		local r, g, b
-		if CastingBarFrame.nonInterruptibleColor then
-			r, g, b = CastingBarFrame.nonInterruptibleColor:GetRGB()
-		else
-			r, g, b = 0.7, 0.7, 0.7
-		end
-		frame.statusbar:SetStatusBarColor(r, g, b)
+		-- frame.statusbar:SetStatusBarColor(CastingBarFrame.nonInterruptibleColor:GetRGB())
+		frame.statusbar:SetStatusBarColor(0.7, 0.7, 0.7)
 	elseif event  == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP" then
 		if ( frame.casting and select(1,...) == frame.castID ) or frame.channeling then
 			if frame.casting then
 				frame.statusbar:SetValue(frame.maxValue)
-				-- frame.statusbar:SetStatusBarColor(0.0, 1.0, 0.0)
-				frame.statusbar:SetStatusBarColor(CastingBarFrame.finishedCastColor:GetRGB())
+				frame.statusbar:SetStatusBarColor(0.0, 1.0, 0.0)
+				-- frame.statusbar:SetStatusBarColor(CastingBarFrame.finishedCastColor:GetRGB())
 				frame.casting = false
 			end
 
@@ -1747,8 +1830,8 @@ local function CastBar_OnEvent(frame, event, unit,...)
 	elseif event == "UNIT_SPELLCAST_FAILED" or event == "UNIT_SPELLCAST_INTERRUPTED" then
 		if frame.casting and select(1,...) == frame.castID then
 			frame.statusbar:SetValue(frame.maxValue)
-			-- frame.statusbar:SetStatusBarColor(1.0, 0.0, 0.0)
-			frame.statusbar:SetStatusBarColor(CastingBarFrame.failedCastColor:GetRGB())
+			frame.statusbar:SetStatusBarColor(1.0, 0.0, 0.0)
+			-- frame.statusbar:SetStatusBarColor(CastingBarFrame.failedCastColor:GetRGB())
 			frame.casting = false
 			local text
 			if event == "UNIT_SPELLCAST_FAILED" then
@@ -1758,7 +1841,7 @@ local function CastBar_OnEvent(frame, event, unit,...)
 			end
 			CastBar_Text(text, frame.statusbar, false)
 			frame.fadeOut = true
-			frame.holdTime =  GetTime() + CASTING_BAR_HOLD_TIME
+			frame.holdTime =  GetTime() + 1
 		end
 	elseif event == "UNIT_SPELLCAST_DELAYED" or event == "UNIT_SPELLCAST_CHANNEL_UPDATE" then
 		if frame.casting or frame.channeling then
@@ -1814,7 +1897,7 @@ local function CastBar_OnUpdate(frame, e)
 	elseif GetTime() < frame.holdTime then
 		return
 	elseif frame.fadeOut then
-		local alpha = frame:GetAlpha() - CASTING_BAR_ALPHA_STEP;
+		local alpha = frame:GetAlpha() - 0.05;
 		if ( alpha > 0 ) then
 			frame:SetAlpha(alpha)
 		else
@@ -2128,7 +2211,7 @@ local PLAYER_UNITS = {
 	pet = true,
 }
 
-local ShouldShowDebuffs = TargetFrame_ShouldShowDebuffs
+local ShouldShowDebuffs = TargetFrame_ShouldShowDebuffs or TargetFrameMixin.ShouldShowDebuffs
 
 local function UpdateAuraAnchor(auraFrame, index, size)
 	local aura = auraFrame["aura"..index]

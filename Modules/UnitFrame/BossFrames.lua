@@ -73,7 +73,7 @@ module.options = {
 					name = "Name",
 					-- desc = "",
 					get = function() return UnitFrames:GetTextFormat("name", nil, moduleName) end,
-					set = function(info, value) module.db.formats.name = value;for _,v in pairs(module.frames) do UnitFrames:UpdateInfo(v) end end,
+					set = function(info, value) module.db.formats.name = value;if module.frames then for _,v in pairs(module.frames) do UnitFrames:UpdateInfo(v) end end end,
 				},
 				health = {
 					order = 2,
@@ -130,7 +130,10 @@ local function OnEvent(frame, event, ...)
 	if not frame.isEnabled then return end
 	
 	local arg1, arg2, arg3, arg4, arg5 = ...
-		if event == "PLAYER_ENTERING_WORLD" or event == "DISPLAY_SIZE_CHANGED" or event == "INSTANCE_ENCOUNTER_ENGAGE_UNIT" then
+		if event == "PLAYER_ENTERING_WORLD" then
+			Update(frame)
+			module:DisableBlizz()
+		elseif event == "DISPLAY_SIZE_CHANGED" or event == "INSTANCE_ENCOUNTER_ENGAGE_UNIT" then
 		Update(frame)
 		if UnitExists("target") and UnitIsUnit("target", frame.unit) then
 			frame:LockHighlight()
@@ -171,13 +174,19 @@ end
 
 local blizzFrames = {}
 
-local function DisableBlizz()
-
+function module:DisableBlizz()
+	
+	if #blizzFrames > 0 then return end
+	
 	for i = 1, MAX_BOSS_FRAMES do
 		local frame = _G["Boss"..i.."TargetFrame"]
+		if not frame then return end
 		local spellBar = _G[frame:GetName().."SpellBar"]
+
 		local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint()
-		
+
+		if not point then return end
+
 		spellBar.showCastbar = false
 		spellBar:SetScript("OnEvent", nil)
 		
@@ -187,6 +196,7 @@ local function DisableBlizz()
 				[3] = relativePoint,
 				[4] = xOfs,
 				[5] = yOfs,
+				[6] = frame:IsClampedToScreen(),
 		}
 
 		frame:UnregisterEvent("UNIT_TARGETABLE_CHANGED")
@@ -194,17 +204,22 @@ local function DisableBlizz()
 			frame:UnregisterEvent("INSTANCE_ENCOUNTER_ENGAGE_UNIT")
 		end
 
+		frame:SetClampedToScreen(false)
 		frame:ClearAllPoints()
 		frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -500, 500)
 		frame:Hide()
 	end
 end
 
-local function EnableBlizz()
-	for i = 1, MAX_BOSS_FRAMES do
+function module:EnableBlizz()
+	
+	if #blizzFrames == 0 then return end
+
+	for i = 1, #blizzFrames do
 		local frame = _G["Boss"..i.."TargetFrame"]
+		if not frame then return end
 		local spellBar = _G[frame:GetName().."SpellBar"]
-		local point, relativeTo, relativePoint, xOfs, yOfs = unpack(blizzFrames[i])
+		local point, relativeTo, relativePoint, xOfs, yOfs, IsClampedToScreen = unpack(blizzFrames[i])
 
 		spellBar.showCastbar = GetCVarBool("showTargetCastbar")
 		spellBar:SetScript("OnEvent", Target_Spellbar_OnEvent)
@@ -216,7 +231,10 @@ local function EnableBlizz()
 
 		frame:ClearAllPoints()
 		frame:SetPoint(point, _G[relativeTo], relativePoint, xOfs, yOfs)
+		frame:SetClampedToScreen(IsClampedToScreen)
 	end
+
+	blizzFrames = {}
 end
 
 
@@ -233,10 +251,10 @@ function module:OnEnable()
 		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
 		return
 	end
-	DisableBlizz()
+	self:DisableBlizz()
 	if table.getn(self.frames) == 0 then
-		for i=1,5 do
-			local frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, _G["Boss"..i.."TargetFrameDropDown"], true, i)
+		for i=1,MAX_BOSS_FRAMES do
+			local frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, _G["Boss"..i.."TargetFrameDropDown"] or "BOSS", true, i)
 			table.insert(self.frames, frame)
 		end
 	end
@@ -255,7 +273,7 @@ function module:OnDisable()
 		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
 		return
 	end
-	EnableBlizz()
+	self:EnableBlizz()
 	for _, frame in ipairs(self.frames) do
 		UnitFrames:DisableFrame(frame)
 	end
