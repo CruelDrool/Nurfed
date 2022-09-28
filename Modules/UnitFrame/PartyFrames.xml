@@ -102,7 +102,7 @@
 				</Anchors>
 			</Frame>
 
-			<Frame parentKey="phasingIcon" forceAlpha="true" hidden="true">
+			<Frame parentKey="phasingIcon" ignoreParentAlpha="true" hidden="true">
 				<Size x="20" y="20"/>
 				<Anchors>
 					<Anchor point="TOPRIGHT" relativeTo="$parent" x="15" y="14.5"/>
