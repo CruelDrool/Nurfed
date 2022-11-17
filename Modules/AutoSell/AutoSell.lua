@@ -63,6 +63,11 @@ local dnsLst = {
 		[29024] = true,
 		[32823] = true,
 }
+
+local GetContainerNumSlots = _G.GetContainerNumSlots or C_Container.GetContainerNumSlots
+local GetContainerItemLink = _G.GetContainerItemLink or C_Container.GetContainerItemLink
+local UseContainerItem = _G.UseContainerItem or C_Container.UseContainerItem
+
 function module:MERCHANT_SHOW()
 	-- local soldNum, soldItems, sold, startMoney = 0, "", nil, GetMoney()
 	local soldNum, soldItems, sold = 0, "", false
