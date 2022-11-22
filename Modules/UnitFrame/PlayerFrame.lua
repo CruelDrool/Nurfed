@@ -15,6 +15,7 @@ module.defaults = {
 		infoline = "$level ($g)",
 		xp = "$cur/$max ($rest) $perc",
 		reputation = "$cur/$max - $faction ($standing) $perc",
+		maxReputation = "$faction ($standing)",
 	},
 	frames = {
 		[unit] = {
@@ -95,6 +96,14 @@ module.options = {
 					-- desc = "",
 					get = function() return UnitFrames:GetTextFormat("reputation", nil, moduleName) end,
 					set = function(info, value) module.db.formats.reputation = value;if module.frame then module:RepBar_Update(module.frame.reputation) end end,
+				},
+				maxReputation = {
+					order = 7,
+					type = "input",
+					name = "Maximum reputation",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("maxReputation", nil, moduleName) end,
+					set = function(info, value) module.db.formats.maxReputation = value;if module.frame then module:RepBar_Update(module.frame.maxReputation) end end,
 				},
 			},
 		},
@@ -279,33 +288,44 @@ end
 function module:RepBar_Update(frame)
 	local factionName, standingID, barMin, barMax, barValue, factionID = GetWatchedFactionInfo()
 	local currValue, maxValue = 0, 0
-	local r, g, b = addon:UnpackColorTable(FACTION_BAR_COLORS[4])
+	local r, g, b = addon:UnpackColorTable(FACTION_BAR_COLORS[standingID] or FACTION_BAR_COLORS[4])
 	local text = ""
 
 	if factionName then
-		local friendshipID = GetFriendshipReputation and GetFriendshipReputation(factionID) or nil
+		local isMajorFaction = C_Reputation and C_Reputation.IsMajorFaction and C_Reputation.IsMajorFaction(factionID)
+		local friendshipInfo = C_GossipInfo and C_GossipInfo.GetFriendshipReputation and C_GossipInfo.GetFriendshipReputation(factionID) or nil
 		local paragonID = C_Reputation and C_Reputation.IsFactionParagon and C_Reputation.IsFactionParagon(factionID) or nil
+		local standingText = _G["FACTION_STANDING_LABEL"..standingID]
 
-		local standing = _G["FACTION_STANDING_LABEL"..standingID]
-
-		if friendshipID then
-			local _, friendRep, friendMaxRep, friendName, friendText, friendTexture, friendTextLevel, friendThreshold, nextFriendThreshold = GetFriendshipReputation(factionID)
-			if nextFriendThreshold then
-				barMin, barMax, barValue = friendThreshold, nextFriendThreshold, friendRep
+		if friendshipInfo and friendshipInfo.friendshipFactionID  > 0 then
+			if friendshipInfo.nextThreshold then
+				barMin, barMax, barValue = friendshipInfo.reactionThreshold, friendshipInfo.nextThreshold, friendshipInfo.standing
 			else
 				barMin, barMax, barValue = 0, 1, 1
 			end
-			standing = friendTextLevel
-			standingID = 5
+
+			standingText = friendshipInfo.reaction
+			r, g, b = addon:UnpackColorTable(FACTION_BAR_COLORS[5])
 		end
 
 		if paragonID then
 			local currentValue, threshold, _, hasRewardPending = C_Reputation.GetFactionParagonInfo(factionID)
 			barMin, barMax = 0, threshold
 			barValue = currentValue % threshold
+
 			if hasRewardPending then
 				barValue = barValue + threshold
 			end
+
+			r, g, b = 0, .5 ,.9
+		end
+
+		if isMajorFaction then
+			local majorFactionInfo = C_MajorFactions.GetMajorFactionData(factionID)
+			barMin, barMax = 0, majorFactionInfo.renownLevelThreshold
+			barValue = isCapped and majorFactionInfo.renownLevelThreshold or majorFactionInfo.renownReputationEarned or 0
+			standingText = RENOWN_LEVEL_LABEL .. majorFactionInfo.renownLevel
+			r, g, b = addon:UnpackColorTable(BLUE_FONT_COLOR)
 		end
 
 		currValue = barValue  - barMin
@@ -316,12 +336,6 @@ function module:RepBar_Update(frame)
 			maxValue = 1
 		end
 
-		if paragonID then
-			r, g, b = 0, .5 ,.9
-		elseif FACTION_BAR_COLORS[standingID] then
-			r, g, b = addon:UnpackColorTable(FACTION_BAR_COLORS[standingID])
-		end
-
 		if self.db.shortenFactionRepName then
 			factionName = factionName:gsub("[A-Za-z']*%s?", function(s)
 				return s:sub(0,1)
@@ -329,16 +343,21 @@ function module:RepBar_Update(frame)
 		end
 
 		if self.db.shortenStandingRepName then
-			standing = standing:gsub("[A-Za-z']*%s?", function(s)
+			standingText = standingText:gsub("[A-Za-z']*%s?", function(s)
 				return s:sub(0,1)
 			end)
 		end
 
-		text = UnitFrames:GetTextFormat("reputation", frame:GetParent())
+		if currValue == maxValue then
+			text = UnitFrames:GetTextFormat("maxReputation", frame:GetParent())
+		else
+			text = UnitFrames:GetTextFormat("reputation", frame:GetParent())
+		end
+	
 		text = text:gsub("$cur", addon:CommaNumber(currValue))
 		text = text:gsub("$max", addon:FormatNumber(maxValue))
 		text = text:gsub("$faction", factionName)
-		text = text:gsub("$standing", standing)
+		text = text:gsub("$standing", standingText)
 		text = text:gsub("$perc", UnitFrames:FormatPercentage(currValue / maxValue*100))
 
 	end
@@ -490,7 +509,7 @@ function module:DisableBlizz()
 
 	blizzFrame = {
 			[1] = point,
-			[2] = relativeTo:GetName(),
+			[2] = "",
 			[3] = relativePoint,
 			[4] = xOfs,
 			[5] = yOfs,
@@ -515,9 +534,9 @@ function module:EnableBlizz()
 	UnitFrame_Update(PlayerFrame)
 	frame:Show()
 
-	local point, relativeTo, relativePoint, xOfs, yOfs, IsClampedToScreen = unpack(blizzFrame)
+	local point, _, relativePoint, xOfs, yOfs, IsClampedToScreen = unpack(blizzFrame)
 	frame:ClearAllPoints()
-	frame:SetPoint(point, _G[relativeTo], relativePoint, xOfs, yOfs)
+	frame:SetPoint(point, UIParent, relativePoint, xOfs, yOfs)
 	frame:SetClampedToScreen(IsClampedToScreen)
 
 	blizzFrame = {}
