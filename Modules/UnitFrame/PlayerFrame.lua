@@ -305,7 +305,9 @@ function module:RepBar_Update(frame)
 			end
 
 			standingText = friendshipInfo.reaction
-			r, g, b = addon:UnpackColorTable(FACTION_BAR_COLORS[5])
+			if not standingID then
+				r, g, b = addon:UnpackColorTable(FACTION_BAR_COLORS[5])
+			end
 		end
 
 		if paragonID then
