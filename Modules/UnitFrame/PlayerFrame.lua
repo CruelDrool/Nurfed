@@ -292,16 +292,18 @@ function module:RepBar_Update(frame)
 	local text = ""
 
 	if factionName then
-		local isMajorFaction = C_Reputation and C_Reputation.IsMajorFaction and C_Reputation.IsMajorFaction(factionID)
+		local isMajorFaction = C_Reputation and C_Reputation.IsMajorFaction and C_Reputation.IsMajorFaction(factionID) or nil
 		local friendshipInfo = C_GossipInfo and C_GossipInfo.GetFriendshipReputation and C_GossipInfo.GetFriendshipReputation(factionID) or nil
 		local paragonID = C_Reputation and C_Reputation.IsFactionParagon and C_Reputation.IsFactionParagon(factionID) or nil
-		local standingText = _G["FACTION_STANDING_LABEL"..standingID]
+		local standingText = standingID and _G["FACTION_STANDING_LABEL"..standingID] or ""
+		local isCapped = standingID and standingID == MAX_REPUTATION_REACTION
 
 		if friendshipInfo and friendshipInfo.friendshipFactionID  > 0 then
 			if friendshipInfo.nextThreshold then
 				barMin, barMax, barValue = friendshipInfo.reactionThreshold, friendshipInfo.nextThreshold, friendshipInfo.standing
 			else
 				barMin, barMax, barValue = 0, 1, 1
+				isCapped = true
 			end
 
 			standingText = friendshipInfo.reaction
@@ -310,7 +312,16 @@ function module:RepBar_Update(frame)
 			end
 		end
 
-		if paragonID then
+		if isMajorFaction then
+			local majorFactionInfo = C_MajorFactions.GetMajorFactionData(factionID)
+			barMin, barMax = 0, majorFactionInfo.renownLevelThreshold
+			isCapped = C_MajorFactions.HasMaximumRenown(factionID);
+			barValue = isCapped and majorFactionInfo.renownLevelThreshold or majorFactionInfo.renownReputationEarned or 0
+			standingText = RENOWN_LEVEL_LABEL .. majorFactionInfo.renownLevel
+			r, g, b = addon:UnpackColorTable(BLUE_FONT_COLOR)
+		end
+
+		if paragonID and isCapped then
 			local currentValue, threshold, _, hasRewardPending = C_Reputation.GetFactionParagonInfo(factionID)
 			barMin, barMax = 0, threshold
 			barValue = currentValue % threshold
@@ -320,14 +331,6 @@ function module:RepBar_Update(frame)
 			end
 
 			r, g, b = 0, .5 ,.9
-		end
-
-		if isMajorFaction then
-			local majorFactionInfo = C_MajorFactions.GetMajorFactionData(factionID)
-			barMin, barMax = 0, majorFactionInfo.renownLevelThreshold
-			barValue = isCapped and majorFactionInfo.renownLevelThreshold or majorFactionInfo.renownReputationEarned or 0
-			standingText = RENOWN_LEVEL_LABEL .. majorFactionInfo.renownLevel
-			r, g, b = addon:UnpackColorTable(BLUE_FONT_COLOR)
 		end
 
 		currValue = barValue  - barMin
@@ -355,7 +358,7 @@ function module:RepBar_Update(frame)
 		else
 			text = UnitFrames:GetTextFormat("reputation", frame:GetParent())
 		end
-	
+
 		text = text:gsub("$cur", addon:CommaNumber(currValue))
 		text = text:gsub("$max", addon:FormatNumber(maxValue))
 		text = text:gsub("$faction", factionName)
