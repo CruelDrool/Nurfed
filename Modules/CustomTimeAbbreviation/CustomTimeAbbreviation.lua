@@ -27,33 +27,48 @@ module.options = {
 	},
 }
 
-module.SecondsToTimeAbbrevCopy = SecondsToTimeAbbrev
-
-function SecondsToTimeAbbrev(seconds)
-	if not module:IsEnabled() then return module.SecondsToTimeAbbrevCopy(seconds) end
-	local time
+function module:SecondsToTimeAbbrev(seconds)
+	local t
 	if seconds > 86400 then
 		local day = floor(seconds / 86400)
 		local hour = floor((seconds % 86400) / 3600)
-		time = format(DAY_ONELETTER_ABBR.." "..HOUR_ONELETTER_ABBR, day, hour)
-		-- time = format(DAY_ONELETTER_ABBR, ceil(seconds / 86400))
+		t = format(DAY_ONELETTER_ABBR.." "..HOUR_ONELETTER_ABBR, day, hour)
+		-- t = format(DAY_ONELETTER_ABBR, ceil(seconds / 86400))
 	elseif seconds > 3600 then
 		local hour = floor(seconds / 3600)
 		local min = floor((seconds % 3600) / 60)
 		local sec = (seconds % 3600) % 60
-		-- time = format("%1d:%02d:%04.1f", hour, min, sec)
-		time = format("%1d:%02d:%02d", hour, min, sec)
+		-- t = format("%1d:%02d:%04.1f", hour, min, sec)
+		t = format("%1d:%02d:%02d", hour, min, sec)
 	elseif seconds > 60 then
 		local min = floor(seconds / 60)
 		local sec = seconds % 60
-		time = format("%02d:%02d", min, sec)
+		t = format("%02d:%02d", min, sec)
 	elseif seconds > 1 then
-		time = format("%1d", seconds)
+		t = format("%1d", seconds)
 	else
-		-- time = format("%.1f", seconds), (seconds * 100 - floor(seconds * 100))/100
-		time = format("%.1f", seconds)
+		-- t = format("%.1f", seconds), (seconds * 100 - floor(seconds * 100))/100
+		t = format("%.1f", seconds)
 	end
-	return time
+	return t
+end
+
+if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
+	local updateAura = function(aura, timeleft)
+		if timeleft and module.db.profile.enabled then
+			aura.duration:SetText(module:SecondsToTimeAbbrev(timeleft))
+		end
+	end
+	hooksecurefunc(BuffButtonMixin, "UpdateDuration", updateAura)
+	hooksecurefunc(DebuffButtonMixin, "UpdateDuration", updateAura)
+else
+	local updateAura = function(aura, timeleft)
+		if timeleft and module.db.profile.enabled then
+			local duration = _G[aura:GetName().."Duration"]
+			duration:SetText(module:SecondsToTimeAbbrev(timeleft))
+		end
+	end
+	hooksecurefunc("AuraButton_UpdateDuration", updateAura)
 end
 
 function module:OnInitialize()

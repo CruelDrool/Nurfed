@@ -39,5 +39,5 @@ Modules\UnitFrame\BossFrames.xml
 Modules\MicroMenu\MicroMenu.lua
 Modules\Chat\Chat.lua
 Modules\AutoSell\AutoSell.lua
-#Modules\CustomTimeAbbreviation\CustomTimeAbbreviation.lua
+Modules\CustomTimeAbbreviation\CustomTimeAbbreviation.lua
 Modules\AutoRepair\AutoRepair.lua
