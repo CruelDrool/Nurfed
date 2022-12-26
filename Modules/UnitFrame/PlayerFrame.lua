@@ -382,6 +382,9 @@ local function RepBar_OnLoad(frame)
 	frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 	frame:RegisterEvent("UPDATE_FACTION")
 	frame:RegisterEvent("QUEST_LOG_UPDATE")
+	if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
+		frame:RegisterEvent("MAJOR_FACTION_RENOWN_LEVEL_CHANGED")
+	end
 	frame:SetScript("OnEvent", RepBar_OnEvent)
 end
 
