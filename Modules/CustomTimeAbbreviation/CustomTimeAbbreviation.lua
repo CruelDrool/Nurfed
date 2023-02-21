@@ -56,11 +56,16 @@ end
 if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
 	local updateAura = function(aura, timeleft)
 		if timeleft and module.db.profile.enabled then
-			aura.duration:SetText(module:SecondsToTimeAbbrev(timeleft))
+			aura.Duration:SetText(module:SecondsToTimeAbbrev(timeleft))
 		end
 	end
-	hooksecurefunc(BuffButtonMixin, "UpdateDuration", updateAura)
-	hooksecurefunc(DebuffButtonMixin, "UpdateDuration", updateAura)
+    for _, button in ipairs(BuffFrame.auraFrames) do
+        hooksecurefunc(button, "UpdateDuration", updateAura)
+    end
+
+	for _, button in ipairs(DebuffFrame.auraFrames) do
+        hooksecurefunc(button, "UpdateDuration", updateAura)
+    end
 else
 	local updateAura = function(aura, timeleft)
 		if timeleft and module.db.profile.enabled then
