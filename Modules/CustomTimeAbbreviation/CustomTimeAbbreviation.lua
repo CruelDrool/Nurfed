@@ -60,11 +60,15 @@ if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
 		end
 	end
     for _, button in ipairs(BuffFrame.auraFrames) do
-        hooksecurefunc(button, "UpdateDuration", updateAura)
+		if button.UpdateDuration then
+       		hooksecurefunc(button, "UpdateDuration", updateAura)
+		end
     end
 
 	for _, button in ipairs(DebuffFrame.auraFrames) do
-        hooksecurefunc(button, "UpdateDuration", updateAura)
+		if button.UpdateDuration then
+        	hooksecurefunc(button, "UpdateDuration", updateAura)
+		end
     end
 else
 	local updateAura = function(aura, timeleft)
