@@ -10,7 +10,9 @@ local LDBIcon = LibStub("LibDBIcon-1.0", true)
 
 local defaults = {
 	profile = {
-		minimapIcon = {},
+		minimapIcon = {
+			showInCompartment = addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE,
+		},
 	}
 }
 
