@@ -3,6 +3,7 @@
 ## Title: Nurfed UI
 ## Notes: Inspired by Tivoli and Apoco.
 ## Author: CruelDrool
+## IconTexture: Interface\AddOns\Nurfed\Images\locked
 ## SavedVariables: NurfedDB
 ## X-Category: Interface Enhancements
 
