@@ -63,6 +63,9 @@ local defaults = {
 			enabled = false,
 			mark = "!",
 		},
+		castBar = {
+			finishedColorSameAsStart = false,
+		},
 	}
 }
 
@@ -320,6 +323,23 @@ module.options = {
 				},
 			},
 		},
+		castBar = {
+			order = 9,
+			type = "group",
+			width = "full",
+			name = "Cast bar",
+			guiInline = true,
+			args = {
+				finishedColorSameAsStart = {
+					order = 1,
+					type = "toggle",
+					name = "Finished cast color same as start",
+					width = "full",
+					get = function() return module.db.profile.castBar.finishedColorSameAsStart end,
+					set = function(info, value) module.db.profile.castBar.finishedColorSameAsStart = value end,
+				},
+			},
+		},
 	},
 }
 
@@ -547,7 +567,11 @@ function module:CreateFrame(modName, unit, events, oneventfunc, dropDownMenu, is
 
 	if self.frames[name] then return end
 
-	local frame = CreateFrame("Button", name, UIParent, template, id)
+	local frame = CreateFrame("Button", name, UIParent, PingableType_UnitFrameMixin and template..", PingReceiverAttributeTemplate" or template , id)
+
+	if PingableType_UnitFrameMixin then
+		Mixin(frame, PingableType_UnitFrameMixin)
+	end
 
 	if id > 0 then
 		frame.unit = unit..id
@@ -1813,8 +1837,12 @@ local function CastBar_OnEvent(frame, event, unit,...)
 	elseif event  == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP" then
 		if ( frame.casting and select(1,...) == frame.castID ) or frame.channeling then
 			if frame.casting then
+				if not module.db.profile.castBar.finishedColorSameAsStart then
+					frame.statusbar:SetStatusBarColor(0.0, 1.0, 0.0)
+            	end
+
 				frame.statusbar:SetValue(frame.maxValue)
-				frame.statusbar:SetStatusBarColor(0.0, 1.0, 0.0)
+
 				-- frame.statusbar:SetStatusBarColor(CastingBarFrame.finishedCastColor:GetRGB())
 				frame.casting = false
 			end
@@ -1825,7 +1853,7 @@ local function CastBar_OnEvent(frame, event, unit,...)
 			end
 
 			frame.fadeOut = true
-			frame.holdTime =  0
+			frame.holdTime = GetTime() + 0.2
 		end
 	elseif event == "UNIT_SPELLCAST_FAILED" or event == "UNIT_SPELLCAST_INTERRUPTED" then
 		if frame.casting and select(1,...) == frame.castID then
@@ -1876,7 +1904,7 @@ local function CastBar_OnUpdate(frame, e)
 		frame.startTime = frame.startTime + e
 		if frame.startTime >= frame.maxValue then
 			frame.statusbar:SetValue(frame.maxValue)
-			frame.casting = false
+			-- frame.casting = false
 			frame.channeling = false
 			frame.fadeOut = true
 			return
@@ -1887,7 +1915,7 @@ local function CastBar_OnUpdate(frame, e)
 		frame.startTime = frame.startTime - e
 		if frame.startTime <= 0 then
 			frame.statusbar:SetValue(0)
-			frame.channeling = false
+			-- frame.channeling = false
 			frame.casting = false
 			frame.fadeOut = true
 			return
@@ -1897,12 +1925,15 @@ local function CastBar_OnUpdate(frame, e)
 	elseif GetTime() < frame.holdTime then
 		return
 	elseif frame.fadeOut then
-		local alpha = frame:GetAlpha() - 0.05;
-		if ( alpha > 0 ) then
-			frame:SetAlpha(alpha)
-		else
+		local step = e / 0.3
+		local alpha = frame:GetAlpha() - step;
+		alpha = alpha >= 0 and alpha or 0
+		frame:SetAlpha(alpha)
+
+		if ( alpha == 0 ) then
 			frame:Clear()
 			frame:Hide()
+			frame.fadeOut = false
 		end
 	end
 end
@@ -1940,7 +1971,6 @@ function module:CastBar_OnLoad(frame, unit)
 
 	frame:Clear()
 
-
 	frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 	frame:RegisterEvent("GROUP_ROSTER_UPDATE")
 	frame:RegisterEvent("PLAYER_TARGET_CHANGED")
@@ -1972,6 +2002,11 @@ function module:CastBar_OnLoad(frame, unit)
 			-- According to Wowpedia these events were added in patch 3.2.0 (2009-08-04). However, it's currently not working in the WotLK Classic client.
 			frame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTIBLE")
 			frame:RegisterEvent("UNIT_SPELLCAST_NOT_INTERRUPTIBLE")
+
+			-- Empowered casts.
+			frame:RegisterEvent("UNIT_SPELLCAST_EMPOWER_START")
+			frame:RegisterEvent("UNIT_SPELLCAST_EMPOWER_UPDATE")
+			frame:RegisterEvent("UNIT_SPELLCAST_EMPOWER_STOP")
 		end
 	end
 
