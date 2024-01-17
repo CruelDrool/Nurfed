@@ -1665,7 +1665,7 @@ function module:PowerBar_Update(frame)
 
 	local unit = frame.unit
 	 -- if unit == frame.unit then
-		local powerType = frame.powerType or UnitPowerType(unit)
+		local powerType = frame.powerType or UnitPowerType(unit) or 0
 		local powerBarColor = PowerBarColor[powerType]
 		local maxValue = UnitPowerMax(unit, powerType)
 		local currValue = UnitPower(unit, powerType)
