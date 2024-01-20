@@ -204,13 +204,13 @@ function module:DisableBlizz()
 	if #blizzFrame > 0 then return end
 
 	local frame = FocusFrame
-	local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint()
+	local point, _, relativePoint, xOfs, yOfs = frame:GetPoint()
 
 	if not point then return end
 
 	blizzFrame = {
 			[1] = point,
-			[2] = relativeTo:GetName(),
+			[2] = "",
 			[3] = relativePoint,
 			[4] = xOfs,
 			[5] = yOfs,
@@ -224,11 +224,11 @@ end
 function module:EnableBlizz()
 	if #blizzFrame == 0 then return end
 	local frame = FocusFrame
-	local point, relativeTo, relativePoint, xOfs, yOfs, IsClampedToScreen = unpack(blizzFrame)
+	local point, _, relativePoint, xOfs, yOfs, IsClampedToScreen = unpack(blizzFrame)
 	
 	frame:SetClampedToScreen(IsClampedToScreen)
 	frame:ClearAllPoints()
-	frame:SetPoint(point, _G[relativeTo], relativePoint, xOfs, yOfs)
+	frame:SetPoint(point, UIParent, relativePoint, xOfs, yOfs)
 	blizzFrame = {}
 end
 

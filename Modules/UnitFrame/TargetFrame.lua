@@ -282,7 +282,7 @@ function module:DisableBlizz()
 
 	blizzFrame = {
 			[1] = point,
-			[2] = relativeTo:GetName(),
+			[2] = "",
 			[3] = relativePoint,
 			[4] = xOfs,
 			[5] = yOfs,
@@ -300,7 +300,7 @@ function module:EnableBlizz()
 	local point, relativeTo, relativePoint, xOfs, yOfs, IsClampedToScreen = unpack(blizzFrame)
 	
 	frame:ClearAllPoints()
-	frame:SetPoint(point, _G[relativeTo], relativePoint, xOfs, yOfs)
+	frame:SetPoint(point, UIParent, relativePoint, xOfs, yOfs)
 	frame:SetClampedToScreen(IsClampedToScreen)
 	blizzFrame = {}
 end

@@ -327,55 +327,63 @@ end
 local blizzFrames = {}
 
 function module:DisableBlizz()
-	if #blizzFrames > 0 then return end
+	if PartyFrame then 
+		PartyFrame:Hide()
+	else
+		if #blizzFrames > 0 then return end
 
-	for i = 1, MAX_PARTY_MEMBERS do
-		local frame = _G["PartyMemberFrame"..i]
-		if not frame then return end
-		local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint()
+		for i = 1, MAX_PARTY_MEMBERS do
+			local frame = _G["PartyMemberFrame"..i]
+			if not frame then return end
+			local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint()
 
-		if not point then return end
-		
-		blizzFrames[i] = { 
-				[1] = point,
-				[2] = relativeTo:GetName(),
-				[3] = relativePoint,
-				[4] = xOfs,
-				[5] = yOfs,
-				[6] = frame:IsClampedToScreen(),
-		}
-		
-		-- frame:SetScript("OnEvent", nil)
-		-- frame:SetScript("OnUpdate", nil)
-		frame:SetClampedToScreen(false)
-		frame:ClearAllPoints()
-		frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -500, 500)
-		frame:Hide()
-	end
+			if not point then return end
+			
+			blizzFrames[i] = { 
+					[1] = point,
+					[2] = "",
+					[3] = relativePoint,
+					[4] = xOfs,
+					[5] = yOfs,
+					[6] = frame:IsClampedToScreen(),
+			}
+			
+			-- frame:SetScript("OnEvent", nil)
+			-- frame:SetScript("OnUpdate", nil)
+			frame:SetClampedToScreen(false)
+			frame:ClearAllPoints()
+			frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -500, 500)
+			frame:Hide()
+		end
 	CompactRaidFrameManager:SetFrameLevel(4)
+	end
 end
 
 function module:EnableBlizz()
-	if #blizzFrames == 0 then return end
-	for i = 1, #blizzFrames do
-		local frame = _G["PartyMemberFrame"..i]
-		if not frame then return end
-		local point, relativeTo, relativePoint, xOfs, yOfs, IsClampedToScreen = unpack(blizzFrames[i])
-		
-		frame:ClearAllPoints()
-		frame:SetPoint(point, _G[relativeTo], relativePoint, xOfs, yOfs)
-		frame:SetClampedToScreen(IsClampedToScreen)
-		
-		-- frame:SetScript("OnEvent", PartyMemberFrame_OnEvent)
-		-- frame:SetScript("OnUpdate", PartyMemberFrame_OnUpdate)
-		PartyMemberFrame_UpdateArt(frame)
-		PartyMemberFrame_UpdateMember(frame)
-		PartyMemberFrame_UpdateLeader(frame)
-		if PartyMemberFrame_UpdateAssignedRoles then PartyMemberFrame_UpdateAssignedRoles(frame) end
-	end
-	CompactRaidFrameManager:SetFrameLevel(1)
+	if PartyFrame then 
+		PartyFrame:Show()
+	else
+		if #blizzFrames == 0 then return end
+		for i = 1, #blizzFrames do
+			local frame = _G["PartyMemberFrame"..i]
+			if not frame then return end
+			local point, relativeTo, relativePoint, xOfs, yOfs, IsClampedToScreen = unpack(blizzFrames[i])
+			
+			frame:ClearAllPoints()
+			frame:SetPoint(point, UIParent, relativePoint, xOfs, yOfs)
+			frame:SetClampedToScreen(IsClampedToScreen)
+			
+			-- frame:SetScript("OnEvent", PartyMemberFrame_OnEvent)
+			-- frame:SetScript("OnUpdate", PartyMemberFrame_OnUpdate)
+			PartyMemberFrame_UpdateArt(frame)
+			PartyMemberFrame_UpdateMember(frame)
+			PartyMemberFrame_UpdateLeader(frame)
+			if PartyMemberFrame_UpdateAssignedRoles then PartyMemberFrame_UpdateAssignedRoles(frame) end
+		end
+		CompactRaidFrameManager:SetFrameLevel(1)
 
-	blizzFrames = {}
+		blizzFrames = {}
+	end
 end
 
 function module:OnInitialize()
@@ -410,8 +418,8 @@ function module:OnEnable()
 			UnitFrames:EnableFrame(frame)
 			Update(frame)
 		end
-		ShowParty()
-		HideParty()
+		--ShowParty()
+		--HideParty()
 	end
 
 	if HidePartyFrame and ShowPartyFrame then
