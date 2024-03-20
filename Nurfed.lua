@@ -55,7 +55,7 @@ addon.options = {
 }
 
 --  Setting our own WoW project IDs by using GetClassicExpansionLevel().
-addon.WOW_PROJECT_ID = GetClassicExpansionLevel and GetClassicExpansionLevel() + 2 or 1
+addon.WOW_PROJECT_ID = WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE and GetClassicExpansionLevel() + 2 or 1
 addon.WOW_PROJECT_ID_MAINLINE = 1
 addon.WOW_PROJECT_ID_CLASSIC = 2
 addon.WOW_PROJECT_ID_THE_BURNING_CRUSADE_CLASSIC = 3
