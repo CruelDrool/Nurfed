@@ -67,6 +67,8 @@ local dnsLst = {
 local GetContainerNumSlots = _G.GetContainerNumSlots or C_Container.GetContainerNumSlots
 local GetContainerItemLink = _G.GetContainerItemLink or C_Container.GetContainerItemLink
 local UseContainerItem = _G.UseContainerItem or C_Container.UseContainerItem
+local GetItemInfo = _G.GetItemInfo or C_Item.GetItemInfo
+local GetItemCount = _G.GetItemCount or C_Item.GetItemCount
 
 function module:MERCHANT_SHOW()
 	-- local soldNum, soldItems, sold, startMoney = 0, "", nil, GetMoney()
