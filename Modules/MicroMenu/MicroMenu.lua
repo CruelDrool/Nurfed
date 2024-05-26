@@ -90,9 +90,7 @@ if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
 			"BLIZZARD_STORE",
 			"WHATS_NEW",
 			"SEPARATOR",
-			"SYSTEMOPTIONS",
-			"UIOPTIONS",
-			"KEY_BINDINGS",
+			"OPTIONS",
 			"MACROS",
 			"ADDONS",
 			-- "SEPARATOR",
@@ -126,6 +124,7 @@ elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CLASSIC then
 		"QUESTLOG",
 		"SOCIAL_MENU", -- Submenu
 		"MAP",
+		"DUNGEONS",
 		"GAME_MENU", -- Submenu
 		"HELP_REQUEST",
 		"SEPARATOR",
@@ -133,11 +132,10 @@ elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CLASSIC then
 	}
 	subMenus = {
 		GAME_MENU = {
-			"HELP",
+			"SUPPORT",
+			"BLIZZARD_STORE",
 			"SEPARATOR",
-			"SYSTEMOPTIONS",
-			"UIOPTIONS",
-			"KEY_BINDINGS",
+			"OPTIONS",
 			"MACROS",
 			"ADDONS",
 			-- "SEPARATOR",
@@ -159,50 +157,7 @@ elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CLASSIC then
 			"PETBOOK",
 		},
 	}
-elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_THE_BURNING_CRUSADE_CLASSIC then
-	mainMenu = {
-		"TITLE",
-		"BLANK",
-		"CHARACTER",
-		"SPELLBOOK_ABILITIES_MENU", -- Submenu
-		"TALENTS",
-		"QUESTLOG",
-		"SOCIAL_MENU", -- Submenu
-		"DUNGEONS",
-		"GAME_MENU", -- Submenu
-		"HELP_REQUEST",
-		"SEPARATOR",
-		"CANCEL"
-	}
-	subMenus = {
-		GAME_MENU = {
-			"SUPPORT",
-			"SEPARATOR",
-			"SYSTEMOPTIONS",
-			"UIOPTIONS",
-			"KEY_BINDINGS",
-			"MACROS",
-			"ADDONS",
-			-- "SEPARATOR",
-			-- "LOGOUT",
-			-- "EXIT_GAME",
-		},
-		SOCIAL_MENU = {
-			"FRIENDS_MENU", -- Submenu
-			"WHO",
-			"GUILD",
-			"RAID",
-		},
-		FRIENDS_MENU = {
-			"FRIENDS_LIST",
-			"IGNORE_LIST",
-		},
-		SPELLBOOK_ABILITIES_MENU = {
-			"SPELLBOOK",
-			"PETBOOK",
-		},
-	}
-elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_WRATH_OF_THE_LICH_KING_CLASSIC then
+elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
 	mainMenu = {
 		"TITLE",
 		"BLANK",
@@ -211,7 +166,8 @@ elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_WRATH_OF_THE_LICH_KING_CLASS
 		"TALENTS",
 		"ACHIEVEMENTS",
 		"QUESTLOG",
-		"SOCIAL_MENU", -- Submenu
+		"GUILD",
+		"COLLECTIONS",
 		"PLAYER_V_PLAYER",
 		"DUNGEONS",
 		"GAME_MENU", -- Submenu
@@ -222,10 +178,9 @@ elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_WRATH_OF_THE_LICH_KING_CLASS
 	subMenus = {
 		GAME_MENU = {
 			"SUPPORT",
+			"BLIZZARD_STORE",
 			"SEPARATOR",
-			"SYSTEMOPTIONS",
-			"UIOPTIONS",
-			"KEY_BINDINGS",
+			"OPTIONS",
 			"MACROS",
 			"ADDONS",
 			-- "SEPARATOR",
@@ -235,7 +190,6 @@ elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_WRATH_OF_THE_LICH_KING_CLASS
 		SOCIAL_MENU = {
 			"FRIENDS_MENU", -- Submenu
 			"WHO",
-			"GUILD",
 			"RAID",
 		},
 		FRIENDS_MENU = {
@@ -253,7 +207,7 @@ end
 
 -- This functions returns an array the contains the available buttons that can be used in main menu itself and submenus.
 local function ButtonsArray()
-	local minLevelSpec, minLevelLFD, minLevelAchi, talentsText, toggleRaidTabFunc, toggleGuildFrameFunc, toggleLFDFunc, LFDtext, LFDKeybind
+	local minLevelSpec, minLevelLFD, minLevelAchi, talentsText, toggleRaidTabFunc, toggleGuildFrameFunc, toggleLFDFunc, LFDtext, LFDKeybind, optionsFunc
 	if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
 		minLevelSpec = 10
 		minLevelLFD = 10
@@ -264,34 +218,28 @@ local function ButtonsArray()
 		toggleLFDFunc = function() LFDMicroButton:Click() end
 		LFDtext = DUNGEONS_BUTTON
 		LFDKeybind = "TOGGLEGROUPFINDER"
+		optionsFunc = function() GameMenuButtonSettings:Click() end
 	elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CLASSIC then
 		minLevelSpec = SHOW_SPEC_LEVEL
 		minLevelLFD = SHOW_LFD_LEVEL
 		talentsText = TALENTS
 		toggleRaidTabFunc = function() ToggleFriendsFrame(4) end
 		toggleGuildFrameFunc = function() ToggleFriendsFrame(3) end
-		toggleLFDFunc = function() end
-		LFDtext = ""
-		LFDKeybind = ""
-	elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_THE_BURNING_CRUSADE_CLASSIC then
+		toggleLFDFunc = function() PVEFrame_ToggleFrame() end
+		LFDtext = LFG_BUTTON or DUNGEONS_BUTTON
+		LFDKeybind = "TOGGLEGROUPFINDER"
+		optionsFunc = function() GameMenuButtonOptions:Click() end
+	elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
 		minLevelSpec = SHOW_SPEC_LEVEL
-		minLevelLFD = 1
+		minLevelLFD = SHOW_LFD_LEVEL
+		minLevelAchi = 1
 		talentsText = TALENTS
 		toggleRaidTabFunc = function() ToggleFriendsFrame(4) end
-		toggleGuildFrameFunc = function() ToggleFriendsFrame(3) end
-		toggleLFDFunc = function() LFGMicroButton:Click() end
-		LFDtext = string.format("%s/%s", LFG_TITLE, LFM_TITLE)
-		LFDKeybind = "TOGGLELFGPARENT"
-	elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_WRATH_OF_THE_LICH_KING_CLASSIC then
-		minLevelSpec = SHOW_SPEC_LEVEL
-		minLevelLFD = 1
-		minLevelAchi = 10
-		talentsText = TALENTS
-		toggleRaidTabFunc = function() ToggleFriendsFrame(4) end
-		toggleGuildFrameFunc = function() ToggleFriendsFrame(3) end
-		toggleLFDFunc = function() LFGMicroButton:Click() end
-		LFDtext = DUNGEONS_BUTTON
-		LFDKeybind = "TOGGLELFGPARENT"
+		toggleGuildFrameFunc = function() GuildMicroButton:Click() end
+		toggleLFDFunc = function() PVEFrame_ToggleFrame() end
+		LFDtext = LFG_BUTTON or DUNGEONS_BUTTON
+		LFDKeybind = "TOGGLEGROUPFINDER"
+		optionsFunc = function() GameMenuButtonOptions:Click() end
 	end
 
 	local buttons = {
@@ -327,7 +275,7 @@ local function ButtonsArray()
 		DUNGEONS = { text = GetMenuButtonText(LFDtext, LFDKeybind), func = toggleLFDFunc, },
 		COLLECTIONS = { text = GetMenuButtonText(COLLECTIONS, "TOGGLECOLLECTIONS"), func = function() CollectionsMicroButton:Click() end, },
 		ADVENTURE_JOURNAL = { text = GetMenuButtonText(ADVENTURE_JOURNAL, "TOGGLEENCOUNTERJOURNAL"), func = function() EJMicroButton:Click() end },
-		BLIZZARD_STORE = { text = BLIZZARD_STORE, func = function() ToggleStoreUI() end, },
+		BLIZZARD_STORE = { text = BLIZZARD_STORE, func = ToggleStoreUI, },
 
 		GAME_MENU = { text = GetMenuButtonText(MAINMENU_BUTTON, "TOGGLEGAMEMENU"), func = function()
 			if GameMenuFrame:IsShown() then
@@ -339,12 +287,11 @@ local function ButtonsArray()
 			end
 		end, nested = 1, },
 		SUPPORT = { text = GAMEMENU_SUPPORT, func = function() ToggleHelpFrame() end, },
-		HELP = { text = GAMEMENU_HELP, func = function() ToggleHelpFrame() end, },
 		HELP_REQUEST = { text = HELP_BUTTON, func = function() ToggleHelpFrame() end, },
 		WHATS_NEW = { text = GAMEMENU_NEW_BUTTON, func = function() GameMenuButtonWhatsNew:Click() end, skip = IsTrialAccount() },
-		SYSTEMOPTIONS = { text = SYSTEMOPTIONS_MENU, func = function() GameMenuButtonOptions:Click() end, },
-		UIOPTIONS = { text = UIOPTIONS_MENU, func = function() GameMenuButtonUIOptions:Click() end, },
-		KEY_BINDINGS = { text = KEY_BINDINGS, func = function() GameMenuButtonKeybindings:Click() end, },
+		OPTIONS = { text = GAMEMENU_OPTIONS, func = optionsFunc, },
+		-- UIOPTIONS = { text = UIOPTIONS_MENU, func = function() GameMenuButtonUIOptions:Click() end, },
+		-- KEY_BINDINGS = { text = KEY_BINDINGS, func = function() GameMenuButtonKeybindings:Click() end, },
 		MACROS = { text = MACROS, func = function() ShowMacroFrame() end, },
 		ADDONS = { text = ADDONS, func = function() GameMenuButtonAddons:Click() end, },
 
@@ -373,13 +320,13 @@ local function ButtonsArray()
 			disabled = true
 			text = string.format('%s (%s)', LOOKINGFORGUILD, ERR_RESTRICTED_ACCOUNT_TRIAL)
 		else
-			if addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_MAINLINE then
+			if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE or WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC  then
+				text = GUILD_AND_COMMUNITIES
+			else
 				if not IsInGuild() then
 					disabled = true
 				end
 				text = GUILD
-			else
-				text = GUILD_AND_COMMUNITIES
 			end
 		end
 		buttons["GUILD"]["disabled"] = disabled
@@ -387,14 +334,14 @@ local function ButtonsArray()
 
 		if level < minLevelLFD then
 			buttons["DUNGEONS"]["disabled"] = true
-			buttons["DUNGEONS"]["text"] = GetMenuButtonText(string.format('%s (%s)', DUNGEONS_BUTTON, string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, minLevelLFD)), "TOGGLEGROUPFINDER")
+			buttons["DUNGEONS"]["text"] = GetMenuButtonText(string.format('%s (%s)', LFDtext, string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, minLevelLFD)), LFDKeybind)
 		end
 	else
 		buttons["GUILD"]["disabled"] = true
 		buttons["GUILD"]["text"] = GetMenuButtonText(string.format('%s (%s)', LOOKINGFORGUILD, FEATURE_NOT_AVAILBLE_PANDAREN), "TOGGLEGUILDTAB")
 
 		buttons["DUNGEONS"]["disabled"] = true
-		buttons["DUNGEONS"]["text"] = GetMenuButtonText(string.format('%s (%s)', DUNGEONS_BUTTON, FEATURE_NOT_AVAILBLE_PANDAREN), "TOGGLEGROUPFINDER")
+		buttons["DUNGEONS"]["text"] = GetMenuButtonText(string.format('%s (%s)', LFDtext, FEATURE_NOT_AVAILBLE_PANDAREN), LFDKeybind)
 	end
 
 	if not (C_AdventureJournal and C_AdventureJournal.CanBeShown()) then
@@ -414,7 +361,7 @@ local function ButtonsArray()
 		buttons["ACHIEVEMENTS"]["text"] = text
 	end
 
-	if TogglePVPFrame and addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_WRATH_OF_THE_LICH_KING_CLASSIC then
+	if TogglePVPFrame and addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
 		local text
 		local binding = "TOGGLECHARACTER4"
 		if level < SHOW_PVP_LEVEL then
