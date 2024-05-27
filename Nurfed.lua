@@ -60,6 +60,7 @@ addon.WOW_PROJECT_ID_MAINLINE = 1
 addon.WOW_PROJECT_ID_CLASSIC = 2
 addon.WOW_PROJECT_ID_THE_BURNING_CRUSADE_CLASSIC = 3
 addon.WOW_PROJECT_ID_WRATH_OF_THE_LICH_KING_CLASSIC = 4
+addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC = 5
 
 function addon:SetupOptions()
 	self.options.plugins.profiles = { profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db) }
@@ -102,7 +103,7 @@ function addon:OnInitialize()
 		OnTooltipShow = function(tooltip)
 			if not tooltip or not tooltip.AddLine then return end
 			tooltip:ClearLines()
-			tooltip:AddDoubleLine(addonName, addon:WrapTextInColorCode(GetAddOnMetadata(addonName, "Version"), addon.colors.tooltipLine), addon:UnpackColorTable(addon.colors.addonName))
+			tooltip:AddDoubleLine(addonName, addon:WrapTextInColorCode(C_AddOns.GetAddOnMetadata(addonName, "Version"), addon.colors.tooltipLine), addon:UnpackColorTable(addon.colors.addonName))
 			tooltip:AddLine("Right Click - Toggle Options", addon:UnpackColorTable(addon.colors.tooltipLine))				
 		end,
 	})
@@ -178,20 +179,34 @@ function addon:CommaNumber(n)
    	return left and left..(num:reverse():gsub('(%d%d%d)','%1,'):reverse()) or n --..right
 end
 
-function addon:FormatNumber(n)
+function addon:FormatNumber(n, threshold)
+	threshold = threshold or 10000
 	local number = math.abs(n)
 	local text
-	if number >= 1000000000 then
-		text = format("%.3fG", number/1000000000)
-	elseif number >= 1000000 then
-		text = format("%.2fM", number/1000000)
-	elseif number >= 10000 then
-		text = format("%.1fk", number/1000)
-	else text = self:CommaNumber(number)
+	if number >= threshold then
+		if number >= 10000000000 then
+			text = format("%.1fG", number/1000000000)
+		elseif number >= 1000000000 then
+			text = format("%.2fG", number/1000000000)
+		elseif number >= 10000000 then
+			text = format("%.1fM", number/1000000)
+		elseif number >= 1000000 then
+			text = format("%.2fM", number/1000000)
+		elseif number >= 10000 then
+			text = format("%.1fk", number/1000)
+		elseif number >= 1000 then
+			text = format("%.2fk", number/1000)
+		else
+			text = tostring(number)
+		end
+	else
+		text = addon:CommaNumber(number)
 	end
+
 	if n < 0 then
 		text = "-"..text
 	end
+
 	return text
 end
 
