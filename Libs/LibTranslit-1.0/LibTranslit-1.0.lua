@@ -1,14 +1,28 @@
+--[[
+Copyright (C) 2019-2022 Vardex
+
+This file is part of LibTranslit.
+
+LibTranslit is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+LibTranslit is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License along with LibTranslit. If not, see <https://www.gnu.org/licenses/>. 
+--]]
+
 local MAJOR_VERSION = "LibTranslit-1.0"
-local MINOR_VERSION = 3
+local MINOR_VERSION = 4
+
 if not LibStub then
 	error(MAJOR_VERSION .. " requires LibStub.")
 end
+
 local lib = LibStub:NewLibrary(MAJOR_VERSION, MINOR_VERSION)
 if not lib then
 	return
 end
 
-local CyrToLat = {
+local cyrToLat = {
 	["А"] = "A",
 	["а"] = "a",
 	["Б"] = "B",
@@ -82,9 +96,10 @@ function lib:Transliterate(str, mark)
 		return ""
 	end
 
-	local mark = mark or ""
+	mark = mark or ""
 	local tstr = ""
-	local marked = false
+	local tword = ""
+	local mark_word = false
 	local i = 1
 
 	while i <= string.len(str) do
@@ -92,22 +107,23 @@ function lib:Transliterate(str, mark)
 		local b = string.byte(c)
 
 		if b == 208 or b == 209 then
-			if marked == false then
-				tstr = tstr .. mark
-				marked = true
-			end
+			mark_word = true
 			c = str:sub(i + 1, i + 1)
-			tstr = tstr .. (CyrToLat[string.char(b, string.byte(c))] or string.char(b, string.byte(c)))
+			tword = tword .. (cyrToLat[string.char(b, string.byte(c))] or string.char(b, string.byte(c)))
 
 			i = i + 2
 		else
+			tword = tword .. c
+
 			if c == " " or c == "-" then
-				marked = false
+				tstr = tstr .. (mark_word and mark .. tword or tword)
+				tword = ""
+				mark_word = false
 			end
-			tstr = tstr .. c
+
 			i = i + 1
 		end
 	end
 
-	return tstr
+	return tstr .. (mark_word and mark .. tword or tword)
 end
