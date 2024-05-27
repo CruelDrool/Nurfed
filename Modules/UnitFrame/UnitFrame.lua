@@ -343,6 +343,7 @@ module.options = {
 	},
 }
 
+module.UIhider = CreateFrame("Frame", nil, nil, "Nurfed_UI_Hider_Template")
 module.frames = {}
 
 function module:OnInitialize()
@@ -434,20 +435,20 @@ function module:OnDisable()
 end
 
 function module:EnableUnitframes()
-	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue("Enable", module)
-		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
-		return
-	end
+	-- if InCombatLockdown() then
+	-- 	addon:AddOutOfCombatQueue("Enable", module)
+	-- 	addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+	-- 	return
+	-- end
 	self:Enable()
 end
 
 function module:DisableUnitframes()
-	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue("Disable", module)
-		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
-		return
-	end
+	-- if InCombatLockdown() then
+	-- 	addon:AddOutOfCombatQueue("Disable", module)
+	-- 	addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+	-- 	return
+	-- end
 	self:Disable()
 end
 
@@ -609,7 +610,7 @@ function module:CreateFrame(modName, unit, events, oneventfunc, dropDownMenu, is
 	frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 
 	local dropdown
-	
+
 	if type(dropDownMenu) == "table" then
 		dropdown = dropDownMenu
 	elseif type(dropDownMenu) == "function" or type(dropDownMenu) == "string" then
@@ -640,23 +641,30 @@ function module:CreateFrame(modName, unit, events, oneventfunc, dropDownMenu, is
 end
 
 function module:DisableFrame(frame)
-	local name = frame:GetName()
-	if frame.isWatched then
-		UnregisterUnitWatch(frame)
-	end
 	frame.isEnabled = false
-	frame:Hide()
+	frame:SetParent(self.UIhider)
+	if frame.isWatched then
+		if InCombatLockdown() then
+			addon:AddOutOfCombatQueue(function() UnregisterUnitWatch(frame);frame:Show() end)
+		else
+			UnregisterUnitWatch(frame)
+			frame:Show()
+		end
+	end
 end
 
 function module:EnableFrame(frame)
-	local name = frame:GetName()
+	frame:SetParent(UIParent)
 	if frame.isWatched and self.locked then
-		RegisterUnitWatch(frame)
-	else
-		frame:Show()
-		if not self.locked then frame.overlay:Show() end
-		if frame.model then module:UpdateModel(frame.model, frame.unit) end
+		if InCombatLockdown() then
+			addon:AddOutOfCombatQueue(function() RegisterUnitWatch(frame) end)
+		else
+			RegisterUnitWatch(frame)
+		end
+	elseif not self.locked then
+		frame.overlay:Show()
 	end
+	if frame.model then module:UpdateModel(frame.model, frame.unit) end
 	frame.isEnabled = true
 end
 
@@ -1621,9 +1629,9 @@ local function PowerBar_OnEvent(frame, event, ...)
 	local arg1 = ...
 	local unit = frame:GetParent().unit or frame:GetParent():GetParent().unit
 
-	-- if event == "PLAYER_ENTERING_WORLD" then
-		-- module:PowerBar_Update(frame, unit)
-	-- end
+	if event == "PLAYER_ENTERING_WORLD" then
+		module:PowerBar_Update(frame)
+	end
 
 	if ( arg1 ~= unit ) then
          return
@@ -1670,7 +1678,7 @@ function module:PowerBar_Update(frame)
 		local maxValue = UnitPowerMax(unit, powerType)
 		local currValue = UnitPower(unit, powerType)
 		if frame.updateFunc then
-			frame:updateFunc(frame)
+			frame:updateFunc()
 		end
 
 		frame:SetStatusBarColor(powerBarColor.r, powerBarColor.g,powerBarColor.b)
@@ -1703,7 +1711,7 @@ function module:PowerBar_OnLoad(frame, unit)
 		-- AdditionalPowerBar_ShowHide(frame)
 	-- end
 
-	-- frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+	frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 	frame:RegisterEvent("UNIT_DISPLAYPOWER")
 
 	frame:SetScript("OnEvent", PowerBar_OnEvent)
@@ -1776,10 +1784,8 @@ local function CastBar_OnEvent(frame, event, unit,...)
          return
     end
 
-	local _
-
-	if event == "UNIT_SPELLCAST_START" or event == "UNIT_SPELLCAST_CHANNEL_START" then
-		local name, texture, startTime, endTime, castID, notInterruptible
+	if event == "UNIT_SPELLCAST_START" or event == "UNIT_SPELLCAST_CHANNEL_START" or event == "UNIT_SPELLCAST_EMPOWER_START" then
+		local _, name, texture, startTime, endTime, castID, notInterruptible, numStages
 		local r, g, b
 		-- frame:Clear() will be called everytime the player changes target. Hmmmm...
 		frame:Clear()
@@ -1787,22 +1793,44 @@ local function CastBar_OnEvent(frame, event, unit,...)
 			name, _, texture, startTime, endTime, _, castID, notInterruptible = UnitCastingInfo(unit)
 			if not endTime then frame:Hide(); frame:Clear(); return end
 			frame.castID = castID
-			frame.startTime = GetTime() - (startTime / 1000)
+			frame.value = GetTime() - (startTime / 1000)
 			-- frame.maxValue = (endTime - startTime) / 1000
 			r, g, b = 1.0, 0.7, 0.0
 			-- r, g, b = CastingBarFrame.startCastColor:GetRGB()
 			-- frame.statusbar:SetMinMaxValues(0,frame.maxValue)
 			frame.channeling = false
 			frame.casting = true
-		elseif event == "UNIT_SPELLCAST_CHANNEL_START" then
-			name, _, texture, startTime, endTime, _, notInterruptible = UnitChannelInfo(unit)
+			frame.reverseChanneling = false
+		elseif event == "UNIT_SPELLCAST_CHANNEL_START" or event == "UNIT_SPELLCAST_EMPOWER_START" then
+			if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
+				name, _, texture, startTime, endTime, _, notInterruptible, _, _, numStages = UnitChannelInfo(unit)
+				if numStages and numStages > 0 then
+					endTime = endTime + GetUnitEmpowerHoldAtMaxTime(unit)
+					frame.reverseChanneling = true
+					frame.channeling = false
+				else
+					frame.channeling = true
+					frame.reverseChanneling = false
+				end
+			else
+				name, _, texture, startTime, endTime, _, notInterruptible = UnitChannelInfo(unit)
+				frame.channeling = true
+				frame.reverseChanneling = false
+			end
 			if not endTime then frame:Hide(); frame:Clear(); return end
-			frame.startTime = (endTime / 1000) - GetTime()
+
+			if frame.reverseChanneling then
+				-- Same calculations as a regular cast.
+				frame.value = GetTime() - (startTime / 1000)
+			else
+				frame.value = (endTime / 1000) - GetTime()
+			end
+
 			-- frame.maxValue = (endTime - startTime) / 1000
 			r, g, b = 0.0, 1.0, 0.0
 			-- r, g, b = CastingBarFrame.startChannelColor:GetRGB()
 			-- frame.statusbar:SetMinMaxValues(0,frame.maxValue)
-			frame.channeling = true
+			-- frame.channeling = true
 			frame.casting = false
 		end
 		if notInterruptible then
@@ -1813,7 +1841,7 @@ local function CastBar_OnEvent(frame, event, unit,...)
 		frame.statusbar:SetStatusBarColor(r, g, b)
 		frame.maxValue = (endTime - startTime) / 1000
 		frame.statusbar:SetMinMaxValues(0,frame.maxValue)
-		frame.statusbar:SetValue(frame.startTime)
+		frame.statusbar:SetValue(frame.value)
 		frame.icon:SetTexture(texture)
 		frame.name = name
 		CastBar_Text(frame.name, frame.statusbar, true)
@@ -1834,12 +1862,12 @@ local function CastBar_OnEvent(frame, event, unit,...)
 	elseif event == "UNIT_SPELLCAST_NOT_INTERRUPTIBLE" then
 		-- frame.statusbar:SetStatusBarColor(CastingBarFrame.nonInterruptibleColor:GetRGB())
 		frame.statusbar:SetStatusBarColor(0.7, 0.7, 0.7)
-	elseif event  == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP" then
-		if ( frame.casting and select(1,...) == frame.castID ) or frame.channeling then
+	elseif event  == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP" or event == "UNIT_SPELLCAST_EMPOWER_STOP" then
+		if ( frame.casting and select(1,...) == frame.castID ) or frame.channeling or frame.reverseChanneling then
 			if frame.casting then
 				if not module.db.profile.castBar.finishedColorSameAsStart then
 					frame.statusbar:SetStatusBarColor(0.0, 1.0, 0.0)
-            	end
+				end
 
 				frame.statusbar:SetValue(frame.maxValue)
 
@@ -1852,8 +1880,15 @@ local function CastBar_OnEvent(frame, event, unit,...)
 				frame.channeling = false
 			end
 
+			local now = GetTime()
+
 			frame.fadeOut = true
-			frame.holdTime = GetTime() + 0.2
+			frame.holdTime = now + 0.2
+
+			if frame.reverseChanneling  then
+				frame.reverseChanneling = false
+				frame.holdTime = now + 1
+			end
 		end
 	elseif event == "UNIT_SPELLCAST_FAILED" or event == "UNIT_SPELLCAST_INTERRUPTED" then
 		if frame.casting and select(1,...) == frame.castID then
@@ -1871,24 +1906,26 @@ local function CastBar_OnEvent(frame, event, unit,...)
 			frame.fadeOut = true
 			frame.holdTime =  GetTime() + 1
 		end
-	elseif event == "UNIT_SPELLCAST_DELAYED" or event == "UNIT_SPELLCAST_CHANNEL_UPDATE" then
-		if frame.casting or frame.channeling then
-			local startTime, endTime
-			if event == "UNIT_SPELLCAST_DELAYED" then
+	elseif event == "UNIT_SPELLCAST_DELAYED" or event == "UNIT_SPELLCAST_CHANNEL_UPDATE" or event == "UNIT_SPELLCAST_EMPOWER_UPDATE" then
+		if frame.casting or frame.channeling or frame.reverseChanneling then
+			local _, startTime, endTime
+			if frame.casting then
 				_, _, _, startTime, endTime = UnitCastingInfo(unit)
 				if not endTime then frame:Hide(); frame:Clear(); return end
-				frame.startTime = GetTime() - (startTime / 1000)
-				-- frame.maxValue = (endTime - startTime) / 1000
-				frame.channeling = false
-				frame.casting = true
-			elseif event == "UNIT_SPELLCAST_CHANNEL_UPDATE" then
+				frame.value = GetTime() - (startTime / 1000)
+			elseif frame.channeling or frame.reverseChanneling then
 				_, _, _, startTime, endTime = UnitChannelInfo(unit)
+
 				if not endTime then frame:Hide(); frame:Clear(); return end
-				frame.startTime = (endTime / 1000) - GetTime()
-				-- frame.maxValue = (endTime - startTime) / 1000
-				frame.statusbar:SetValue(frame.startTime)
-				frame.channeling = true
-				frame.casting = false
+
+				frame.value = (endTime / 1000) - GetTime()
+
+				if frame.reverseChanneling then
+					endTime = endTime + GetUnitEmpowerHoldAtMaxTime(unit)
+					frame.value = GetTime() - (startTime / 1000)
+				end
+
+				frame.statusbar:SetValue(frame.value)
 			end
 			frame.maxValue = (endTime - startTime) / 1000
 			frame.statusbar:SetMinMaxValues(0,frame.maxValue)
@@ -1896,32 +1933,32 @@ local function CastBar_OnEvent(frame, event, unit,...)
 			frame.holdTime = 0
 		end
 	end
-
 end
 
 local function CastBar_OnUpdate(frame, e)
-	if frame.casting then
-		frame.startTime = frame.startTime + e
-		if frame.startTime >= frame.maxValue then
+	if frame.casting or frame.reverseChanneling then
+		-- treating reverse channels the same as casts.
+		frame.value = frame.value + e
+		if frame.value >= frame.maxValue then
 			frame.statusbar:SetValue(frame.maxValue)
 			-- frame.casting = false
 			frame.channeling = false
 			frame.fadeOut = true
 			return
 		end
-		frame.time:SetText(string.format("(%.1fs)",frame.maxValue - frame.startTime))
-		frame.statusbar:SetValue(frame.startTime)
+		frame.time:SetText(string.format("(%.1fs)",frame.maxValue - frame.value))
+		frame.statusbar:SetValue(frame.value)
 	elseif frame.channeling then
-		frame.startTime = frame.startTime - e
-		if frame.startTime <= 0 then
+		frame.value = frame.value - e
+		if frame.value <= 0 then
 			frame.statusbar:SetValue(0)
 			-- frame.channeling = false
 			frame.casting = false
 			frame.fadeOut = true
 			return
 		end
-		frame.statusbar:SetValue(frame.startTime)
-		frame.time:SetText(string.format("(%.1fs)", frame.startTime))
+		frame.statusbar:SetValue(frame.value)
+		frame.time:SetText(string.format("(%.1fs)", frame.value))
 	elseif GetTime() < frame.holdTime then
 		return
 	elseif frame.fadeOut then
@@ -1965,6 +2002,7 @@ function module:CastBar_OnLoad(frame, unit)
 		frame.time:SetText("")
 		frame.casting = false
 		frame.channeling = false
+		frame.reverseChanneling = false
 		frame.fadeOut = false
 		frame.holdTime = 0
 	end
@@ -1998,15 +2036,16 @@ function module:CastBar_OnLoad(frame, unit)
 		frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_UPDATE")
 		frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
 
-		if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
-			-- According to Wowpedia these events were added in patch 3.2.0 (2009-08-04). However, it's currently not working in the WotLK Classic client.
+		if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE or addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
 			frame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTIBLE")
 			frame:RegisterEvent("UNIT_SPELLCAST_NOT_INTERRUPTIBLE")
 
+			if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
 			-- Empowered casts.
-			frame:RegisterEvent("UNIT_SPELLCAST_EMPOWER_START")
-			frame:RegisterEvent("UNIT_SPELLCAST_EMPOWER_UPDATE")
-			frame:RegisterEvent("UNIT_SPELLCAST_EMPOWER_STOP")
+				frame:RegisterEvent("UNIT_SPELLCAST_EMPOWER_START")
+				frame:RegisterEvent("UNIT_SPELLCAST_EMPOWER_UPDATE")
+				frame:RegisterEvent("UNIT_SPELLCAST_EMPOWER_STOP")
+			end
 		end
 	end
 
@@ -2039,7 +2078,12 @@ end
 
 function module:TargetofTarget_Onload(frame, unit)
 	frame.unit = unit
-	RegisterUnitWatch(frame)
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue(function() RegisterUnitWatch(frame) end)
+	else
+		RegisterUnitWatch(frame)
+	end
+
 	-- self.isWatched = true
 	-- self:RegisterEvent("PLAYER_ENTERING_WORLD");
 	-- self:RegisterEvent("UNIT_FACTION")
@@ -2246,7 +2290,15 @@ local PLAYER_UNITS = {
 	pet = true,
 }
 
-local ShouldShowDebuffs = TargetFrame_ShouldShowDebuffs or TargetFrameMixin.ShouldShowDebuffs
+local ShouldShowDebuffs = TargetFrame_ShouldShowDebuffs or function(unit, caster, nameplateShowAll, casterIsAPlayer) return TargetFrame:ShouldShowDebuffs(unit, caster, nameplateShowAll, casterIsAPlayer) end
+
+local UnitBuff = _G.UnitBuff or function(unitToken, index, filter)
+	 return AuraUtil.UnpackAuraData(C_UnitAuras.GetBuffDataByIndex(unitToken, index, filter))
+end
+
+local UnitDebuff = _G.UnitDebuff or function(unitToken, index, filter)
+	return AuraUtil.UnpackAuraData(C_UnitAuras.GetDebuffDataByIndex(unitToken, index, filter))
+end
 
 local function UpdateAuraAnchor(auraFrame, index, size)
 	local aura = auraFrame["aura"..index]
@@ -2276,7 +2328,7 @@ function module:UpdateAuras(frame)
 		local buffName, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, _ , spellId, _, _, casterIsPlayer, nameplateShowAll = UnitBuff(frame.unit, i, nil);
 		if icon then
 			if not auraFrame["aura"..i] then
-				auraFrame["aura"..i] = CreateFrame("Button", _, auraFrame, self.db.profile.templatePrefix.."Buff")
+				auraFrame["aura"..i] = CreateFrame("Button", nil, auraFrame, self.db.profile.templatePrefix.."Buff")
 			end
 
 			aura = auraFrame["aura"..i]
@@ -2363,7 +2415,7 @@ function module:UpdateAuras(frame)
 
 				if icon then
 					if not auraFrame["aura"..frameNum] then
-						auraFrame["aura"..frameNum] = CreateFrame("Button", _, auraFrame, self.db.profile.templatePrefix.."Debuff")
+						auraFrame["aura"..frameNum] = CreateFrame("Button", nil, auraFrame, self.db.profile.templatePrefix.."Debuff")
 					end
 
 					aura = auraFrame["aura"..frameNum]

@@ -570,4 +570,7 @@
 			</OnLeave>
 		</Scripts>
 	</Frame>	
+
+	<Frame name="Nurfed_UI_Hider_Template" virtual="true" hidden="true"></Frame>
+
 	</Ui>

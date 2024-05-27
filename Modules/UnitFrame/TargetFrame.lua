@@ -3,7 +3,7 @@ local moduleName = "TargetFrame"
 local displayName = moduleName
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
 local UnitFrames = addon:GetModule("UnitFrames")
-local module = UnitFrames:NewModule(moduleName)
+local module = UnitFrames:NewModule(moduleName, "AceHook-3.0")
 local unit = "target"
 
 module.defaults = {
@@ -116,7 +116,7 @@ local events = {
 
 local function UpdateCombo(frame, unit)
 	-- local comboPoints = UnitPower("player", Enum.PowerType.ComboPoints) -- for later, perhaps.
-	
+
 	local comboPoints = GetComboPoints("player", unit)
 	local maxComboPoints = UnitPowerMax("player", Enum.PowerType.ComboPoints)
 	-- local r, g, b
@@ -133,7 +133,7 @@ local function UpdateCombo(frame, unit)
 		-- elseif comboPoints == 1 then
 			-- r, g, b = 0, 0.5, 0
 		-- end
-		
+
 		local perc = comboPoints / maxComboPoints
 		local r1, g1, b1
 		local r2, g2, b2
@@ -148,10 +148,10 @@ local function UpdateCombo(frame, unit)
 		end
 
 		local r, g, b = r1 + (r2-r1)*perc, g1 + (g2-g1)*perc, b1 + (b2-b1)*perc
-		
-		
-		
-		
+
+
+
+
 		frame:SetTextColor(r, g, b)
 		frame:SetText(comboPoints)
 		frame:Show()
@@ -187,7 +187,7 @@ local function Update(frame)
 		UnitFrames:UpdatePVPStatus(frame)
 		UnitFrames:UpdateAuras(frame)
 		UpdateQuestionIcon(frame)
-	end	
+	end
 end
 
 local function OnEvent(frame, event, ...)
@@ -210,7 +210,7 @@ local function OnEvent(frame, event, ...)
 				else
 					PlaySound(SOUNDKIT.IG_CREATURE_NEUTRAL_SELECT)
 				end
-			end		
+			end
 	elseif event == "UNIT_POWER_FREQUENT" then
 		if arg1 == "player" then
 			UpdateCombo(frame.combo, frame.unit)
@@ -221,7 +221,7 @@ local function OnEvent(frame, event, ...)
 			if event == "UNIT_FACTION" then
 				UnitFrames:UpdatePVPStatus(frame)
 			end
-			
+
 			if event == "UNIT_CLASSIFICATION_CHANGED" then
 				UpdateQuestionIcon(frame)
 			end
@@ -270,39 +270,23 @@ local function OnEvent(frame, event, ...)
 	end
 end
 
-local blizzFrame = {}
-
 function module:DisableBlizz()
-	if #blizzFrame > 0 then return end
-
-	local frame = TargetFrame
-	local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint()
-
-	if not point then return end
-
-	blizzFrame = {
-			[1] = point,
-			[2] = "",
-			[3] = relativePoint,
-			[4] = xOfs,
-			[5] = yOfs,
-			[6] = frame:IsClampedToScreen(),
-	}
-
-	frame:SetClampedToScreen(false)
-	frame:ClearAllPoints()
-	frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -500, 500)
+	if TargetFrame.ApplySystemAnchor then
+		if not self:IsHooked(TargetFrame, "ApplySystemAnchor") then
+			---@diagnostic disable-next-line: redefined-local
+			self:SecureHook(TargetFrame, "ApplySystemAnchor", function(self)
+				self:SetParent(UnitFrames.UIhider)
+			end)
+		end
+	end
+	TargetFrame:SetParent(UnitFrames.UIhider)
 end
 
 function module:EnableBlizz()
-	if #blizzFrame == 0 then return end
-	local frame = TargetFrame
-	local point, relativeTo, relativePoint, xOfs, yOfs, IsClampedToScreen = unpack(blizzFrame)
-	
-	frame:ClearAllPoints()
-	frame:SetPoint(point, UIParent, relativePoint, xOfs, yOfs)
-	frame:SetClampedToScreen(IsClampedToScreen)
-	blizzFrame = {}
+	if TargetFrame.ApplySystemAnchor then
+		self:Unhook(TargetFrame, "ApplySystemAnchor")
+	end
+	TargetFrame:SetParent(UIParent)
 end
 
 function module:OnInitialize()
@@ -313,11 +297,6 @@ function module:OnInitialize()
 end
 
 function module:OnEnable()
-	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue("OnEnable", module)
-		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
-		return
-	end
 
 	self:DisableBlizz()
 
@@ -332,11 +311,6 @@ function module:OnEnable()
 end
 
 function module:OnDisable()
-	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue("OnDisable", module)
-		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
-		return
-	end
 	self:EnableBlizz()
 	UnitFrames:DisableFrame(self.frame)
 end

@@ -3,7 +3,7 @@ local moduleName = "BossFrames"
 local displayName = moduleName
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
 local UnitFrames = addon:GetModule("UnitFrames")
-local module = UnitFrames:NewModule(moduleName)
+local module = UnitFrames:NewModule(moduleName, "AceHook-3.0")
 local unit = "boss"
 
 module.defaults = {
@@ -171,86 +171,47 @@ local function OnEvent(frame, event, ...)
 	end
 end
 
-
-local blizzFrames = {}
-
 function module:DisableBlizz()
-	
-	if #blizzFrames > 0 then return end
-	
-	for i = 1, MAX_BOSS_FRAMES do
-		local frame = _G["Boss"..i.."TargetFrame"]
-		if not frame then return end
-		local spellBar = _G[frame:GetName().."SpellBar"]
 
-		local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint()
-
-		if not point then return end
-
-		spellBar.showCastbar = false
-		spellBar:SetScript("OnEvent", nil)
-		
-		blizzFrames[i] = {
-				[1] = point,
-				[2] = "",
-				[3] = relativePoint,
-				[4] = xOfs,
-				[5] = yOfs,
-				[6] = frame:IsClampedToScreen(),
-		}
-
-		frame:UnregisterEvent("UNIT_TARGETABLE_CHANGED")
-		if i == 1 then
-			frame:UnregisterEvent("INSTANCE_ENCOUNTER_ENGAGE_UNIT")
+	if BossTargetFrameContainer then
+		BossTargetFrameContainer:SetParent(UnitFrames.UIhider)
+		if not self:IsHooked(BossTargetFrameContainer, "ApplySystemAnchor") then
+			---@diagnostic disable-next-line: redefined-local
+			self:SecureHook(BossTargetFrameContainer, "ApplySystemAnchor", function(self)
+				self:SetParent(UnitFrames.UIhider)
+			end)
 		end
-
-		frame:SetClampedToScreen(false)
-		frame:ClearAllPoints()
-		frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -500, 500)
-		frame:Hide()
+		if not self:IsHooked(BossTargetFrameContainer, "UpdateShownState") then
+			---@diagnostic disable-next-line: redefined-local
+			self:SecureHook(BossTargetFrameContainer, "UpdateShownState", function(self)
+				self:SetParent(UnitFrames.UIhider)
+			end)
+		end
+		BossTargetFrameContainer:SetParent(UnitFrames.UIhider)
+	else
+		for i = 1, MAX_BOSS_FRAMES do
+			local frame = _G["Boss"..i.."TargetFrame"]
+			if not frame then return end
+			frame:SetParent(UnitFrames.UIhider)
+		end
 	end
 end
 
 function module:EnableBlizz()
-	
-	if #blizzFrames == 0 then return end
-
-	for i = 1, #blizzFrames do
-		local frame = _G["Boss"..i.."TargetFrame"]
-		if not frame then return end
-		local spellBar = _G[frame:GetName().."SpellBar"]
-		local point, relativeTo, relativePoint, xOfs, yOfs, IsClampedToScreen = unpack(blizzFrames[i])
-
-		spellBar.showCastbar = GetCVarBool("showTargetCastbar")
-		spellBar:SetScript("OnEvent", Target_Spellbar_OnEvent)
-
-		frame:RegisterEvent("UNIT_TARGETABLE_CHANGED")
-		if i == 1 then
-			frame:RegisterEvent("INSTANCE_ENCOUNTER_ENGAGE_UNIT")
+	if BossTargetFrameContainer then
+		self:Unhook(PartyFrame, "ApplySystemAnchor")
+		self:Unhook(PartyFrame, "UpdateShownState")
+		BossTargetFrameContainer:SetParent(UIParentRightManagedFrameContainer)
+	else
+		for i = 1, MAX_BOSS_FRAMES do
+			local frame = _G["Boss"..i.."TargetFrame"]
+			if not frame then return end
+			frame:SetParent(UIParent)
 		end
-
-		frame:ClearAllPoints()
-		frame:SetPoint(point, UIParent, relativePoint, xOfs, yOfs)
-		frame:SetClampedToScreen(IsClampedToScreen)
-	end
-
-	blizzFrames = {}
-end
-
-
-function module:OnInitialize()
-	-- Enable if we're supposed to be enabled
-	if self.db and self.db.enabled and UnitFrames:IsEnabled() then
-		self:Enable()
 	end
 end
 
 function module:OnEnable()
-	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue("OnEnable", module)
-		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
-		return
-	end
 	self:DisableBlizz()
 	if table.getn(self.frames) == 0 then
 		for i=1,MAX_BOSS_FRAMES do
@@ -268,11 +229,6 @@ function module:OnEnable()
 end
 
 function module:OnDisable()
-	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue("OnDisable", module)
-		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
-		return
-	end
 	self:EnableBlizz()
 	for _, frame in ipairs(self.frames) do
 		UnitFrames:DisableFrame(frame)

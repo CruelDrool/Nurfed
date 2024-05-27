@@ -3,7 +3,7 @@ local moduleName = "FocusFrame"
 local displayName = moduleName
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
 local UnitFrames = addon:GetModule("UnitFrames")
-local module = UnitFrames:NewModule(moduleName)
+local module = UnitFrames:NewModule(moduleName, "AceHook-3.0")
 local unit = "focus"
 
 module.defaults = {
@@ -198,38 +198,23 @@ local function OnEvent(frame, event, ...)
 	end
 end
 
-local blizzFrame = {}
-
 function module:DisableBlizz()
-	if #blizzFrame > 0 then return end
-
-	local frame = FocusFrame
-	local point, _, relativePoint, xOfs, yOfs = frame:GetPoint()
-
-	if not point then return end
-
-	blizzFrame = {
-			[1] = point,
-			[2] = "",
-			[3] = relativePoint,
-			[4] = xOfs,
-			[5] = yOfs,
-			[6] = frame:IsClampedToScreen(),
-	}
-	frame:SetClampedToScreen(false)
-	frame:ClearAllPoints()
-	frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -500, 500)
+	if FocusFrame.ApplySystemAnchor then
+		if not self:IsHooked(FocusFrame, "ApplySystemAnchor") then
+			---@diagnostic disable-next-line: redefined-local
+			self:SecureHook(FocusFrame, "ApplySystemAnchor", function(self)
+				self:SetParent(UnitFrames.UIhider)
+			end)
+		end
+	end
+	FocusFrame:SetParent(UnitFrames.UIhider)
 end
 
 function module:EnableBlizz()
-	if #blizzFrame == 0 then return end
-	local frame = FocusFrame
-	local point, _, relativePoint, xOfs, yOfs, IsClampedToScreen = unpack(blizzFrame)
-	
-	frame:SetClampedToScreen(IsClampedToScreen)
-	frame:ClearAllPoints()
-	frame:SetPoint(point, UIParent, relativePoint, xOfs, yOfs)
-	blizzFrame = {}
+	if FocusFrame.ApplySystemAnchor then
+		self:Unhook(FocusFrame, "ApplySystemAnchor")
+	end
+	FocusFrame:SetParent(UIParent)
 end
 
 function module:OnInitialize()
@@ -240,11 +225,6 @@ function module:OnInitialize()
 end
 
 function module:OnEnable()
-	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue("OnEnable", module)
-		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
-		return
-	end
 	self:DisableBlizz()
 	if not self.frame then
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, FocusFrameDropDown or "FOCUS", true)
@@ -257,11 +237,6 @@ function module:OnEnable()
 end
 
 function module:OnDisable()
-	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue("OnDisable", module)
-		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
-		return
-	end
 	self:EnableBlizz()
 	UnitFrames:DisableFrame(self.frame)
 end

@@ -3,12 +3,12 @@ local moduleName = "PlayerFrame"
 local displayName = moduleName
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
 local UnitFrames = addon:GetModule("UnitFrames")
-local module = UnitFrames:NewModule(moduleName)
+local module = UnitFrames:NewModule(moduleName, "AceHook-3.0")
 local unit = "player"
 
 module.defaults = {
 	enabled = true,
-	disableBlizzCastBar = true,
+	disableBlizzCastBar = false,
 	shortenFactionRepName = false,
 	shortenStandingRepName = false,
 	formats = {
@@ -123,13 +123,13 @@ module.options = {
 			get = function() return module.db.shortenStandingRepName end,
 			set = function(info, value) module.db.shortenStandingRepName = value;if module.frame then module:RepBar_Update(module.frame.reputation) end end,
 		},
-		blizzCastBar = CastingBarFrame and {
+		blizzCastBar = {
 			order = 5,
 			type = "toggle",
 			name = "Disable Blizzard Castbar",
 			get = function() return module.db.disableBlizzCastBar end,
 			set = function(info, value) module.db.disableBlizzCastBar = value; if value == true and module.db.enabled and UnitFrames:IsEnabled() then module:DisableBlizzCastBar() else module:EnableBlizzCastBar() end end,
-		} or nil,
+		},
 	},
 }
 
@@ -479,83 +479,81 @@ local function AdditionalPowerBar_OnLoad(frame, unit)
 				frame:Hide()
 			end
 		end
-		
 		UnitFrames:PowerBar_OnLoad(statusbar, unit)
 		UnitFrames:PowerBar_Update(statusbar)
+		-- statusbar:updateFunc()
 	end
 end
 
 
 function module:DisableBlizzCastBar()
-	if self.db.disableBlizzCastBar and CastingBarFrame then
-		CastingBarFrame:SetScript("OnEvent", nil)
-		CastingBarFrame:SetScript("OnUpdate", nil)
-		CastingBarFrame:SetScript("OnShow", nil)
-		CastingBarFrame:Hide()
+	if not self:IsEnabled() then return end
+	if not self.db.disableBlizzCastBar then return end
+
+	if PlayerCastingBarFrame then
+		PlayerCastingBarFrame:SetParent(UnitFrames.UIhider)
+		if not self:IsHooked(PlayerCastingBarFrame, "ApplySystemAnchor") then
+			---@diagnostic disable-next-line: redefined-local
+			self:SecureHook(PlayerCastingBarFrame, "ApplySystemAnchor", function(self)
+				if not PlayerCastingBarFrame.attachedToPlayerFrame then
+					self:SetParent(UnitFrames.UIhider)
+				end
+			end)
+		end
+
+		if not self:IsHooked(PlayerCastingBarFrame, "UpdateShownState") then
+			---@diagnostic disable-next-line: redefined-local
+			self:SecureHook(PlayerCastingBarFrame, "UpdateShownState", function(self)
+				if not PlayerCastingBarFrame.attachedToPlayerFrame then
+					self:SetParent(UnitFrames.UIhider)
+				end
+			end)
+		end
+
+	else
+		CastingBarFrame:SetParent(UnitFrames.UIhider)
 	end
 end
 
 function module:EnableBlizzCastBar()
-	if CastingBarFrame and CastingBarFrame then
-		CastingBarFrame:SetScript("OnEvent", CastingBarFrame_OnEvent)
-		CastingBarFrame:SetScript("OnUpdate", CastingBarFrame_OnUpdate)
-		CastingBarFrame:SetScript("OnShow", CastingBarFrame_OnShow)
+	if PlayerCastingBarFrame then
+		self:Unhook(PlayerCastingBarFrame, "ApplySystemAnchor")
+		self:Unhook(PlayerCastingBarFrame, "UpdateShownState")
+		PlayerCastingBarFrame:SetParent(PlayerCastingBarFrame.attachedToPlayerFrame and PlayerFrame or UIParent)
+	else
+		CastingBarFrame:SetParent(UIParent)
 	end
 end
 
-local blizzFrame = {}
-
 function module:DisableBlizz()
-	if #blizzFrame > 0 then return end
-
+	if PlayerFrame.ApplySystemAnchor then
+		if not self:IsHooked(PlayerFrame, "ApplySystemAnchor") then
+			---@diagnostic disable-next-line: redefined-local
+			self:SecureHook(PlayerFrame, "ApplySystemAnchor", function(self)
+				self:SetParent(UnitFrames.UIhider)
+			end)
+		end
+	end
+	PlayerFrame:SetParent(UnitFrames.UIhider)
 	self:DisableBlizzCastBar()
-
-	local frame = PlayerFrame
-	local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint()
-
-	if not point then return end
-
-	blizzFrame = {
-			[1] = point,
-			[2] = "",
-			[3] = relativePoint,
-			[4] = xOfs,
-			[5] = yOfs,
-			[6] = frame:IsClampedToScreen()
-	}
-
-	frame:SetClampedToScreen(false)
-	frame:ClearAllPoints()
-	frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -500, 500)
-	frame:SetScript("OnEvent", nil)
-	frame:SetScript("OnUpdate", nil)
-	frame:Hide()
 end
 
 function module:EnableBlizz()
-	if #blizzFrame == 0 then return end
+	if PlayerFrame.ApplySystemAnchor then
+		self:Unhook(PlayerFrame, "ApplySystemAnchor")
+	end
+
+	PlayerFrame:SetParent(UIParent)
+
 	self:EnableBlizzCastBar()
-	local frame = PlayerFrame
-	frame:SetScript("OnEvent", PlayerFrame_OnEvent)
-	frame:SetScript("OnUpdate", PlayerFrame_OnUpdate)
-	PlayerFrame_Update()
-	UnitFrame_Update(PlayerFrame)
-	frame:Show()
-
-	local point, _, relativePoint, xOfs, yOfs, IsClampedToScreen = unpack(blizzFrame)
-	frame:ClearAllPoints()
-	frame:SetPoint(point, UIParent, relativePoint, xOfs, yOfs)
-	frame:SetClampedToScreen(IsClampedToScreen)
-
-	blizzFrame = {}
 end
 
 function module:OnEnable()
-	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue("OnEnable", module)
-		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
-		return
-	end
+	-- if InCombatLockdown() and not self.frame then
+	-- 	addon:AddOutOfCombatQueue("OnEnable", module)
+	-- 	addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+	-- 	return
+	-- end
 
 	self:DisableBlizz()
 
@@ -571,7 +569,6 @@ function module:OnEnable()
 		self.frame.inCombat = nil
 		self.frame.onHateList = nil
 		Update(self.frame)
-
 		if self.frame.xp then
 			self:XPbar_Update(self.frame.xp)
 		end
@@ -583,11 +580,12 @@ function module:OnEnable()
 end
 
 function module:OnDisable()
-	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue("OnDisable", module)
-		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
-		return
-	end
+	-- if InCombatLockdown() then
+	-- 	addon:AddOutOfCombatQueue("OnDisable", module)
+	-- 	addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+	-- 	return
+	-- end
+
 	self:EnableBlizz()
-	UnitFrames:DisableFrame(module.frame)
+	UnitFrames:DisableFrame(self.frame)
 end

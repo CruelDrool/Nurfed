@@ -3,7 +3,7 @@ local moduleName = "PetFrame"
 local displayName = moduleName
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
 local UnitFrames = addon:GetModule("UnitFrames")
-local module = UnitFrames:NewModule(moduleName)
+local module = UnitFrames:NewModule(moduleName, "AceHook-3.0")
 local unit = "pet"
 
 module.defaults = {
@@ -161,39 +161,35 @@ local function OnEvent(frame, event, ...)
 	end
 end
 
-local blizzFrame = {}
-
 function module:DisableBlizz()
-	if #blizzFrame > 0 then return end
 
-	local frame = PetFrame
-	local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint()
+	if PetFrame.ApplySystemAnchor and not self:IsHooked(PetFrame, "ApplySystemAnchor") then
+		---@diagnostic disable-next-line: redefined-local
+		self:SecureHook(PetFrame, "ApplySystemAnchor", function(self)
+			self:SetParent(UnitFrames.UIhider)
+		end)
+	end
 
-	if not point then return end
+	if PetFrame.UpdateShownState and not self:IsHooked(PetFrame, "UpdateShownState") then
+		---@diagnostic disable-next-line: redefined-local
+		self:SecureHook(PetFrame, "UpdateShownState", function(self)
+			self:SetParent(UnitFrames.UIhider)
+		end)
+	end
 
-	blizzFrame = {
-			[1] = point,
-			[2] = "",
-			[3] = relativePoint,
-			[4] = xOfs,
-			[5] = yOfs,
-			[6] = frame:IsClampedToScreen(),
-	}
-
-	frame:SetClampedToScreen(false)
-	frame:ClearAllPoints()
-	frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -500, 500)
+	PetFrame:SetParent(UnitFrames.UIhider)
 end
 
 function module:EnableBlizz()
-	if #blizzFrame == 0 then return end
-	local frame = PetFrame
-	local point, relativeTo, relativePoint, xOfs, yOfs, IsClampedToScreen = unpack(blizzFrame)
-	
-	frame:ClearAllPoints()
-	frame:SetPoint(point, UIParent, relativePoint, xOfs, yOfs)
-	frame:SetClampedToScreen(IsClampedToScreen)
-	blizzFrame = {}
+	if PetFrame.ApplySystemAnchor then
+		self:Unhook(PetFrame, "ApplySystemAnchor")
+	end
+
+	if PetFrame.UpdateShownState then
+		self:Unhook(PetFrame, "UpdateShownState")
+	end
+
+	PetFrame:SetParent(PlayerFrameBottomManagedFramesContainer or PlayerFrame)
 end
 
 function module:OnInitialize()
@@ -204,11 +200,6 @@ function module:OnInitialize()
 end
 
 function module:OnEnable()
-	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue("OnEnable", module)
-		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
-		return
-	end
 	self:DisableBlizz()
 	if not self.frame then
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PetFrameDropDown, true)
@@ -221,11 +212,6 @@ function module:OnEnable()
 end
 
 function module:OnDisable()
-	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue("OnDisable", module)
-		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
-		return
-	end
 	self:EnableBlizz()
 	UnitFrames:DisableFrame(self.frame)
 end

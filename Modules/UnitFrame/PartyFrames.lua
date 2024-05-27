@@ -282,158 +282,161 @@ local function OnEvent(frame, event, ...)
 	end
 end
 
-
-local function HideParty()
-	if not IsInRaid() and GetCVar("useCompactPartyFrames") == "0" then return end
-	-- GetCVarBool()
-	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue(HideParty)
-		return
+local function ShouldShowParty()
+	local raidStyle
+	if EditModeManagerFrame and EditModeManagerFrame.UseRaidStylePartyFrames then
+		-- raidStyle = EditModeManagerFrame:UseRaidStylePartyFrames()
+		--[[
+		On Mainline this setting is dependent on the party frames being available in Edit Mode.
+		This means that people are better off disabling this module if this style is wanted.
+		Also had some real difficulty toggling on and off the hiding of "PartyFrame".
+		]]--
+		raidStyle = false
+	else
+		raidStyle = GetCVarBool("useCompactPartyFrames")
 	end
 
-	for k,frame in pairs(module.frames) do
+	return not(IsInRaid() or raidStyle)
+end
+
+local function _HideParty()
+	for _,frame in pairs(module.frames) do
+		frame:SetParent(UIParent)
+
 		if frame.isWatched then
 			UnregisterUnitWatch(frame)
 			frame.isWatched = false
 		end
-		
+
 		frame.hidden = true
-		
+
 		if UnitFrames.locked and not frame.isWatched then
 			frame:Hide()
 		end
 	end
 end
- 
-local function ShowParty()
-	if IsInRaid() and GetCVar("useCompactPartyFrames") == "1" then return end
-	-- GetCVarBool()
+
+local function HideParty()
+	if ShouldShowParty() then return end
 	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue(ShowParty)
-		return
+		addon:AddOutOfCombatQueue(_HideParty)
+		for _,frame in pairs(module.frames) do
+			frame:SetParent(UnitFrames.UIhider)
+		end
+	else
+		_HideParty()
 	end
-	
-	for k,frame in pairs(module.frames) do
+end
+
+local function _ShowParty()
+	for _,frame in pairs(module.frames) do
 		if UnitFrames.locked and not frame.isWatched then
 			RegisterUnitWatch(frame)
 		end
 		frame.hidden = false
 		-- Even if not registered with an actual unit watch, set as watched for the UnitFrames:Lock() function.
 		frame.isWatched = true
-		UnitFrames:UpdateReadyCheck(frame.unit, frame.readyCheck)
+		
 	end
 end
 
-local blizzFrames = {}
+local function ShowParty()
+	if not ShouldShowParty() then return end
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue(_ShowParty)
+		for _,frame in pairs(module.frames) do
+			frame:SetParent(UIParent)
+			UnitFrames:UpdateReadyCheck(frame.unit, frame.readyCheck)
+		end
+	else
+		_ShowParty()
+	end
+end
+
+local function ToggleParty()
+	ShowParty()
+	HideParty()
+end
 
 function module:DisableBlizz()
-	if PartyFrame then 
-		PartyFrame:Hide()
+	if PartyFrame then
+		if not self:IsHooked(PartyFrame, "ApplySystemAnchor") then
+			---@diagnostic disable-next-line: redefined-local
+			self:SecureHook(PartyFrame, "ApplySystemAnchor", function(self)
+				self:SetParent(UnitFrames.UIhider)
+			end)
+		end
+		PartyFrame:SetParent(UnitFrames.UIhider)
 	else
-		if #blizzFrames > 0 then return end
-
 		for i = 1, MAX_PARTY_MEMBERS do
 			local frame = _G["PartyMemberFrame"..i]
 			if not frame then return end
-			local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint()
+			frame:SetParent(UnitFrames.UIhider)
 
-			if not point then return end
-			
-			blizzFrames[i] = { 
-					[1] = point,
-					[2] = "",
-					[3] = relativePoint,
-					[4] = xOfs,
-					[5] = yOfs,
-					[6] = frame:IsClampedToScreen(),
-			}
-			
-			-- frame:SetScript("OnEvent", nil)
-			-- frame:SetScript("OnUpdate", nil)
-			frame:SetClampedToScreen(false)
-			frame:ClearAllPoints()
-			frame:SetPoint("BOTTOMRIGHT", UIParent, "TOPLEFT", -500, 500)
-			frame:Hide()
 		end
-	CompactRaidFrameManager:SetFrameLevel(4)
+	end
+
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue(function() CompactRaidFrameManager:SetFrameLevel(4) end)
+	else
+		CompactRaidFrameManager:SetFrameLevel(4)
 	end
 end
 
 function module:EnableBlizz()
-	if PartyFrame then 
-		PartyFrame:Show()
+	if PartyFrame then
+		self:Unhook(PartyFrame, "ApplySystemAnchor")
+		PartyFrame:SetParent(UIParent)
 	else
-		if #blizzFrames == 0 then return end
-		for i = 1, #blizzFrames do
+		for i = 1, MAX_PARTY_MEMBERS do
 			local frame = _G["PartyMemberFrame"..i]
+
 			if not frame then return end
-			local point, relativeTo, relativePoint, xOfs, yOfs, IsClampedToScreen = unpack(blizzFrames[i])
-			
-			frame:ClearAllPoints()
-			frame:SetPoint(point, UIParent, relativePoint, xOfs, yOfs)
-			frame:SetClampedToScreen(IsClampedToScreen)
-			
-			-- frame:SetScript("OnEvent", PartyMemberFrame_OnEvent)
-			-- frame:SetScript("OnUpdate", PartyMemberFrame_OnUpdate)
-			PartyMemberFrame_UpdateArt(frame)
-			PartyMemberFrame_UpdateMember(frame)
-			PartyMemberFrame_UpdateLeader(frame)
-			if PartyMemberFrame_UpdateAssignedRoles then PartyMemberFrame_UpdateAssignedRoles(frame) end
+
+			frame:SetParent(UIParent)
 		end
-		CompactRaidFrameManager:SetFrameLevel(1)
-
-		blizzFrames = {}
 	end
-end
 
-function module:OnInitialize()
-	-- Enable if we're supposed to be enabled
-	if self.db and self.db.enabled and UnitFrames:IsEnabled() then
-		self:Enable()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue(function() CompactRaidFrameManager:SetFrameLevel(1) end)
+	else
+		CompactRaidFrameManager:SetFrameLevel(1)
 	end
 end
 
 function module:OnEnable()
-	if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
-		table.insert(events, "INCOMING_SUMMON_CHANGED")
-		table.insert(events, "UNIT_CTR_OPTIONS")
-	end
 
-	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue("OnEnable", module)
-		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
-		return
-	end
+
 	self:DisableBlizz()
-	if table.getn(self.frames) == 0 then
+
+	if #self.frames == 0 then
+		if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
+			table.insert(events, "INCOMING_SUMMON_CHANGED")
+			table.insert(events, "UNIT_CTR_OPTIONS")
+		end
 		for i=1,MAX_PARTY_MEMBERS do
 			local frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, _G["PartyMemberFrame"..i.."DropDown"] or "PARTY", true, i)
 			frame:SetScript("OnUpdate", OnUpdate)
-			table.insert(module.frames, frame)
+			table.insert(self.frames, frame)
 		end
 	end
 
-	if table.getn(self.frames) > 0 then
-		for _, frame in ipairs(module.frames) do
+	if #self.frames > 0 then
+		for _, frame in ipairs(self.frames) do
 			UnitFrames:EnableFrame(frame)
 			Update(frame)
 		end
-		--ShowParty()
-		--HideParty()
 	end
 
 	if HidePartyFrame and ShowPartyFrame then
 		self:SecureHook("HidePartyFrame", HideParty)
 		self:SecureHook("ShowPartyFrame", ShowParty)
+	else
+		self:SecureHook(PartyFrame, "UpdatePartyFrames", ToggleParty)
 	end
 end
 
 function module:OnDisable()
-	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue("OnDisable", module)
-		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
-		return
-	end
 	self:EnableBlizz()
 	for _, frame in ipairs(self.frames) do
 		UnitFrames:DisableFrame(frame)
