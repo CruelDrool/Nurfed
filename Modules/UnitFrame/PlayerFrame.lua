@@ -11,11 +11,13 @@ module.defaults = {
 	disableBlizzCastBar = false,
 	shortenFactionRepName = false,
 	shortenStandingRepName = false,
+	hideClassResourceBars = false,
 	formats = {
 		infoline = "$level ($g)",
 		xp = "$cur/$max ($rest) $perc",
 		reputation = "$cur/$max - $faction ($standing) $perc",
 		maxReputation = "$faction ($standing)",
+		stagger = "$cur ($max)",
 	},
 	frames = {
 		[unit] = {
@@ -103,8 +105,16 @@ module.options = {
 					name = "Maximum reputation",
 					-- desc = "",
 					get = function() return UnitFrames:GetTextFormat("maxReputation", nil, moduleName) end,
-					set = function(info, value) module.db.formats.maxReputation = value;if module.frame then module:RepBar_Update(module.frame.maxReputation) end end,
+					set = function(info, value) module.db.formats.maxReputation = value;if module.frame then module:RepBar_Update(module.frame.reputation) end end,
 				},
+				stagger = select(2, UnitClass(unit)) == "MONK" and {
+					order = 7,
+					type = "input",
+					name = "Stagger bar",
+					-- desc = "",
+					get = function() return UnitFrames:GetTextFormat("stagger", nil, moduleName) end,
+					set = function(info, value) module.db.formats.stagger = value; end,
+				} or nil,
 			},
 		},
 		shortenFactionRepName = {
@@ -127,8 +137,34 @@ module.options = {
 			order = 5,
 			type = "toggle",
 			name = "Disable Blizzard Castbar",
+			width = "full",
 			get = function() return module.db.disableBlizzCastBar end,
-			set = function(info, value) module.db.disableBlizzCastBar = value; if value == true and module.db.enabled and UnitFrames:IsEnabled() then module:DisableBlizzCastBar() else module:EnableBlizzCastBar() end end,
+			set = 
+			function(info, value)
+				module.db.disableBlizzCastBar = value;
+				if module.db.enabled and UnitFrames:IsEnabled() then
+					if not value then
+						module:EnableBlizzCastBar()
+					else
+						module:DisableBlizzCastBar()
+					end
+				end
+			end,
+		},
+		hideClassResourceBars = {
+			order = 6,
+			type = "toggle",
+			name = "Hide class resource bars",
+			desc = addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE and "Combo points, runes, soul shards, chi, stagger, essence, arcane charges etc.." or "Runes, soul shards, eclipse or holy power",
+			width = "full",
+			get = function() return module.db.hideClassResourceBars end,
+			set =
+			function(info, value)
+				module.db.hideClassResourceBars = value
+				if module.db.enabled and UnitFrames:IsEnabled() then
+					module:ToggleClassResourceBars(value)
+				end
+			end,
 		},
 	},
 }
@@ -363,7 +399,7 @@ function module:RepBar_Update(frame)
 		text = text:gsub("$max", addon:FormatNumber(maxValue))
 		text = text:gsub("$faction", factionName)
 		text = text:gsub("$standing", standingText)
-		text = text:gsub("$perc", UnitFrames:FormatPercentage(currValue / maxValue*100))
+		text = text:gsub("$perc", UnitFrames:FormatPercentage(currValue / maxValue*100, true))
 
 	end
 	frame:SetMinMaxValues(0, maxValue)
@@ -406,7 +442,7 @@ function module:XPbar_Update(frame)
 
 		text = text:gsub("$cur", addon:CommaNumber(currValue))
 		text = text:gsub("$max", addon:FormatNumber(maxValue))
-		text = text:gsub("$perc", UnitFrames:FormatPercentage(currValue / (maxValue > 0 and maxValue or 1)*100))
+		text = text:gsub("$perc", UnitFrames:FormatPercentage(currValue / (maxValue > 0 and maxValue or 1)*100, true))
 
 		local rest = GetXPExhaustion() or 0 -- Sometimes GetXPExhaustion() returns nil
 
@@ -431,16 +467,8 @@ local function XPbar_OnEvent(frame,event,...)
 	module:XPbar_Update(frame)
 end
 
-local function XPbar_OnLoad(frame, unit)
-	if not frame.unit then
-		if unit then
-			frame.unit = unit
-		elseif not unit and frame:GetParent().unit then
-			frame.unit = frame:GetParent().unit
-		else
-			return
-		end
-	end
+local function XPbar_OnLoad(frame)
+	frame.unit = unit
 
 	frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 	frame:RegisterEvent("UPDATE_EXHAUSTION")
@@ -449,10 +477,9 @@ local function XPbar_OnLoad(frame, unit)
 	frame:SetScript("OnEvent", XPbar_OnEvent)
 end
 
-
-local function AdditionalPowerBar_OnLoad(frame, unit)
-	local _, class = UnitClass(unit)
-	if class == "DRUID" or class == "SHAMAN" or class == "PRIEST" then
+local function AdditionalPowerBar_OnLoad(frame)
+	local _, classFileName = UnitClass(unit)
+	if classFileName == "DRUID" or classFileName == "SHAMAN" or classFileName == "PRIEST" then
 		local statusbar
 		if frame.statusbar then
 			statusbar = frame.statusbar
@@ -462,21 +489,20 @@ local function AdditionalPowerBar_OnLoad(frame, unit)
 		end
 
 		statusbar.powerType = 0 -- ADDITIONAL_POWER_BAR_INDEX only defined in Retail
-		statusbar.updateFunc = function(statusbar)
-			local unit = statusbar.unit
-			local frame
-			if statusbar.isChild then
-				frame = statusbar:GetParent()
+		statusbar.updateFunc = function(self)
+			local f
+			if self.isChild then
+				f = self:GetParent()
 			else
-				frame = statusbar
+				f = self
 			end
-			if UnitPowerType(unit) ~= statusbar.powerType and UnitPowerMax(unit, statusbar.powerType) ~= 0 and (not statusbar.specRestriction or statusbar.specRestriction == GetSpecialization()) then
+			if UnitPowerType(self.unit) ~= statusbar.powerType and UnitPowerMax(self.unit, statusbar.powerType) ~= 0 and (not statusbar.specRestriction or statusbar.specRestriction == GetSpecialization()) then
 				statusbar.pauseUpdates = false
-				frame:Show()
+				f:Show()
 		
 			else
 				statusbar.pauseUpdates = true
-				frame:Hide()
+				f:Hide()
 			end
 		end
 		UnitFrames:PowerBar_OnLoad(statusbar, unit)
@@ -485,6 +511,138 @@ local function AdditionalPowerBar_OnLoad(frame, unit)
 	end
 end
 
+local function StaggerBar_OnUpdate(frame, elapsed)
+	if frame.pauseUpdates then return end
+
+	local currValue, maxValue = UnitStagger(unit),  UnitHealthMax(unit)
+	local percent = maxValue > 0 and currValue / maxValue or 0
+	local staggerStateKey;
+
+	if percent >= STAGGER_STATES.RED.threshold then
+		staggerStateKey = STAGGER_STATES.RED.key;
+	elseif percent >= STAGGER_STATES.YELLOW.threshold then
+		staggerStateKey = STAGGER_STATES.YELLOW.key;
+	else
+		staggerStateKey = STAGGER_STATES.GREEN.key;
+	end
+
+	if frame.staggerStateKey ~= staggerStateKey then
+		frame.staggerStateKey = staggerStateKey;
+		frame.statusbar:SetStatusBarTexture(frame.artInfo[staggerStateKey].atlas)
+	end
+
+	frame.statusbar:SetMinMaxValues(0, maxValue)
+	frame.statusbar:SetValue(currValue)
+	local  text = UnitFrames:GetTextFormat("stagger", nil, moduleName)
+	text = text:gsub("$cur", addon:FormatNumber(currValue, 100000))
+	text = text:gsub("$max", addon:FormatNumber(maxValue))
+	frame.statusbar.text1:SetText(text)
+	frame.statusbar.text2:SetText(UnitFrames:FormatPercentage(percent * 100))
+end
+
+local function StaggerBar_Update(frame)
+	if GetSpecialization() == SPEC_MONK_BREWMASTER then
+		frame:Show()
+		frame.pauseUpdates = false
+	else
+		frame.pauseUpdates = true
+		frame:Hide()
+	end
+end
+
+local function StaggerBar_OnEvent(frame, event, ...)
+	StaggerBar_Update(frame)
+end
+
+local function StaggerBar_Init(parent)
+	local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+	frame:SetSize(130, 15)
+	frame:Hide()
+	frame:SetFrameStrata("LOW")
+	frame:SetPoint("TOP", parent, "BOTTOM", 0, 0)
+
+	frame:SetBackdrop({
+		bgFile = [[Interface\Tooltips\UI-Tooltip-Background]],
+		edgeFile = [[Interface\Tooltips\UI-Tooltip-Border]],
+		tile = true,
+		tileEdge = true,
+		tileSize = 16,
+		edgeSize = 8,
+		insets = { left = 2, right = 2, top = 2, bottom = 2 },
+	})
+	frame:SetBackdropColor(0, 0, 0, 0.75)
+
+	frame.artInfo = PowerBarColor["STAGGER"];
+
+	local statusbar = CreateFrame("StatusBar", nil, frame, "TextStatusBar")
+	statusbar:SetSize(124, 9)
+	statusbar:SetFrameStrata("LOW")
+	statusbar:SetPoint("CENTER", frame, "CENTER", 0, 0)
+	statusbar:SetStatusBarTexture(frame.artInfo["green"].atlas)
+
+	statusbar.bg = statusbar:CreateTexture(nil, "BACKGROUND")
+	statusbar.bg:SetTexture([[Interface\AddOns\Nurfed\Images\statusbar5]])
+	statusbar.bg:SetVertexColor(0, 0, 0, 0.25)
+	statusbar.bg:SetAllPoints()
+
+	statusbar.text1 = statusbar:CreateFontString(nil, "OVERLAY", "Nurfed_UnitFontShadow")
+	statusbar.text1:SetPoint("LEFT", statusbar)
+
+	statusbar.text2 = statusbar:CreateFontString(nil, "OVERLAY", "Nurfed_UnitFontShadow")
+	statusbar.text2:SetPoint("RIGHT", statusbar)
+
+	statusbar.Spark = statusbar:CreateTexture(nil, "OVERLAY","TextStatusBarSparkTemplate" )
+	statusbar:InitializeTextStatusBar()
+	statusbar.Spark:SetVisuals(frame.artInfo.spark)
+
+	local powerMask = statusbar:CreateMaskTexture(nil, "OVERLAY", nil, 3)
+	powerMask:SetPoint("TOPLEFT", statusbar, -2, 3)
+	powerMask:IsSnappingToPixelGrid(false)
+	powerMask:SetTexelSnappingBias(0.0)
+	powerMask:SetAtlas("UI-HUD-UnitFrame-Player-PortraitOn-Bar-Mana-Mask", true)
+	powerMask:SetTexture(powerMask:GetTexture(), "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+
+	statusbar.Spark:AddMaskTexture(powerMask)
+	statusbar:GetStatusBarTexture():AddMaskTexture(powerMask)
+
+	frame.statusbar = statusbar
+
+	frame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+	frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+
+	StaggerBar_Update(frame)
+
+	frame:SetScript("OnEvent", StaggerBar_OnEvent)
+	frame:SetScript("OnUpdate", StaggerBar_OnUpdate)
+
+	return frame
+end
+
+local function CreateClassResourceBar(parent, template, relativeTo, relativePoint, xOffset, yOffset)
+	relativeTo = relativeTo or "TOP"
+	relativePoint = relativePoint or "BOTTOM"
+	xOffset = xOffset or 0
+	yOffset = yOffset or 0
+	local frame =  CreateFrame("Frame", nil, nil, "Nurfed_Class_Resource_Bar_Template, " .. template)
+	frame:ClearAllPoints()
+	frame:SetPoint(relativeTo, parent, relativePoint, xOffset, yOffset)
+	frame:SetScript("OnShow", nil)
+	frame:SetScript("OnHide", nil)
+	frame:SetParent(parent)
+	frame.isManagedFrame = false
+	frame.isPlayerFrameBottomManagedFrame = false
+	return frame
+end
+
+
+function module:ToggleClassResourceBars(hide)
+	if not self.frame then return end
+	if hide then
+		self.frame.resourceBars:Hide()
+	else
+		self.frame.resourceBars:Show()
+	end
+end
 
 function module:DisableBlizzCastBar()
 	if not self:IsEnabled() then return end
@@ -549,19 +707,46 @@ function module:EnableBlizz()
 end
 
 function module:OnEnable()
-	-- if InCombatLockdown() and not self.frame then
-	-- 	addon:AddOutOfCombatQueue("OnEnable", module)
-	-- 	addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
-	-- 	return
-	-- end
-
 	self:DisableBlizz()
+
+	local _, classFileName = UnitClass("player")
 
 	if not self.frame then
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PlayerFrameDropDown)
-		if self.frame.xp then XPbar_OnLoad(self.frame.xp, unit) end
-		if self.frame.additionalPowerBar then AdditionalPowerBar_OnLoad(self.frame.additionalPowerBar, unit) end
+		if self.frame.xp then XPbar_OnLoad(self.frame.xp) end
+		if self.frame.additionalPowerBar then AdditionalPowerBar_OnLoad(self.frame.additionalPowerBar) end
 		if self.frame.reputation then RepBar_OnLoad(self.frame.reputation) end
+		local resourceBars = CreateFrame("Frame",nil, self.frame)
+		resourceBars.unit = unit
+		-- resourceBars:SetSize(1,1)
+		-- resourceBars:SetPoint("TOP",self.frame, "BOTTOM")
+		resourceBars:SetAllPoints()
+		if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
+			if classFileName == "ROGUE" then
+				resourceBars.comboPoints = CreateClassResourceBar(resourceBars, "RogueComboPointBarTemplate")
+			elseif classFileName == "DRUID" then
+				resourceBars.comboPoints = CreateClassResourceBar(resourceBars, "DruidComboPointBarTemplate")
+			elseif classFileName == "MONK" then
+				resourceBars.stagger = StaggerBar_Init(resourceBars)
+				resourceBars.harmony = CreateClassResourceBar(resourceBars, "Nurfed_Monk_Resource_Bar_Template")
+			elseif classFileName == "MAGE" then
+				resourceBars.arcaneCharges = CreateClassResourceBar(resourceBars, "Nurfed_Mage_Arcane_Resource_Bar_Template")
+				resourceBars.arcaneCharges:SetScale(0.9)
+			elseif classFileName == "WARLOCK" then
+				resourceBars.soulShards = CreateClassResourceBar(resourceBars, "WarlockPowerFrameTemplate")
+				resourceBars.soulShards:SetScale(0.9)
+			elseif classFileName == "EVOKER" then
+				resourceBars.essence = CreateClassResourceBar(resourceBars, "Nurfed_Evoker_Resource_Bar_Template")
+			elseif classFileName == "PALADIN" then
+				resourceBars.holyPower = CreateClassResourceBar(resourceBars, "Nurfed_Paladin_Resource_Bar_Template", nil, nil, 0, 9)
+			elseif classFileName == "DEATHKNIGHT" then
+				resourceBars.runes = CreateClassResourceBar(resourceBars, "Nurfed_DeathKnight_Resource_Bar_Template")
+			elseif classFileName == "SHAMAN" then
+				resourceBars.totems = CreateClassResourceBar(resourceBars, "Nurfed_Shaman_TotemFrame_Template", "TOPLEFT", "BOTTOMLEFT", nil, 5)
+			end
+		end
+
+		self.frame.resourceBars = resourceBars
 	end
 
 	if self.frame then
@@ -577,15 +762,51 @@ function module:OnEnable()
 			self:RepBar_Update(self.frame.reputation)
 		end
 	end
+
+	-- Yoink! Let's hope nothing yoinks it back.
+	if classFileName == "DEATHKNIGHT" and addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_WRATH_OF_THE_LICH_KING_CLASSIC then
+		RuneFrame:ClearAllPoints()
+		RuneFrame:SetPoint("TOP",self.frame.resourceBars ,"BOTTOM", 0, 0)
+		RuneFrame:SetParent(self.frame.resourceBars )
+	elseif addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
+		if classFileName == "WARLOCK" then
+			ShardBarFrame:ClearAllPoints()
+			ShardBarFrame:SetPoint("TOP",self.frame.resourceBars ,"BOTTOM", 0, 0)
+			ShardBarFrame:SetParent(self.frame.resourceBars )
+		elseif classFileName == "DRUID" then
+			EclipseBarFrame:ClearAllPoints()
+			EclipseBarFrame:SetPoint("TOP",self.frame.resourceBars ,"BOTTOM", 0, 0)
+			EclipseBarFrame:SetParent(self.frame.resourceBars )
+		elseif classFileName == "PALADIN" then
+			PaladinPowerBar:ClearAllPoints()
+			PaladinPowerBar:SetPoint("TOP",self.frame.resourceBars ,"BOTTOM", 0, 6)
+			PaladinPowerBar:SetParent(self.frame.resourceBars )
+		end
+	end
+
+	module:ToggleClassResourceBars(self.db.hideClassResourceBars)
 end
 
 function module:OnDisable()
-	-- if InCombatLockdown() then
-	-- 	addon:AddOutOfCombatQueue("OnDisable", module)
-	-- 	addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
-	-- 	return
-	-- end
+	local _, classFileName = UnitClass("player")
 
+	if classFileName == "DEATHKNIGHT" and addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_WRATH_OF_THE_LICH_KING_CLASSIC then
+		RuneFrame:ClearAllPoints()
+		RuneFrame:SetPoint("TOP",PlayerFrame,"BOTTOM", 54, 34)
+		RuneFrame:SetParent(PlayerFrame)
+	elseif classFileName == "WARLOCK" and addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
+		ShardBarFrame:ClearAllPoints()
+		ShardBarFrame:SetPoint("TOP",PlayerFrame,"BOTTOM", 50, 34)
+		ShardBarFrame:SetParent(PlayerFrame)
+	elseif classFileName == "DRUID" and addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
+		EclipseBarFrame:ClearAllPoints()
+		EclipseBarFrame:SetPoint("TOP",PlayerFrame,"BOTTOM", 48, 40)
+		EclipseBarFrame:SetParent(PlayerFrame)
+	elseif classFileName == "PALADIN" and addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
+		PaladinPowerBar:ClearAllPoints()
+		PaladinPowerBar:SetPoint("TOP",PlayerFrame,"BOTTOM", 43,39)
+		PaladinPowerBar:SetParent(PlayerFrame)
+	end
 	self:EnableBlizz()
 	UnitFrames:DisableFrame(self.frame)
 end

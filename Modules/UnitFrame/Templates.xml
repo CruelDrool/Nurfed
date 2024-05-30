@@ -6,6 +6,14 @@
 		<Color r="1" g="1" b="1"/>
 	</Font>
 
+	<Font name="Nurfed_UnitFontShadow" font="Interface\AddOns\Nurfed\Fonts\framd.ttf" outline="NONE" virtual="true">
+		<FontHeight val="10"/>
+		<Color r="1" g="1" b="1"/>
+		<Shadow x="-1" y="-1">
+			<Color r="0" g="0" b="0" a="0.75"/>
+		</Shadow>
+	</Font>
+
 	<Font name="Nurfed_UnitFontOutline" font="Interface\AddOns\Nurfed\Fonts\framd.ttf" outline="NORMAL" virtual="true">
 		<FontHeight val="10"/>
 		<Color r="1" g="1" b="1"/>
@@ -14,6 +22,14 @@
 	<Font name="Nurfed_UnitFontSmall" font="Interface\AddOns\Nurfed\Fonts\framd.ttf" outline="NONE" virtual="true">
 		<FontHeight val="8"/>
 		<Color r="1" g="1" b="1"/>
+	</Font>
+
+	<Font name="Nurfed_UnitFontSmallShadow" font="Interface\AddOns\Nurfed\Fonts\framd.ttf" outline="NONE" virtual="true">
+		<FontHeight val="8"/>
+		<Color r="1" g="1" b="1"/>
+		<Shadow x="-1" y="-1">
+			<Color r="0" g="0" b="0" a="0.75"/>
+		</Shadow>
 	</Font>
 
 	<Font name="Nurfed_UnitFontSmallOutline" font="Interface\AddOns\Nurfed\Fonts\framd.ttf" outline="NORMAL" virtual="true">
@@ -205,25 +221,6 @@
 			<Attribute name="glide" type="boolean" value="true"/>
 		</Attributes>
 
-		<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5"/>
-	</StatusBar>
-
-	<StatusBar name="Nurfed_Unit_rune" hidden="true" virtual="true">
-		<Layers>
-			<Layer level="BACKGROUND">
-				<Texture parentKey="bg" file="Interface\AddOns\Nurfed\Images\statusbar5">
-					<Color r="0" g="0" b="1" a="0.25"/>
-				</Texture>
-			</Layer>
-			<Layer level="OVERLAY">
-				<FontString parentKey="text" inherits="Nurfed_UnitFontSmall" justifyH="CENTER" text="!">
-					<Shadow x="-1" y="-1">
-						<Color r="0" g="0" b="0" a="0.75"/>
-						<!--<Offset x="-1" y="-1"/>-->
-					</Shadow>
-				</FontString>
-			</Layer>
-		</Layers>
 		<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5"/>
 	</StatusBar>
 
@@ -572,5 +569,53 @@
 	</Frame>	
 
 	<Frame name="Nurfed_UI_Hider_Template" virtual="true" hidden="true"></Frame>
+
+	<Frame name="Nurfed_Class_Resource_Bar_Template" virtual="true">
+		<KeyValues>
+			<KeyValue key="showTooltip" value="true" type="boolean"/>
+		</KeyValues>
+	</Frame>
+
+	<Frame name="Nurfed_Evoker_Resource_Bar_Template" inherits="EssencePlayerFrameTemplate" virtual="true">
+		<KeyValues>
+			<!-- Blizzard's own EssencePlayerFrameTemplate has this value set to "DRACTHYR"! Why?! -->
+			<KeyValue key="class" value="EVOKER" type="string"/>
+		</KeyValues>
+	</Frame>
+
+	<Frame name="Nurfed_Mage_Arcane_Resource_Bar_Template" inherits="MageArcaneChargesFrameTemplate" mixin="MagePowerBar" virtual="true">
+	<!-- Blizzard's own MageArcaneChargesFrameTemplate has no Mixin set. Instead it's on MageArcaneChargesFrame -->
+	</Frame>
+	
+	<Frame name="Nurfed_Monk_Resource_Bar_Template" inherits="MonkHarmonyBarFrameTemplate" virtual="true">
+		<KeyValues>
+			<KeyValue key="tooltip1" value="CHI_POWER" type="global"/>
+			<KeyValue key="tooltip2" value="CHI_TOOLTIP" type="global"/>
+		</KeyValues>
+	</Frame>
+
+	<Frame name="Nurfed_Paladin_Resource_Bar_Template" inherits="PaladinPowerBarFrameTemplate" virtual="true">
+		<KeyValues>
+			<KeyValue key="tooltip1" value="HOLY_POWER" type="global"/>
+			<KeyValue key="tooltip2" value="HOLY_POWER_TOOLTIP" type="global"/>
+		</KeyValues>
+	</Frame>
+
+	<Frame name="Nurfed_DeathKnight_Resource_Bar_Template" inherits="RuneFrameTemplate" virtual="true">
+		<KeyValues>
+			<KeyValue key="tooltip" value="RUNES_TOOLTIP" type="global"/>
+			<KeyValue key="tooltipTitle" value="COMBAT_TEXT_RUNE_DEATH" type="global"/>
+		</KeyValues>
+	</Frame>
+
+	<Frame name="Nurfed_Shaman_TotemFrame_Template" toplevel="true" inherits="HorizontalLayoutFrame, PlayerFrameBottomManagedFrameTemplate" mixin="TotemFrameMixin" hidden="true" virtual="true">
+		<KeyValues>
+			<KeyValue key="spacing" value="-6" type="number" />
+		</KeyValues>
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+			<OnEvent method="OnEvent"/>
+		</Scripts>
+	</Frame>
 
 	</Ui>

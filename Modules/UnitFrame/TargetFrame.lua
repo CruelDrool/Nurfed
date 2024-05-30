@@ -89,7 +89,7 @@ module.options = {
 }
 
 local events = {
-	"UNIT_POWER_FREQUENT",
+	"UNIT_POWER_UPDATE",
 	"PLAYER_ENTERING_WORLD",
 	"PARTY_LOOT_METHOD_CHANGED",
 	"PLAYER_ROLES_ASSIGNED",
@@ -113,8 +113,8 @@ local events = {
     "CVAR_UPDATE",
 }
 
-
-local function UpdateCombo(frame, unit)
+local function UpdateCombo(frame)
+	if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then return end
 	-- local comboPoints = UnitPower("player", Enum.PowerType.ComboPoints) -- for later, perhaps.
 
 	local comboPoints = GetComboPoints("player", unit)
@@ -211,9 +211,9 @@ local function OnEvent(frame, event, ...)
 					PlaySound(SOUNDKIT.IG_CREATURE_NEUTRAL_SELECT)
 				end
 			end
-	elseif event == "UNIT_POWER_FREQUENT" then
+	elseif event == "UNIT_POWER_UPDATE" then
 		if arg1 == "player" then
-			UpdateCombo(frame.combo, frame.unit)
+			UpdateCombo(frame.combo)
 		end
 	elseif event == "UNIT_CLASSIFICATION_CHANGED" or event == "UNIT_LEVEL" or event == "UNIT_FACTION" or event == "UNIT_NAME_UPDATE" then
 		if arg1 == frame.unit then
@@ -280,6 +280,9 @@ function module:DisableBlizz()
 		end
 	end
 	TargetFrame:SetParent(UnitFrames.UIhider)
+	if ComboFrame and addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_CLASSIC then
+		ComboFrame:SetParent(UnitFrames.UIhider)
+	end
 end
 
 function module:EnableBlizz()
@@ -287,6 +290,9 @@ function module:EnableBlizz()
 		self:Unhook(TargetFrame, "ApplySystemAnchor")
 	end
 	TargetFrame:SetParent(UIParent)
+	if ComboFrame and addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_CLASSIC then
+		ComboFrame:SetParent(UIParent)
+	end
 end
 
 function module:OnInitialize()

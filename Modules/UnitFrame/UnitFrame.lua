@@ -731,7 +731,7 @@ function module:GetTextFormat(f,frame, modName)
 	modName = modName or frame and self.frames[frame:GetName()]
 
 	if modName ~= nil then
-		if self.db.profile[modName].formats then
+		if self.db.profile[modName] and self.db.profile[modName].formats then
 			if self.db.profile[modName].formats[f] then
 				if self.db.profile[modName].formats[f] == "" then
 					if defaults.profile[modName].formats[f] then
@@ -762,8 +762,8 @@ function module:GetTextFormat(f,frame, modName)
 	end
 end
 
-function module:FormatPercentage(number)
-	return format("%."..tostring(self.db.profile.decimalpoints).."f", number).."%%"
+function module:FormatPercentage(number, substitution)
+	return format("%."..tostring(self.db.profile.decimalpoints).."f", number).. (substitution and "%%" or "%")
 end
 
 local Colour_Gradients = {
@@ -1308,7 +1308,7 @@ local function HealthBar_Text(frame)
 			else
 				percent = 0
 			end
-			perc = perc:gsub("$perc", module:FormatPercentage(percent))
+			perc = perc:gsub("$perc", module:FormatPercentage(percent, true))
 		end
 	end
 
@@ -2144,7 +2144,7 @@ local function ThreatBar_Text(frame)
 		else
 			percent = 0
 		end
-		perc = perc:gsub("$perc", module:FormatPercentage(percent))
+		perc = perc:gsub("$perc", module:FormatPercentage(percent, true))
 	end
 
 	if frame.text then frame.text:SetText(text) end
