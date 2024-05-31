@@ -3,7 +3,7 @@ local moduleName = "PlayerFrame"
 local displayName = moduleName
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
 local UnitFrames = addon:GetModule("UnitFrames")
-local module = UnitFrames:NewModule(moduleName, "AceHook-3.0")
+local module = UnitFrames:NewModule(moduleName, "AceHook-3.0", "AceEvent-3.0")
 local unit = "player"
 
 module.defaults = {
@@ -554,12 +554,12 @@ local function StaggerBar_OnEvent(frame, event, ...)
 	StaggerBar_Update(frame)
 end
 
-local function StaggerBar_Init(parent)
+local function StaggerBar_Init(parent, relativeTo, relativePoint, xOffset, yOffset)
 	local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
 	frame:SetSize(130, 15)
 	frame:Hide()
 	frame:SetFrameStrata("LOW")
-	frame:SetPoint("TOP", parent, "BOTTOM", 0, 0)
+	frame:SetPoint(relativeTo, parent, relativePoint, xOffset, yOffset)
 
 	frame:SetBackdrop({
 		bgFile = [[Interface\Tooltips\UI-Tooltip-Background]],
@@ -619,10 +619,6 @@ local function StaggerBar_Init(parent)
 end
 
 local function CreateClassResourceBar(parent, template, relativeTo, relativePoint, xOffset, yOffset)
-	relativeTo = relativeTo or "TOP"
-	relativePoint = relativePoint or "BOTTOM"
-	xOffset = xOffset or 0
-	yOffset = yOffset or 0
 	local frame =  CreateFrame("Frame", nil, nil, "Nurfed_Class_Resource_Bar_Template, " .. template)
 	frame:ClearAllPoints()
 	frame:SetPoint(relativeTo, parent, relativePoint, xOffset, yOffset)
@@ -634,13 +630,73 @@ local function CreateClassResourceBar(parent, template, relativeTo, relativePoin
 	return frame
 end
 
-
 function module:ToggleClassResourceBars(hide)
-	if not self.frame then return end
+	if not (self.frame and self.frame.resourceBars) then return end
 	if hide then
 		self.frame.resourceBars:Hide()
 	else
 		self.frame.resourceBars:Show()
+	end
+end
+
+function module:ClassResourceBars()
+	if not self.frame then return end
+
+	self.frame.resourceBars = CreateFrame("Frame",nil, self.frame)
+	self.frame.resourceBars:SetAllPoints()
+	self.frame.resourceBars.unit = unit
+
+	local resourceBars = self.frame.resourceBars
+	local relativeTo = "TOP"
+	local relativePoint = "BOTTOM"
+	local xOffset = 0
+	local yOffset =  0
+
+	local _, classFileName = UnitClass("player")
+	if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
+		if classFileName == "ROGUE" then
+			resourceBars.comboPoints = CreateClassResourceBar(resourceBars, "RogueComboPointBarTemplate", relativeTo, relativePoint, xOffset, yOffset)
+		elseif classFileName == "DRUID" then
+			resourceBars.comboPoints = CreateClassResourceBar(resourceBars, "DruidComboPointBarTemplate", relativeTo, relativePoint, xOffset, yOffset)
+		elseif classFileName == "MONK" then
+			resourceBars.stagger = StaggerBar_Init(resourceBars, relativeTo, relativePoint, xOffset, yOffset)
+			resourceBars.harmony = CreateClassResourceBar(resourceBars, "Nurfed_Monk_Resource_Bar_Template", relativeTo, relativePoint, xOffset, yOffset)
+		elseif classFileName == "MAGE" then
+			resourceBars.arcaneCharges = CreateClassResourceBar(resourceBars, "Nurfed_Mage_Arcane_Resource_Bar_Template", relativeTo, relativePoint, xOffset, yOffset)
+			resourceBars.arcaneCharges:SetScale(0.9)
+		elseif classFileName == "WARLOCK" then
+			resourceBars.soulShards = CreateClassResourceBar(resourceBars, "WarlockPowerFrameTemplate", relativeTo, relativePoint, xOffset, yOffset)
+			resourceBars.soulShards:SetScale(0.9)
+		elseif classFileName == "EVOKER" then
+			resourceBars.essence = CreateClassResourceBar(resourceBars, "Nurfed_Evoker_Resource_Bar_Template", relativeTo, relativePoint, xOffset, yOffset)
+		elseif classFileName == "PALADIN" then
+			resourceBars.holyPower = CreateClassResourceBar(resourceBars, "Nurfed_Paladin_Resource_Bar_Template", relativeTo, relativePoint, xOffset, yOffset + 9)
+		elseif classFileName == "DEATHKNIGHT" then
+			resourceBars.runes = CreateClassResourceBar(resourceBars, "Nurfed_DeathKnight_Resource_Bar_Template", relativeTo, relativePoint, xOffset, yOffset)
+		elseif classFileName == "SHAMAN" then
+			resourceBars.totems = CreateClassResourceBar(resourceBars, "Nurfed_Shaman_TotemFrame_Template", "TOPLEFT", "BOTTOMLEFT", xOffset, yOffset + 5)
+		end
+	end
+
+	-- Yoink! Let's hope nothing yoinks it back.
+	if classFileName == "DEATHKNIGHT" and addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_WRATH_OF_THE_LICH_KING_CLASSIC then
+		RuneFrame:ClearAllPoints()
+		RuneFrame:SetPoint(relativeTo, resourceBars, relativePoint, xOffset, yOffset)
+		RuneFrame:SetParent(resourceBars )
+	elseif addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
+		if classFileName == "WARLOCK" then
+			ShardBarFrame:ClearAllPoints()
+			ShardBarFrame:SetPoint(relativeTo, resourceBars, relativePoint, xOffset, yOffset)
+			ShardBarFrame:SetParent(resourceBars )
+		elseif classFileName == "DRUID" then
+			EclipseBarFrame:ClearAllPoints()
+			EclipseBarFrame:SetPoint(relativeTo, resourceBars, relativePoint, xOffset, yOffset)
+			EclipseBarFrame:SetParent(resourceBars )
+		elseif classFileName == "PALADIN" then
+			PaladinPowerBar:ClearAllPoints()
+			PaladinPowerBar:SetPoint(relativeTo, resourceBars, relativePoint, xOffset, yOffset + 6)
+			PaladinPowerBar:SetParent(resourceBars )
+		end
 	end
 end
 
@@ -706,47 +762,29 @@ function module:EnableBlizz()
 	self:EnableBlizzCastBar()
 end
 
+-- Have create the resource bars when the player has already entered the world to avoid taint in Edit Mode... the bane of my existence.
+local playerHasEnteredWorld = false
+function module:PLAYER_ENTERING_WORLD()
+	playerHasEnteredWorld = true
+	self:ClassResourceBars()
+	self:ToggleClassResourceBars(self.db.hideClassResourceBars)
+end
+
+module:RegisterEvent("PLAYER_ENTERING_WORLD")
+
 function module:OnEnable()
 	self:DisableBlizz()
-
-	local _, classFileName = UnitClass("player")
 
 	if not self.frame then
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PlayerFrameDropDown)
 		if self.frame.xp then XPbar_OnLoad(self.frame.xp) end
 		if self.frame.additionalPowerBar then AdditionalPowerBar_OnLoad(self.frame.additionalPowerBar) end
 		if self.frame.reputation then RepBar_OnLoad(self.frame.reputation) end
-		local resourceBars = CreateFrame("Frame",nil, self.frame)
-		resourceBars.unit = unit
-		-- resourceBars:SetSize(1,1)
-		-- resourceBars:SetPoint("TOP",self.frame, "BOTTOM")
-		resourceBars:SetAllPoints()
-		if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
-			if classFileName == "ROGUE" then
-				resourceBars.comboPoints = CreateClassResourceBar(resourceBars, "RogueComboPointBarTemplate")
-			elseif classFileName == "DRUID" then
-				resourceBars.comboPoints = CreateClassResourceBar(resourceBars, "DruidComboPointBarTemplate")
-			elseif classFileName == "MONK" then
-				resourceBars.stagger = StaggerBar_Init(resourceBars)
-				resourceBars.harmony = CreateClassResourceBar(resourceBars, "Nurfed_Monk_Resource_Bar_Template")
-			elseif classFileName == "MAGE" then
-				resourceBars.arcaneCharges = CreateClassResourceBar(resourceBars, "Nurfed_Mage_Arcane_Resource_Bar_Template")
-				resourceBars.arcaneCharges:SetScale(0.9)
-			elseif classFileName == "WARLOCK" then
-				resourceBars.soulShards = CreateClassResourceBar(resourceBars, "WarlockPowerFrameTemplate")
-				resourceBars.soulShards:SetScale(0.9)
-			elseif classFileName == "EVOKER" then
-				resourceBars.essence = CreateClassResourceBar(resourceBars, "Nurfed_Evoker_Resource_Bar_Template")
-			elseif classFileName == "PALADIN" then
-				resourceBars.holyPower = CreateClassResourceBar(resourceBars, "Nurfed_Paladin_Resource_Bar_Template", nil, nil, 0, 9)
-			elseif classFileName == "DEATHKNIGHT" then
-				resourceBars.runes = CreateClassResourceBar(resourceBars, "Nurfed_DeathKnight_Resource_Bar_Template")
-			elseif classFileName == "SHAMAN" then
-				resourceBars.totems = CreateClassResourceBar(resourceBars, "Nurfed_Shaman_TotemFrame_Template", "TOPLEFT", "BOTTOMLEFT", nil, 5)
-			end
-		end
 
-		self.frame.resourceBars = resourceBars
+		-- Player has entered world but no resource bars.
+		if playerHasEnteredWorld and not self.frame.resourceBars then
+			self:ClassResourceBars()
+		end
 	end
 
 	if self.frame then
@@ -763,28 +801,7 @@ function module:OnEnable()
 		end
 	end
 
-	-- Yoink! Let's hope nothing yoinks it back.
-	if classFileName == "DEATHKNIGHT" and addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_WRATH_OF_THE_LICH_KING_CLASSIC then
-		RuneFrame:ClearAllPoints()
-		RuneFrame:SetPoint("TOP",self.frame.resourceBars ,"BOTTOM", 0, 0)
-		RuneFrame:SetParent(self.frame.resourceBars )
-	elseif addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
-		if classFileName == "WARLOCK" then
-			ShardBarFrame:ClearAllPoints()
-			ShardBarFrame:SetPoint("TOP",self.frame.resourceBars ,"BOTTOM", 0, 0)
-			ShardBarFrame:SetParent(self.frame.resourceBars )
-		elseif classFileName == "DRUID" then
-			EclipseBarFrame:ClearAllPoints()
-			EclipseBarFrame:SetPoint("TOP",self.frame.resourceBars ,"BOTTOM", 0, 0)
-			EclipseBarFrame:SetParent(self.frame.resourceBars )
-		elseif classFileName == "PALADIN" then
-			PaladinPowerBar:ClearAllPoints()
-			PaladinPowerBar:SetPoint("TOP",self.frame.resourceBars ,"BOTTOM", 0, 6)
-			PaladinPowerBar:SetParent(self.frame.resourceBars )
-		end
-	end
-
-	module:ToggleClassResourceBars(self.db.hideClassResourceBars)
+	self:ToggleClassResourceBars(self.db.hideClassResourceBars)
 end
 
 function module:OnDisable()
@@ -794,18 +811,20 @@ function module:OnDisable()
 		RuneFrame:ClearAllPoints()
 		RuneFrame:SetPoint("TOP",PlayerFrame,"BOTTOM", 54, 34)
 		RuneFrame:SetParent(PlayerFrame)
-	elseif classFileName == "WARLOCK" and addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
-		ShardBarFrame:ClearAllPoints()
-		ShardBarFrame:SetPoint("TOP",PlayerFrame,"BOTTOM", 50, 34)
-		ShardBarFrame:SetParent(PlayerFrame)
-	elseif classFileName == "DRUID" and addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
-		EclipseBarFrame:ClearAllPoints()
-		EclipseBarFrame:SetPoint("TOP",PlayerFrame,"BOTTOM", 48, 40)
-		EclipseBarFrame:SetParent(PlayerFrame)
-	elseif classFileName == "PALADIN" and addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
-		PaladinPowerBar:ClearAllPoints()
-		PaladinPowerBar:SetPoint("TOP",PlayerFrame,"BOTTOM", 43,39)
-		PaladinPowerBar:SetParent(PlayerFrame)
+	elseif addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
+		if classFileName == "WARLOCK" then
+			ShardBarFrame:ClearAllPoints()
+			ShardBarFrame:SetPoint("TOP",PlayerFrame,"BOTTOM", 50, 34)
+			ShardBarFrame:SetParent(PlayerFrame)
+		elseif classFileName == "DRUID" then
+			EclipseBarFrame:ClearAllPoints()
+			EclipseBarFrame:SetPoint("TOP",PlayerFrame,"BOTTOM", 48, 40)
+			EclipseBarFrame:SetParent(PlayerFrame)
+		elseif classFileName == "PALADIN" then
+			PaladinPowerBar:ClearAllPoints()
+			PaladinPowerBar:SetPoint("TOP",PlayerFrame,"BOTTOM", 43,39)
+			PaladinPowerBar:SetParent(PlayerFrame)
+		end
 	end
 	self:EnableBlizz()
 	UnitFrames:DisableFrame(self.frame)
