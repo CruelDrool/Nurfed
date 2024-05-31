@@ -728,6 +728,7 @@ end
 
 
 function module:GetTextFormat(f,frame, modName)
+	if not (self.db and self.db.profile) then return "" end
 	modName = modName or frame and self.frames[frame:GetName()]
 
 	if modName ~= nil then
