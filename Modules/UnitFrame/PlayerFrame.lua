@@ -3,7 +3,7 @@ local moduleName = "PlayerFrame"
 local displayName = moduleName
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
 local UnitFrames = addon:GetModule("UnitFrames")
-local module = UnitFrames:NewModule(moduleName, "AceHook-3.0", "AceEvent-3.0")
+local module = UnitFrames:NewModule(moduleName, "AceHook-3.0")
 local unit = "player"
 
 module.defaults = {
@@ -42,7 +42,7 @@ module.options = {
 			-- desc = "",
 			width = "full",
 			get = function() return module.db.enabled end,
-			set = function() if UnitFrames:IsEnabled() then if module.db.enabled then module:Disable() else module:Enable() end end; if module.db.enabled then module.db.enabled = false else module.db.enabled = true end end,
+			set = function(info, value) if UnitFrames:IsEnabled() then if module.db.enabled then module:Disable() else module:Enable() end end; module.db.enabled = value end,
 		},
 		formats = {
 			order = 2,
@@ -143,10 +143,10 @@ module.options = {
 			function(info, value)
 				module.db.disableBlizzCastBar = value;
 				if module.db.enabled and UnitFrames:IsEnabled() then
-					if not value then
-						module:EnableBlizzCastBar()
-					else
+					if value == true then
 						module:DisableBlizzCastBar()
+					else
+						module:EnableBlizzCastBar()
 					end
 				end
 			end,
@@ -162,7 +162,7 @@ module.options = {
 			function(info, value)
 				module.db.hideClassResourceBars = value
 				if module.db.enabled and UnitFrames:IsEnabled() then
-					module:ToggleClassResourceBars(value)
+					module:ToggleClassResourceBars()
 				end
 			end,
 		},
@@ -260,13 +260,12 @@ end
 local function OnEvent(frame, event, ...)
 
 	if not frame.isEnabled then return end
-	
+
 	local arg1, arg2, arg3, arg4, arg5 = ...
 	if event == "PLAYER_ENTERING_WORLD" then
-	    frame.inCombat = nil;
-        frame.onHateList = nil;
+		frame.inCombat = nil;
+		frame.onHateList = nil;
 		Update(frame)
-		module:DisableBlizz()
 	elseif event == "UNIT_LEVEL" or event == "UNIT_NAME_UPDATE" then
 		if arg1 == frame.unit then
 			UnitFrames:UpdateInfo(frame)
@@ -451,7 +450,6 @@ function module:XPbar_Update(frame)
 		else
 			text = text:gsub("%S*$rest%S*%s?", "")
 		end
-		
 	end
 
 	frame:SetMinMaxValues(0, maxValue)
@@ -488,7 +486,7 @@ local function AdditionalPowerBar_OnLoad(frame)
 			statusbar = frame
 		end
 
-		statusbar.powerType = 0 -- ADDITIONAL_POWER_BAR_INDEX only defined in Retail
+		statusbar.powerType = Enum.PowerType.Mana
 		statusbar.updateFunc = function(self)
 			local f
 			if self.isChild then
@@ -630,9 +628,9 @@ local function CreateClassResourceBar(parent, template, relativeTo, relativePoin
 	return frame
 end
 
-function module:ToggleClassResourceBars(hide)
+function module:ToggleClassResourceBars()
 	if not (self.frame and self.frame.resourceBars) then return end
-	if hide then
+	if self.db.hideClassResourceBars then
 		self.frame.resourceBars:Hide()
 	else
 		self.frame.resourceBars:Show()
@@ -641,6 +639,7 @@ end
 
 function module:ClassResourceBars()
 	if not self.frame then return end
+	if self.frame.resourceBars then return end
 
 	self.frame.resourceBars = CreateFrame("Frame",nil, self.frame)
 	self.frame.resourceBars:SetAllPoints()
@@ -701,29 +700,23 @@ function module:ClassResourceBars()
 end
 
 function module:DisableBlizzCastBar()
-	if not self:IsEnabled() then return end
 	if not self.db.disableBlizzCastBar then return end
-
 	if PlayerCastingBarFrame then
 		PlayerCastingBarFrame:SetParent(UnitFrames.UIhider)
-		if not self:IsHooked(PlayerCastingBarFrame, "ApplySystemAnchor") then
-			---@diagnostic disable-next-line: redefined-local
-			self:SecureHook(PlayerCastingBarFrame, "ApplySystemAnchor", function(self)
-				if not PlayerCastingBarFrame.attachedToPlayerFrame then
-					self:SetParent(UnitFrames.UIhider)
-				end
-			end)
-		end
 
-		if not self:IsHooked(PlayerCastingBarFrame, "UpdateShownState") then
-			---@diagnostic disable-next-line: redefined-local
-			self:SecureHook(PlayerCastingBarFrame, "UpdateShownState", function(self)
-				if not PlayerCastingBarFrame.attachedToPlayerFrame then
-					self:SetParent(UnitFrames.UIhider)
-				end
-			end)
-		end
+		---@diagnostic disable-next-line: redefined-local
+		self:SecureHook(PlayerCastingBarFrame, "ApplySystemAnchor", function(self)
+			if not PlayerCastingBarFrame.attachedToPlayerFrame then
+				self:SetParent(UnitFrames.UIhider)
+			end
+		end)
 
+		---@diagnostic disable-next-line: redefined-local
+		self:SecureHook(PlayerCastingBarFrame, "UpdateShownState", function(self)
+			if not PlayerCastingBarFrame.attachedToPlayerFrame then
+				self:SetParent(UnitFrames.UIhider)
+			end
+		end)
 	else
 		CastingBarFrame:SetParent(UnitFrames.UIhider)
 	end
@@ -741,12 +734,10 @@ end
 
 function module:DisableBlizz()
 	if PlayerFrame.ApplySystemAnchor then
-		if not self:IsHooked(PlayerFrame, "ApplySystemAnchor") then
-			---@diagnostic disable-next-line: redefined-local
-			self:SecureHook(PlayerFrame, "ApplySystemAnchor", function(self)
-				self:SetParent(UnitFrames.UIhider)
-			end)
-		end
+		---@diagnostic disable-next-line: redefined-local
+		self:SecureHook(PlayerFrame, "ApplySystemAnchor", function(self)
+			self:SetParent(UnitFrames.UIhider)
+		end)
 	end
 	PlayerFrame:SetParent(UnitFrames.UIhider)
 	self:DisableBlizzCastBar()
@@ -762,29 +753,25 @@ function module:EnableBlizz()
 	self:EnableBlizzCastBar()
 end
 
--- Have create the resource bars when the player has already entered the world to avoid taint in Edit Mode... the bane of my existence.
-local playerHasEnteredWorld = false
-function module:PLAYER_ENTERING_WORLD()
-	playerHasEnteredWorld = true
-	self:ClassResourceBars()
-	self:ToggleClassResourceBars(self.db.hideClassResourceBars)
+function module:OnInitialize()
+	-- Enable if we're supposed to be enabled
+	if self.db and self.db.enabled and UnitFrames:IsEnabled() then
+		self:Enable()
+		UnitFrames:RunOnPlayerEnteringWorld(function()
+			self:DisableBlizz()
+			self:ClassResourceBars()
+			self:ToggleClassResourceBars()
+		end)
+	end
 end
 
-module:RegisterEvent("PLAYER_ENTERING_WORLD")
-
 function module:OnEnable()
-	self:DisableBlizz()
 
 	if not self.frame then
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PlayerFrameDropDown)
 		if self.frame.xp then XPbar_OnLoad(self.frame.xp) end
 		if self.frame.additionalPowerBar then AdditionalPowerBar_OnLoad(self.frame.additionalPowerBar) end
 		if self.frame.reputation then RepBar_OnLoad(self.frame.reputation) end
-
-		-- Player has entered world but no resource bars.
-		if playerHasEnteredWorld and not self.frame.resourceBars then
-			self:ClassResourceBars()
-		end
 	end
 
 	if self.frame then
@@ -801,7 +788,11 @@ function module:OnEnable()
 		end
 	end
 
-	self:ToggleClassResourceBars(self.db.hideClassResourceBars)
+	if UnitFrames:IsPlayerInWorld() then
+		self:DisableBlizz()
+		self:ClassResourceBars()
+		self:ToggleClassResourceBars()
+	end
 end
 
 function module:OnDisable()

@@ -376,10 +376,29 @@ function module:OnInitialize()
 
 	self.locked = true
 
+	self:RegisterEvent("PLAYER_ENTERING_WORLD")
+
 	-- Enable if we're supposed to be enabled
 	if self.db.profile.enabled then
 		self:Enable()
 	end
+end
+
+local runOnPlayerEnteringWorld = {}
+
+function module:RunOnPlayerEnteringWorld(...)
+	addon:AddToFuncQueue(runOnPlayerEnteringWorld, ...)
+end
+
+local isPlayerInWorld = false
+
+function module:PLAYER_ENTERING_WORLD()
+	isPlayerInWorld = true
+	addon:EmptyFuncQueue(runOnPlayerEnteringWorld)
+end
+
+function module:IsPlayerInWorld()
+	return isPlayerInWorld
 end
 
 -- Go through modules and enable/disable those that should be.
@@ -416,8 +435,11 @@ function module:OnEnable()
 
 	self:RegisterEvent("PLAYER_REGEN_DISABLED")
 
+	if self:IsPlayerInWorld() then
+		self:ToggleModules()
+	end
+
 	self.db.profile.enabled = true
-	self:ToggleModules()
 end
 
 function module:OnDisable()
@@ -657,7 +679,7 @@ function module:EnableFrame(frame)
 	frame:SetParent(UIParent)
 	if frame.isWatched and self.locked then
 		if InCombatLockdown() then
-			addon:AddOutOfCombatQueue(function() RegisterUnitWatch(frame) end)
+			addon:AddOutOfCombatQueue(RegisterUnitWatch, frame)
 		else
 			RegisterUnitWatch(frame)
 		end
@@ -679,7 +701,7 @@ end
 function module:Lock()
 
 	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue("Lock", module)
+		addon:AddOutOfCombatQueue("Lock", self)
 		addon:InfoMessage("Unlocking the UI when combat ends.")
 		return
 	end
@@ -2080,7 +2102,7 @@ end
 function module:TargetofTarget_Onload(frame, unit)
 	frame.unit = unit
 	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue(function() RegisterUnitWatch(frame) end)
+		addon:AddOutOfCombatQueue(RegisterUnitWatch, frame)
 	else
 		RegisterUnitWatch(frame)
 	end

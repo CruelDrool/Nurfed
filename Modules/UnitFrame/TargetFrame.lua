@@ -34,7 +34,7 @@ module.options = {
 			name = "Enabled",
 			-- desc = "",
 			get = function() return module.db.enabled end,
-			set = function() if UnitFrames:IsEnabled() then if module.db.enabled then module:Disable() else module:Enable() end end; if module.db.enabled then module.db.enabled = false else module.db.enabled = true end end,
+			set = function(info, value) if UnitFrames:IsEnabled() then if module.db.enabled then module:Disable() else module:Enable() end end; module.db.enabled = value end,
 		},
 		formats = {
 			order = 2,
@@ -197,7 +197,6 @@ local function OnEvent(frame, event, ...)
 	local arg1, arg2, arg3, arg4, arg5 = ...
 	if event == "PLAYER_ENTERING_WORLD" then
 		Update(frame)
-		module:DisableBlizz()
 	elseif event == "DISPLAY_SIZE_CHANGED" then
 		Update(frame)
 	elseif event == "PLAYER_TARGET_CHANGED" then
@@ -272,14 +271,14 @@ end
 
 function module:DisableBlizz()
 	if TargetFrame.ApplySystemAnchor then
-		if not self:IsHooked(TargetFrame, "ApplySystemAnchor") then
-			---@diagnostic disable-next-line: redefined-local
-			self:SecureHook(TargetFrame, "ApplySystemAnchor", function(self)
-				self:SetParent(UnitFrames.UIhider)
-			end)
-		end
+		---@diagnostic disable-next-line: redefined-local
+		self:SecureHook(TargetFrame, "ApplySystemAnchor", function(self)
+			self:SetParent(UnitFrames.UIhider)
+		end)
 	end
+
 	TargetFrame:SetParent(UnitFrames.UIhider)
+
 	if ComboFrame and addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_CLASSIC then
 		ComboFrame:SetParent(UnitFrames.UIhider)
 	end
@@ -299,12 +298,11 @@ function module:OnInitialize()
 	-- Enable if we're supposed to be enabled
 	if self.db and self.db.enabled and UnitFrames:IsEnabled() then
 		self:Enable()
+		UnitFrames:RunOnPlayerEnteringWorld("DisableBlizz", self)
 	end
 end
 
 function module:OnEnable()
-
-	self:DisableBlizz()
 
 	if not self.frame then
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, TargetFrameDropDown or TargetFrameDropDown_Initialize, true)
@@ -314,6 +312,11 @@ function module:OnEnable()
 		UnitFrames:EnableFrame(self.frame)
 		Update(self.frame)
 	end
+
+	if UnitFrames:IsPlayerInWorld() then
+		self:DisableBlizz()
+	end
+
 end
 
 function module:OnDisable()

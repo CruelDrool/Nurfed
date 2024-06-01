@@ -52,7 +52,7 @@ module.options = {
 			name = "Enabled",
 			-- desc = "",
 			get = function() return module.db.enabled end,
-			set = function() if UnitFrames:IsEnabled() then if module.db.enabled then module:Disable() else module:Enable() end end; if module.db.enabled then module.db.enabled = false else module.db.enabled = true end end,
+			set = function(info, value) if UnitFrames:IsEnabled() then if module.db.enabled then module:Disable() else module:Enable() end end; module.db.enabled = value end,
 		},
 		formats = {
 			order = 2,
@@ -229,7 +229,6 @@ local function OnEvent(frame, event, ...)
 
 	if event == "PLAYER_ENTERING_WORLD" then
 		Update(frame)
-		module:DisableBlizz()
 	elseif event == "CVAR_UPDATE" or event == "UPDATE_BINDINGS" or event == "DISPLAY_SIZE_CHANGED" then
 		Update(frame)
 	elseif event == "UNIT_PHASE" or event == "PARTY_MEMBER_ENABLE" or event == "PARTY_MEMBER_DISABLE" or event == "UNIT_FLAGS" or event == "UNIT_CTR_OPTIONS" then
@@ -360,12 +359,11 @@ end
 
 function module:DisableBlizz()
 	if PartyFrame then
-		if not self:IsHooked(PartyFrame, "ApplySystemAnchor") then
-			---@diagnostic disable-next-line: redefined-local
-			self:SecureHook(PartyFrame, "ApplySystemAnchor", function(self)
-				self:SetParent(UnitFrames.UIhider)
-			end)
-		end
+		---@diagnostic disable-next-line: redefined-local
+		self:SecureHook(PartyFrame, "ApplySystemAnchor", function(self)
+			self:SetParent(UnitFrames.UIhider)
+		end)
+
 		PartyFrame:SetParent(UnitFrames.UIhider)
 	else
 		for i = 1, MAX_PARTY_MEMBERS do
@@ -377,7 +375,7 @@ function module:DisableBlizz()
 	end
 
 	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue(function() CompactRaidFrameManager:SetFrameLevel(4) end)
+		addon:AddOutOfCombatQueue("SetFrameLevel", CompactRaidFrameManager, 4)
 	else
 		CompactRaidFrameManager:SetFrameLevel(4)
 	end
@@ -398,16 +396,21 @@ function module:EnableBlizz()
 	end
 
 	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue(function() CompactRaidFrameManager:SetFrameLevel(1) end)
+		addon:AddOutOfCombatQueue("SetFrameLevel", CompactRaidFrameManager, 1)
 	else
 		CompactRaidFrameManager:SetFrameLevel(1)
 	end
 end
 
+function module:OnInitialize()
+	-- Enable if we're supposed to be enabled
+	if self.db and self.db.enabled and UnitFrames:IsEnabled() then
+		self:Enable()
+		UnitFrames:RunOnPlayerEnteringWorld("DisableBlizz", self)
+	end
+end
+
 function module:OnEnable()
-
-
-	self:DisableBlizz()
 
 	if #self.frames == 0 then
 		if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
@@ -434,6 +437,11 @@ function module:OnEnable()
 	else
 		self:SecureHook(PartyFrame, "UpdatePartyFrames", ToggleParty)
 	end
+
+	if UnitFrames:IsPlayerInWorld() then
+		self:DisableBlizz()
+	end
+
 end
 
 function module:OnDisable()

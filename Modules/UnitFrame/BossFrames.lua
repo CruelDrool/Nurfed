@@ -58,7 +58,7 @@ module.options = {
 			name = "Enabled",
 			-- desc = "",
 			get = function() return module.db.enabled end,
-			set = function() if UnitFrames:IsEnabled() then if module.db.enabled then module:Disable() else module:Enable() end end; if module.db.enabled then module.db.enabled = false else module.db.enabled = true end end,
+			set = function(info, value) if UnitFrames:IsEnabled() then if module.db.enabled then module:Disable() else module:Enable() end end; module.db.enabled = value end,
 		},
 		formats = {
 			order = 2,
@@ -130,10 +130,9 @@ local function OnEvent(frame, event, ...)
 	if not frame.isEnabled then return end
 	
 	local arg1, arg2, arg3, arg4, arg5 = ...
-		if event == "PLAYER_ENTERING_WORLD" then
-			Update(frame)
-			module:DisableBlizz()
-		elseif event == "DISPLAY_SIZE_CHANGED" or event == "INSTANCE_ENCOUNTER_ENGAGE_UNIT" then
+	if event == "PLAYER_ENTERING_WORLD" then
+		Update(frame)
+	elseif event == "DISPLAY_SIZE_CHANGED" or event == "INSTANCE_ENCOUNTER_ENGAGE_UNIT" then
 		Update(frame)
 		if UnitExists("target") and UnitIsUnit("target", frame.unit) then
 			frame:LockHighlight()
@@ -175,18 +174,17 @@ function module:DisableBlizz()
 
 	if BossTargetFrameContainer then
 		BossTargetFrameContainer:SetParent(UnitFrames.UIhider)
-		if not self:IsHooked(BossTargetFrameContainer, "ApplySystemAnchor") then
-			---@diagnostic disable-next-line: redefined-local
-			self:SecureHook(BossTargetFrameContainer, "ApplySystemAnchor", function(self)
-				self:SetParent(UnitFrames.UIhider)
-			end)
-		end
-		if not self:IsHooked(BossTargetFrameContainer, "UpdateShownState") then
-			---@diagnostic disable-next-line: redefined-local
-			self:SecureHook(BossTargetFrameContainer, "UpdateShownState", function(self)
-				self:SetParent(UnitFrames.UIhider)
-			end)
-		end
+
+		---@diagnostic disable-next-line: redefined-local
+		self:SecureHook(BossTargetFrameContainer, "ApplySystemAnchor", function(self)
+			self:SetParent(UnitFrames.UIhider)
+		end)
+
+		---@diagnostic disable-next-line: redefined-local
+		self:SecureHook(BossTargetFrameContainer, "UpdateShownState", function(self)
+			self:SetParent(UnitFrames.UIhider)
+		end)
+
 		BossTargetFrameContainer:SetParent(UnitFrames.UIhider)
 	else
 		for i = 1, MAX_BOSS_FRAMES do
@@ -211,20 +209,32 @@ function module:EnableBlizz()
 	end
 end
 
+function module:OnInitialize()
+	-- Enable if we're supposed to be enabled
+	if self.db and self.db.enabled and UnitFrames:IsEnabled() then
+		self:Enable()
+		UnitFrames:RunOnPlayerEnteringWorld("DisableBlizz", self)
+	end
+end
+
 function module:OnEnable()
-	self:DisableBlizz()
-	if table.getn(self.frames) == 0 then
+
+	if #self.frames == 0 then
 		for i=1,MAX_BOSS_FRAMES do
 			local frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, _G["Boss"..i.."TargetFrameDropDown"] or "BOSS", true, i)
 			table.insert(self.frames, frame)
 		end
 	end
 	
-	if table.getn(self.frames) > 0 then
+	if #self.frames > 0 then
 		for _, frame in ipairs(self.frames) do
 			UnitFrames:EnableFrame(frame)
 			Update(frame)
 		end
+	end
+
+	if UnitFrames:IsPlayerInWorld() then
+		self:DisableBlizz()
 	end
 end
 
