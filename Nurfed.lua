@@ -16,7 +16,6 @@ local defaults = {
 	}
 }
 
-addon.OutOfCombatQueue = {}
 
 addon.infoMessages = {
 	enableModuleInCombat = "Module %s will be enabled when combat ends.",
@@ -250,36 +249,67 @@ function addon:Binding(bind)
 	return bind
 end
 
-function addon:AddOutOfCombatQueue(func, tbl)
-	if type(func) == "function" then
-		table.insert(self.OutOfCombatQueue, func)
-	elseif type(func) == "string" then
+function addon:AddToFuncQueue(funcQueueTable, ...)
+	local arg1 = ...
+	if type(arg1) == "function" then
+		local func = arg1
+		local args = {select(2, ...)}
+		if #args > 0 then
+			table.insert(funcQueueTable, {func, args})
+		else
+			table.insert(funcQueueTable, func)
+		end
+	elseif type(arg1) == "string" then
+		local funcName = arg1
+		local tbl = select(2, ...)
 		-- Name of method. Will need the table where it is located.
 		if type(tbl)  ~= "table" then
-			error(string.format("Please provide the table where the method '%s' is located.", func))
+			error(string.format("Please provide the table where the method '%s' is located.", funcName))
 			return
 		end
-		if not tbl[func] then
-			error(string.format("The method '%1$s' doesn't exist in the the provided table.", func))
+
+		if not tbl[funcName] then
+			error(string.format("The method '%s' doesn't exist in the the provided table.", funcName))
 			return
 		end
-		table.insert(self.OutOfCombatQueue, {tbl, func})
+
+		local args = {select(3, ...)}
+		if #args > 0 then
+			table.insert(funcQueueTable, {tbl, funcName, args})
+		else
+			table.insert(funcQueueTable, {tbl, funcName})
+		end
 	end
 end
 
-local function EmptyOutOfCombatQueue()
-	for i, entry in pairs(addon.OutOfCombatQueue) do 
+function addon:EmptyFuncQueue(funcQueueTable)
+	for i, entry in pairs(funcQueueTable) do
 		if type(entry) == "function" then
 			entry()
 		elseif type(entry) == "table" then
-			local tbl = entry[1]
-			local funcName = entry[2]
-			tbl[funcName](tbl)
+			if type(entry[1]) == "function" then
+				local func = entry[1]
+				func(unpack(entry[2]))
+			elseif type(entry[1]) == "table" then
+				local tbl = entry[1]
+				local funcName = entry[2]
+				if entry[3] then
+					tbl[funcName](tbl, unpack(entry[3]))
+				else
+					tbl[funcName](tbl)
+				end
+			end
 		end
-		addon.OutOfCombatQueue[i] = nil
+		funcQueueTable[i] = nil
 	end
 end
 
+local OutOfCombatQueue = {}
+
+function addon:AddOutOfCombatQueue(...)
+	addon:AddToFuncQueue(OutOfCombatQueue, ...)
+end
+
 function addon:PLAYER_REGEN_ENABLED()
-	EmptyOutOfCombatQueue()
+	addon:EmptyFuncQueue(OutOfCombatQueue)
 end
