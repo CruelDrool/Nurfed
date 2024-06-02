@@ -170,6 +170,7 @@ elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
 		"COLLECTIONS",
 		"PLAYER_V_PLAYER",
 		"DUNGEONS",
+		"DUNGEON_JOURNAL",
 		"GAME_MENU", -- Submenu
 		"HELP_REQUEST",
 		"SEPARATOR",
@@ -274,14 +275,15 @@ local function ButtonsArray()
 		GUILD = { func = toggleGuildFrameFunc, },
 		DUNGEONS = { text = GetMenuButtonText(LFDtext, LFDKeybind), func = toggleLFDFunc, },
 		COLLECTIONS = { text = GetMenuButtonText(COLLECTIONS, "TOGGLECOLLECTIONS"), func = function() CollectionsMicroButton:Click() end, },
-		ADVENTURE_JOURNAL = { text = GetMenuButtonText(ADVENTURE_JOURNAL, "TOGGLEENCOUNTERJOURNAL"), func = function() EJMicroButton:Click() end },
+		ADVENTURE_JOURNAL = { text = GetMenuButtonText(ADVENTURE_JOURNAL, "TOGGLEENCOUNTERJOURNAL"), func = function() ToggleEncounterJournal() end },
+		DUNGEON_JOURNAL = { text = GetMenuButtonText(ENCOUNTER_JOURNAL, "TOGGLEENCOUNTERJOURNAL"), func = function() ToggleEncounterJournal() end },
 		BLIZZARD_STORE = { text = BLIZZARD_STORE, func = ToggleStoreUI, },
 
 		GAME_MENU = { text = GetMenuButtonText(MAINMENU_BUTTON, "TOGGLEGAMEMENU"), func = function()
 			if GameMenuFrame:IsShown() then
 				PlaySound(SOUNDKIT.IG_MAINMENU_QUIT)
 				HideUIPanel(GameMenuFrame)
-			else 
+			else
 				PlaySound(SOUNDKIT.IG_MAINMENU_OPEN)
 				ShowUIPanel(GameMenuFrame)
 			end
