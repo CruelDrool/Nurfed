@@ -34,11 +34,16 @@
 				<Anchors>
 					<Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-5" y="23" />
 				</Anchors>
-				<Attributes>
-					<Attribute name="textFormat" type="string" value="$cur ($max)"/>
-					<Attribute name="glide" type="boolean" value="true"/>
-					<Attribute name="glideFade" type="number" value="0.35"/>
-				</Attributes>
+				<Frames>
+					<Frame parentKey="costPredictionBar" frameLevel="2">
+						<Layers>
+							<Layer level="OVERLAY">
+								<Texture file="Interface\AddOns\Nurfed\Images\statusbar5" parentKey="fill" setAllPoints="true"/>
+								<Texture file="Interface\RaidFrame\Absorb-Fill" parentKey="fillReserve" setAllPoints="true" hidden="true"/>
+							</Layer>
+						</Layers>
+					</Frame>
+				</Frames>
 			</StatusBar>
 
 			<StatusBar parentKey="reputation" frameStrata="LOW" hidden="true">
@@ -127,6 +132,16 @@
 						<Anchors>
 							<Anchor point="CENTER" relativePoint="CENTER" x="0" y="0" />
 						</Anchors>
+						<Frames>
+							<Frame parentKey="costPredictionBar" frameLevel="3">
+								<Layers>
+									<Layer level="OVERLAY">
+										<Texture file="Interface\AddOns\Nurfed\Images\statusbar5" parentKey="fill" setAllPoints="true"/>
+										<Texture file="Interface\RaidFrame\Absorb-Fill" parentKey="fillReserve" setAllPoints="true" hidden="true"/>
+									</Layer>
+								</Layers>
+							</Frame>
+						</Frames>
 						<Layers>
 							<Layer level="OVERLAY">
 								<FontString parentKey="text" inherits="Nurfed_UnitFontSmallOutline" justifyH="LEFT"/>

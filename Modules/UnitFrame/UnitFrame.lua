@@ -1411,7 +1411,7 @@ function HealthBar_Gradient(frame, elapsed, gradient)
 	frame:SetStatusBarColor(r, g, b, alpha)
 end
 
-local function HealPredictionBar_Fill(frame, previousTexture, bar, amount, barOffsetXPercent)
+local function PredictionBar_Fill(frame, previousTexture, bar, amount, barOffsetXPercent)
 	if amount == 0 then
 		bar:Hide()
 		return previousTexture
@@ -1510,7 +1510,7 @@ local function HealPredictionBar_Update(frame)
 		local shownHealAbsorb = healAbsorb - allIncomingHeal
 		local shownHealAbsorbPercent = shownHealAbsorb / maxHealth
 
-		healAbsorbTexture = HealPredictionBar_Fill(frame, healthTexture, frame.healAbsorb, shownHealAbsorb, -shownHealAbsorbPercent)
+		healAbsorbTexture = PredictionBar_Fill(frame, healthTexture, frame.healAbsorb, shownHealAbsorb, -shownHealAbsorbPercent)
 
 		-- If there are incoming heals the left shadow would be overlayed by the incoming heals so it isn't shown.
 		if ( allIncomingHeal > 0 ) then
@@ -1532,13 +1532,13 @@ local function HealPredictionBar_Update(frame)
 	end
 
 	-- Show myIncomingHeal on the health bar.
-	local incomingHealTexture = HealPredictionBar_Fill(frame, healthTexture, frame.myHealPrediction, myIncomingHeal, -healAbsorbPercent);
+	local incomingHealTexture = PredictionBar_Fill(frame, healthTexture, frame.myHealPrediction, myIncomingHeal, -healAbsorbPercent);
 
 	-- Append otherIncomingHeal on the health bar
 	if (myIncomingHeal > 0) then
-		incomingHealTexture = HealPredictionBar_Fill(frame, incomingHealTexture, frame.otherHealPrediction, otherIncomingHeal);
+		incomingHealTexture = PredictionBar_Fill(frame, incomingHealTexture, frame.otherHealPrediction, otherIncomingHeal);
 	else
-		incomingHealTexture = HealPredictionBar_Fill(frame, healthTexture, frame.otherHealPrediction, otherIncomingHeal, -healAbsorbPercent);
+		incomingHealTexture = PredictionBar_Fill(frame, healthTexture, frame.otherHealPrediction, otherIncomingHeal, -healAbsorbPercent);
 	end
 
 	-- Append absorbs to the correct section of the health bar.
@@ -1550,7 +1550,7 @@ local function HealPredictionBar_Update(frame)
 		-- Otherwise, append the absorb to the end of the the incomingHeals part;
 		appendTexture = incomingHealTexture;
 	end
-	HealPredictionBar_Fill(frame, appendTexture, frame.totalAbsorb, totalAbsorb)
+	PredictionBar_Fill(frame, appendTexture, frame.totalAbsorb, totalAbsorb)
 
 end
 
@@ -1646,22 +1646,50 @@ local function PowerBar_Text(frame)
 	if frame.text then frame.text:SetText(text) end
 end
 
+local function PowerBar_CostPrediction(frame, isStarting, startTime, endTime, spellId)
+	local cost = 0
+	local powerType = frame.powerType or UnitPowerType(frame.unit)
+	if not isStarting or startTime == endTime then
+		local currentSpellID = select(9, UnitCastingInfo(frame.unit));
+		if currentSpellID and frame.predictedPowerCost then
+			cost = frame.predictedPowerCost
+		else
+			frame.predictedPowerCost = nil
+		end
+	else
+		for _,info in pairs(GetSpellPowerCost(spellId)) do
+			if info.type == powerType and info.cost > 0 then
+				cost = info.cost
+				break
+			end
+		end
+		frame.predictedPowerCost = cost
+	end
+
+	local _, maxPower= frame:GetMinMaxValues()
+	local perc = maxPower > 0 and cost / maxPower or 0
+	local texture = frame:GetStatusBarTexture()
+	local colorInfo = PowerBarColor[powerType]
+	if colorInfo and colorInfo.predictionColor then
+		frame.costPredictionBar.fill:SetVertexColor(colorInfo.predictionColor:GetRGB())
+		frame.costPredictionBar.fill:Show()
+		frame.costPredictionBar.fillReserve:Hide()
+	else
+		frame.costPredictionBar.fill:Hide()
+		frame.costPredictionBar.fillReserve:Show()
+	end
+
+	PredictionBar_Fill(frame, texture, frame.costPredictionBar, cost, -perc)
+end
+
 local function PowerBar_OnEvent(frame, event, ...)
 	-- if not (frame:GetParent().isEnabled or frame:GetParent():GetParent().isEnabled) then return end
 
-	local arg1 = ...
-	local unit = frame:GetParent().unit or frame:GetParent():GetParent().unit
-
-	if event == "PLAYER_ENTERING_WORLD" then
+	if event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_SPECIALIZATION_CHANGED" or event == "UNIT_DISPLAYPOWER" then
 		module:PowerBar_Update(frame)
-	end
-
-	if ( arg1 ~= unit ) then
-         return
-    end
-
-	if event == "UNIT_DISPLAYPOWER" or event == "PLAYER_SPECIALIZATION_CHANGED" then
-		module:PowerBar_Update(frame)
+	elseif event == "UNIT_SPELLCAST_START" or event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_FAILED" or event == "UNIT_SPELLCAST_SUCCEEDED" then
+		local _, _, _, startTime, endTime, _, _, _, spellId = UnitCastingInfo(frame.unit);
+		PowerBar_CostPrediction(frame, event == "UNIT_SPELLCAST_START", startTime, endTime, spellId);
 	end
 end
 
@@ -1695,47 +1723,50 @@ end
 function module:PowerBar_Update(frame)
 
 	local unit = frame.unit
-	 -- if unit == frame.unit then
-		local powerType = frame.powerType or UnitPowerType(unit) or 0
-		local powerBarColor = PowerBarColor[powerType]
-		local maxValue = UnitPowerMax(unit, powerType)
-		local currValue = UnitPower(unit, powerType)
-		if frame.updateFunc then
-			frame:updateFunc()
-		end
+	local powerType = frame.powerType or UnitPowerType(unit) or 0
+	local powerBarColor = PowerBarColor[powerType]
+	local maxValue = UnitPowerMax(unit, powerType)
+	local currValue = UnitPower(unit, powerType)
+	if frame.updateFunc then
+		frame:updateFunc()
+	end
 
-		frame:SetStatusBarColor(powerBarColor.r, powerBarColor.g,powerBarColor.b)
-		frame.bg:SetVertexColor(powerBarColor.r, powerBarColor.g,powerBarColor.b)
+	frame:SetStatusBarColor(powerBarColor.r, powerBarColor.g,powerBarColor.b)
+	frame.bg:SetVertexColor(powerBarColor.r, powerBarColor.g,powerBarColor.b)
 
-		--- For Glide animation!
-		frame.startvalue = currValue
-		frame.endvalue = currValue
+	--- For Glide animation!
+	frame.startvalue = currValue
+	frame.endvalue = currValue
 
-		frame.currValue = currValue
-		frame.maxValue = maxValue
+	frame.currValue = currValue
+	frame.maxValue = maxValue
 
-		frame:SetMinMaxValues(0, maxValue);
-		frame:SetValue(currValue)
+	frame:SetMinMaxValues(0, maxValue);
+	frame:SetValue(currValue)
 
-		if maxValue == 0 and powerType == 1 then
-			frame:Hide()
-		else
-			frame:Show()
-		end
+	if maxValue == 0 and powerType == 1 then
+		frame:Hide()
+	else
+		frame:Show()
+	end
 
-		PowerBar_Text(frame)
-	-- end
+	PowerBar_Text(frame)
 end
 
 function module:PowerBar_OnLoad(frame, unit)
 	frame.pauseUpdates = false
 	frame.unit = unit
-	-- if frame.additional then
-		-- AdditionalPowerBar_ShowHide(frame)
-	-- end
 
 	frame:RegisterEvent("PLAYER_ENTERING_WORLD")
-	frame:RegisterEvent("UNIT_DISPLAYPOWER")
+	frame:RegisterUnitEvent("PLAYER_SPECIALIZATION_CHANGED", unit)
+	frame:RegisterUnitEvent("UNIT_DISPLAYPOWER", unit)
+
+	if frame.costPredictionBar and unit =="player" then
+		frame:RegisterUnitEvent("UNIT_SPELLCAST_START", unit)
+		frame:RegisterUnitEvent("UNIT_SPELLCAST_STOP", unit)
+		frame:RegisterUnitEvent("UNIT_SPELLCAST_FAILED", unit)
+		frame:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", unit)
+	end
 
 	frame:SetScript("OnEvent", PowerBar_OnEvent)
 	frame:SetScript("OnUpdate", PowerBar_OnUpdate)
