@@ -509,6 +509,179 @@ local function AdditionalPowerBar_OnLoad(frame)
 	end
 end
 
+local function EbonMightBar_ShouldShowOverFlow(statusbar, active)
+	local areVisualsActive = statusbar.overflowCap:IsShown() or statusbar.overflowAnim:IsPlaying();
+	if areVisualsActive == active then
+		return;
+	end
+
+	if active then
+		statusbar.overflowFill:Show()
+		statusbar.overflowCap:Show()
+		statusbar.overflowAnim:Restart()
+	else
+		statusbar.overflowFill:Hide()
+		statusbar.overflowCap:Hide()
+		statusbar.overflowAnim:Stop()
+	end
+end
+
+local function EbonMightBar_OnUpdate(frame, elapsed)
+	if frame.pauseUpdates then return end
+	local currValue = frame.auraExpirationTime and frame.auraExpirationTime - GetTime() or 0
+
+	currValue = currValue >= 0 and currValue or 0
+	frame.statusbar:SetValue(currValue)
+
+	local text = frame.statusbar:GetValue() > 0 and string.format("%.1f",frame.statusbar:GetValue()) or ""
+
+	frame.statusbar.text1:SetText(text)
+
+	EbonMightBar_ShouldShowOverFlow(frame.statusbar, currValue > frame.maxPower )
+end
+
+local function EbonMightBar_Update(frame)
+	if GetSpecialization() == SPEC_EVOKER_AUGMENTATION then
+		frame:Show()
+		frame.pauseUpdates = false
+	else
+		frame.pauseUpdates = true
+		frame:Hide()
+	end
+end
+
+local function EbonMightBar_OnEvent(frame, event, ...)
+	if event == "PLAYER_SPECIALIZATION_CHANGED" then
+		EbonMightBar_Update(frame)
+	elseif event == "UNIT_AURA" and not frame.pauseUpdates then
+
+		local _, auraUpdateInfo = ...
+		local isUpdatePopulated = auraUpdateInfo.isFullUpdate
+		or (auraUpdateInfo.addedAuras ~= nil and #auraUpdateInfo.addedAuras > 0)
+		or (auraUpdateInfo.removedAuraInstanceIDs ~= nil and #auraUpdateInfo.removedAuraInstanceIDs > 0)
+		or (auraUpdateInfo.updatedAuraInstanceIDs ~= nil and #auraUpdateInfo.updatedAuraInstanceIDs > 0)
+
+		if isUpdatePopulated then
+			local auraInfo = C_UnitAuras.GetPlayerAuraBySpellID(frame.spellId)
+			local auraExpirationTime = auraInfo and auraInfo.expirationTime or nil;
+			if auraExpirationTime ~= frame.auraExpirationTime then
+				frame.auraExpirationTime = auraExpirationTime
+			end
+		end
+	end
+end
+
+local function EbonMightBar_Init(parent, relativeTo, relativePoint, xOffset, yOffset)
+	local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+	frame:SetSize(130, 15)
+	frame:Hide()
+	frame:SetFrameStrata("LOW")
+	frame:SetPoint(relativeTo, parent, relativePoint, xOffset, yOffset)
+
+	frame:SetBackdrop({
+		bgFile = [[Interface\Tooltips\UI-Tooltip-Background]],
+		edgeFile = [[Interface\Tooltips\UI-Tooltip-Border]],
+		tile = true,
+		tileEdge = true,
+		tileSize = 16,
+		edgeSize = 8,
+		insets = { left = 2, right = 2, top = 2, bottom = 2 },
+	})
+	frame:SetBackdropColor(0, 0, 0, 0.75)
+
+	frame.artInfo = PowerBarColor["EBON_MIGHT"];
+	frame.spellId = 395296
+	frame.maxPower = 20
+
+	local statusbar = CreateFrame("StatusBar", nil, frame, "TextStatusBar")
+	statusbar:SetSize(124, 9)
+	statusbar:SetFrameStrata("LOW")
+	statusbar:SetPoint("CENTER", frame, "CENTER", 0, 0)
+	statusbar:SetStatusBarTexture(frame.artInfo.atlas)
+	statusbar:GetStatusBarTexture():SetTexelSnappingBias(0);
+	statusbar:GetStatusBarTexture():SetSnapToPixelGrid(false);
+	statusbar:SetMinMaxValues(0, frame.maxPower)
+
+	statusbar.bg = statusbar:CreateTexture(nil, "BACKGROUND")
+	statusbar.bg:SetTexture([[Interface\AddOns\Nurfed\Images\statusbar5]])
+	statusbar.bg:SetVertexColor(0, 0, 0, 0.25)
+	statusbar.bg:SetAllPoints()
+
+	statusbar.text1 = statusbar:CreateFontString(nil, "OVERLAY", "Nurfed_UnitFontShadow")
+	statusbar.text1:SetPoint("RIGHT", statusbar)
+
+	local powerMaskAtlas = "UI-HUD-UnitFrame-Player-PortraitOn-Bar-Mana-Mask"
+	local atlasInfo = C_Texture.GetAtlasInfo(powerMaskAtlas)
+	local powerMask = statusbar:CreateMaskTexture(nil, "OVERLAY", nil, 3)
+	powerMask:SetPoint("TOPLEFT", statusbar, -2, 3)
+	powerMask:SetSnapToPixelGrid(false)
+	powerMask:SetTexelSnappingBias(0.0)
+	powerMask:SetTexture(atlasInfo.file, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+	powerMask:SetAtlas(powerMaskAtlas, true)
+	statusbar:GetStatusBarTexture():AddMaskTexture(powerMask)
+
+	local overflowFill = statusbar:CreateTexture(nil, "OVERLAY",nil, 1)
+	overflowFill:SetAtlas("Unit_Evoker_EbonMight_Highlight")
+	overflowFill:SetSize(126, 10)
+	overflowFill:SetPoint("RIGHT", statusbar, "LEFT", 0, 0)
+	overflowFill:SetBlendMode("BLEND")
+	overflowFill:SetSnapToPixelGrid(false)
+	overflowFill:SetTexelSnappingBias(0.0)
+	overflowFill:AddMaskTexture(powerMask)
+	overflowFill:Hide()
+
+	statusbar.overflowFill = overflowFill
+
+	local overflowCap = statusbar:CreateTexture(nil, "OVERLAY",nil, 1)
+	overflowCap:SetAtlas("Unit_Evoker_EbonMight_EndCap")
+	overflowCap:SetSize(10, 20)
+	overflowCap:SetPoint("RIGHT", statusbar, 1, 0)
+	overflowCap:SetBlendMode("BLEND")
+	overflowCap:SetSnapToPixelGrid(false)
+	overflowCap:SetTexelSnappingBias(0.0)
+	overflowCap:Hide()
+
+	statusbar.overflowCap = overflowCap
+
+	local overflowAnim = statusbar:CreateAnimationGroup()
+	overflowAnim:SetToFinalAlpha(true)
+
+	local translationAnim = overflowAnim:CreateAnimation("Translation")
+	translationAnim:SetChildKey("overflowFill")
+	translationAnim:SetOffset(252, 0)
+	translationAnim:SetDuration(.766)
+	translationAnim:SetOrder(1)
+
+	local alphaAnim1 = overflowAnim:CreateAnimation("Alpha")
+	alphaAnim1:SetChildKey("overflowCap")
+	alphaAnim1:SetFromAlpha(0)
+	alphaAnim1:SetToAlpha(0)
+	alphaAnim1:SetDuration(.1)
+	alphaAnim1:SetOrder(1)
+
+	local alphaAnim2 = overflowAnim:CreateAnimation("Alpha")
+	alphaAnim2:SetChildKey("overflowCap")
+	alphaAnim2:SetFromAlpha(0)
+	alphaAnim2:SetToAlpha(1)
+	alphaAnim2:SetDuration(.1)
+	alphaAnim2:SetStartDelay(.5)
+	alphaAnim2:SetOrder(1)
+
+	statusbar.overflowAnim = overflowAnim
+
+	frame.statusbar = statusbar
+
+	frame:RegisterUnitEvent("PLAYER_SPECIALIZATION_CHANGED", unit)
+	frame:RegisterUnitEvent("UNIT_AURA", unit)
+
+	EbonMightBar_Update(frame)
+
+	frame:SetScript("OnEvent", EbonMightBar_OnEvent)
+	frame:SetScript("OnUpdate", EbonMightBar_OnUpdate)
+
+	return frame
+end
+
 local function StaggerBar_OnUpdate(frame, elapsed)
 	if frame.pauseUpdates then return end
 
@@ -577,6 +750,8 @@ local function StaggerBar_Init(parent, relativeTo, relativePoint, xOffset, yOffs
 	statusbar:SetFrameStrata("LOW")
 	statusbar:SetPoint("CENTER", frame, "CENTER", 0, 0)
 	statusbar:SetStatusBarTexture(frame.artInfo["green"].atlas)
+	statusbar:GetStatusBarTexture():SetTexelSnappingBias(0);
+	statusbar:GetStatusBarTexture():SetSnapToPixelGrid(false);
 
 	statusbar.bg = statusbar:CreateTexture(nil, "BACKGROUND")
 	statusbar.bg:SetTexture([[Interface\AddOns\Nurfed\Images\statusbar5]])
@@ -593,20 +768,22 @@ local function StaggerBar_Init(parent, relativeTo, relativePoint, xOffset, yOffs
 	statusbar:InitializeTextStatusBar()
 	statusbar.Spark:SetVisuals(frame.artInfo.spark)
 
+	local powerMaskAtlas = "UI-HUD-UnitFrame-Player-PortraitOn-Bar-Mana-Mask"
+	local atlasInfo = C_Texture.GetAtlasInfo(powerMaskAtlas)
 	local powerMask = statusbar:CreateMaskTexture(nil, "OVERLAY", nil, 3)
 	powerMask:SetPoint("TOPLEFT", statusbar, -2, 3)
-	powerMask:IsSnappingToPixelGrid(false)
+	powerMask:SetSnapToPixelGrid(false)
 	powerMask:SetTexelSnappingBias(0.0)
-	powerMask:SetAtlas("UI-HUD-UnitFrame-Player-PortraitOn-Bar-Mana-Mask", true)
-	powerMask:SetTexture(powerMask:GetTexture(), "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+	powerMask:SetTexture(atlasInfo.file, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+	powerMask:SetAtlas(powerMaskAtlas, true)
+	statusbar:GetStatusBarTexture():AddMaskTexture(powerMask)
 
 	statusbar.Spark:AddMaskTexture(powerMask)
 	statusbar:GetStatusBarTexture():AddMaskTexture(powerMask)
 
 	frame.statusbar = statusbar
 
-	frame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
-	frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+	frame:RegisterUnitEvent("PLAYER_SPECIALIZATION_CHANGED", unit)
 
 	StaggerBar_Update(frame)
 
@@ -617,14 +794,10 @@ local function StaggerBar_Init(parent, relativeTo, relativePoint, xOffset, yOffs
 end
 
 local function CreateClassResourceBar(parent, template, relativeTo, relativePoint, xOffset, yOffset)
-	local frame =  CreateFrame("Frame", nil, nil, "Nurfed_Class_Resource_Bar_Template, " .. template)
+	local frame =  CreateFrame("Frame", nil, parent, template..", Nurfed_Class_Resource_Bar_Template")
 	frame:ClearAllPoints()
 	frame:SetPoint(relativeTo, parent, relativePoint, xOffset, yOffset)
-	frame:SetScript("OnShow", nil)
-	frame:SetScript("OnHide", nil)
 	frame:SetParent(parent)
-	frame.isManagedFrame = false
-	frame.isPlayerFrameBottomManagedFrame = false
 	return frame
 end
 
@@ -643,7 +816,7 @@ function module:ClassResourceBars()
 
 	self.frame.resourceBars = CreateFrame("Frame",nil, self.frame)
 	self.frame.resourceBars:SetAllPoints()
-	self.frame.resourceBars.unit = unit
+	-- self.frame.resourceBars.unit = unit
 
 	local resourceBars = self.frame.resourceBars
 	local relativeTo = "TOP"
@@ -667,14 +840,21 @@ function module:ClassResourceBars()
 			resourceBars.soulShards = CreateClassResourceBar(resourceBars, "WarlockPowerFrameTemplate", relativeTo, relativePoint, xOffset, yOffset)
 			resourceBars.soulShards:SetScale(0.9)
 		elseif classFileName == "EVOKER" then
-			resourceBars.essence = CreateClassResourceBar(resourceBars, "Nurfed_Evoker_Resource_Bar_Template", relativeTo, relativePoint, xOffset, yOffset)
+			resourceBars.essence = CreateClassResourceBar(resourceBars, "Nurfed_Evoker_Resource_Bar_Template", relativeTo, relativePoint, xOffset, yOffset+4)
+			resourceBars.ebonMight = EbonMightBar_Init(resourceBars, relativeTo, relativePoint, xOffset, yOffset-16.5)
 		elseif classFileName == "PALADIN" then
 			resourceBars.holyPower = CreateClassResourceBar(resourceBars, "Nurfed_Paladin_Resource_Bar_Template", relativeTo, relativePoint, xOffset, yOffset + 9)
 		elseif classFileName == "DEATHKNIGHT" then
 			resourceBars.runes = CreateClassResourceBar(resourceBars, "Nurfed_DeathKnight_Resource_Bar_Template", relativeTo, relativePoint, xOffset, yOffset)
-		elseif classFileName == "SHAMAN" then
-			resourceBars.totems = CreateClassResourceBar(resourceBars, "Nurfed_Shaman_TotemFrame_Template", "TOPLEFT", "BOTTOMLEFT", xOffset, yOffset + 5)
+			resourceBars.runes:UpdateRunes(true)
 		end
+
+		if classFileName == "SHAMAN" then
+			resourceBars.totems = CreateClassResourceBar(resourceBars, "Nurfed_TotemFrame_Horizontal_Template", relativeTo, relativePoint, xOffset, yOffset + 5)
+		else
+			resourceBars.totems = CreateClassResourceBar(resourceBars, "Nurfed_TotemFrame_Horizontal_Template", "BOTTOMLEFT", "TOPLEFT", -2, 3)
+		end
+		
 	end
 
 	-- Yoink! Let's hope nothing yoinks it back.

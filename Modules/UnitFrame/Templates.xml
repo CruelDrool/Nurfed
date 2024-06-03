@@ -573,7 +573,13 @@
 	<Frame name="Nurfed_Class_Resource_Bar_Template" virtual="true">
 		<KeyValues>
 			<KeyValue key="showTooltip" value="true" type="boolean"/>
+			<KeyValue key="isManagedFrame" value="false" type="boolean"/>
+			<KeyValue key="isPlayerFrameBottomManagedFrame" value="false" type="boolean"/>
 		</KeyValues>
+		<Scripts>
+			<OnShow/>
+			<OnHide/>
+		</Scripts>
 	</Frame>
 
 	<Frame name="Nurfed_Evoker_Resource_Bar_Template" inherits="EssencePlayerFrameTemplate" virtual="true">
@@ -608,14 +614,23 @@
 		</KeyValues>
 	</Frame>
 
-	<Frame name="Nurfed_Shaman_TotemFrame_Template" toplevel="true" inherits="HorizontalLayoutFrame, PlayerFrameBottomManagedFrameTemplate" mixin="TotemFrameMixin" hidden="true" virtual="true">
-		<KeyValues>
-			<KeyValue key="spacing" value="-6" type="number" />
-		</KeyValues>
+	<Frame name="Nurfed_TotemFrame_Base_Template" toplevel="true" mixin="TotemFrameMixin" hidden="true" virtual="true">
 		<Scripts>
 			<OnLoad method="OnLoad"/>
 			<OnEvent method="OnEvent"/>
 		</Scripts>
+	</Frame>
+
+	<Frame name="Nurfed_TotemFrame_Horizontal_Template" toplevel="true" inherits="HorizontalLayoutFrame, Nurfed_TotemFrame_Base_Template" mixin="TotemFrameMixin" hidden="true" virtual="true">
+		<KeyValues>
+			<KeyValue key="spacing" value="-6" type="number" />
+		</KeyValues>
+	</Frame>
+
+	<Frame name="Nurfed_TotemFrame_Vertical_Template" toplevel="true" inherits="VerticalLayoutFrame, Nurfed_TotemFrame_Base_Template" mixin="TotemFrameMixin" hidden="true" virtual="true">
+		<KeyValues>
+			<KeyValue key="spacing" value="0" type="number" />
+		</KeyValues>
 	</Frame>
 
 	</Ui>
