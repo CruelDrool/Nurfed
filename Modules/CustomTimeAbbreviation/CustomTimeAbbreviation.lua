@@ -1,6 +1,6 @@
 local addonName = ...
 local moduleName = "CustomTimeAbbreviation"
-local displayName = "Custom time abbreviation"
+local displayName = "Aura timers"
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
 local module = addon:NewModule(moduleName)
 
@@ -13,7 +13,7 @@ local defaults = {
 module.options = {
 	type = "group",
 	name = displayName,
-	desc = "Custom function to convert seconds into days, hours and minutes.",
+	desc = "Changes how the time left on auras are formatted.",
 	-- icon = "Interface\\GossipFrame\\FooIconThatDoesntExist",
 	args = {
 		enabled = {
