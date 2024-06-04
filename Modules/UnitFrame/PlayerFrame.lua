@@ -12,6 +12,7 @@ module.defaults = {
 	shortenFactionRepName = false,
 	shortenStandingRepName = false,
 	hideClassResourceBars = false,
+	combatFeedBack = false,
 	formats = {
 		infoline = "$level ($g)",
 		xp = "$cur/$max ($rest) $perc",
@@ -166,11 +167,19 @@ module.options = {
 				end
 			end,
 		},
+		combatFeedBack = {
+			order = 7,
+			type = "toggle",
+			name = "Combat feedback",
+			width = "full",
+			get = function() return module.db.combatFeedBack end,
+			set = function(info, value) module.db.combatFeedBack = value end,
+		},
 	},
 }
 
 local events = {
-	-- "UNIT_COMBAT",
+	"UNIT_COMBAT",
 	"UNIT_FACTION",
 	"UNIT_LEVEL",
 	"UNIT_MODEL_CHANGED",
@@ -257,6 +266,55 @@ local function Update(frame)
 	end
 end
 
+local function CombatFeedback_OnEvent(frame, event, flags, amount, school)
+	if not ( frame and module.db.combatFeedBack ) then return end
+	local isCrit = false
+	local text = ""
+	local r, g, b = 1, 0.647, 0
+
+	if event == "WOUND" then
+		if amount ~= 0 then
+			isCrit =  flags == "CRITICAL" or flags == "CRUSHING"
+
+			local colorInfo = CombatLog_Color_ColorArrayBySchool(school)
+			r, g, b = colorInfo.r, colorInfo.g, colorInfo.b
+
+			text = addon:FormatNumber(amount)
+			if flags == "BLOCK_REDUCED" then
+				text = COMBAT_TEXT_BLOCK_REDUCED:format(text)
+			end
+
+			text = "-" .. text
+		elseif CombatFeedbackText[flags] then
+			text = CombatFeedbackText[flags]
+		else
+			text = CombatFeedbackText["MISS"]
+		end
+	elseif event == "HEAL" then
+		text = "+" .. addon:FormatNumber(amount)
+		r, g, b = 0, 1, 0
+		isCrit = flags == "CRITICAL"
+	elseif event == "ENERGIZE" then
+		text = addon:FormatNumber(amount)
+		r, g, b = 0.41, 0.8, 0.94
+		isCrit = flags == "CRITICAL"
+	elseif CombatFeedbackText[event] then
+		text = CombatFeedbackText[event]
+	end
+
+	local scale = isCrit and 1.25 or 1
+	local messageFrame
+
+	if event == "HEAL" then
+		messageFrame = frame.heal
+	else
+		messageFrame = frame.damage
+	end
+
+	messageFrame:AddMessage(text, r, g,b, 1, 1)
+	messageFrame:SetScale(scale)
+end
+
 local function OnEvent(frame, event, ...)
 
 	if not frame.isEnabled then return end
@@ -317,6 +375,10 @@ local function OnEvent(frame, event, ...)
         ReadyCheck_Finish(frame.readyCheck, DEFAULT_READY_CHECK_STAY_TIME)
 	elseif event == "UI_SCALE_CHANGED" then
 		if frame.model then frame.model:RefreshUnit() end
+	elseif event == "UNIT_COMBAT" then
+		if arg1 == frame.unit then
+			CombatFeedback_OnEvent(frame.feedback, arg2, arg3, arg4, arg5)
+		end
 	end
 end
 
