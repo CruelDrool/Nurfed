@@ -306,7 +306,11 @@ local function ButtonsArray()
 
 	local level = UnitLevel("player")
 
-	if level < minLevelSpec then
+	if C_SpecializationInfo and not C_SpecializationInfo.CanPlayerUseTalentSpecUI() then
+		local _, failureReason = C_SpecializationInfo.CanPlayerUseTalentSpecUI();
+		buttons["TALENTS"]["disabled"] = true
+		buttons["TALENTS"]["text"] = GetMenuButtonText(string.format('%s (%s)', talentsText, failureReason), "TOGGLETALENTS")
+	elseif level < minLevelSpec then
 		buttons["TALENTS"]["disabled"] = true
 		buttons["TALENTS"]["text"] = GetMenuButtonText(string.format('%s (%s)', talentsText, string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, minLevelSpec)), "TOGGLETALENTS")
 	end
@@ -331,19 +335,24 @@ local function ButtonsArray()
 				text = GUILD
 			end
 		end
+
 		buttons["GUILD"]["disabled"] = disabled
 		buttons["GUILD"]["text"] = GetMenuButtonText(text, "TOGGLEGUILDTAB")
 
-		if level < minLevelLFD then
+		if not C_LFGInfo.CanPlayerUseGroupFinder() then
+			local _, failureReason = C_LFGInfo.CanPlayerUseGroupFinder()
+			buttons["DUNGEONS"]["disabled"] = true
+			buttons["DUNGEONS"]["text"] = GetMenuButtonText(string.format('%s (%s)', LFDtext, failureReason), LFDKeybind)
+		elseif level < minLevelLFD then
 			buttons["DUNGEONS"]["disabled"] = true
 			buttons["DUNGEONS"]["text"] = GetMenuButtonText(string.format('%s (%s)', LFDtext, string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, minLevelLFD)), LFDKeybind)
 		end
 	else
 		buttons["GUILD"]["disabled"] = true
-		buttons["GUILD"]["text"] = GetMenuButtonText(string.format('%s (%s)', LOOKINGFORGUILD, FEATURE_NOT_AVAILBLE_PANDAREN), "TOGGLEGUILDTAB")
+		buttons["GUILD"]["text"] = GetMenuButtonText(string.format('%s (%s)', LOOKINGFORGUILD, FEATURE_UNAVAILBLE_PLAYER_IS_NEUTRAL), "TOGGLEGUILDTAB")
 
 		buttons["DUNGEONS"]["disabled"] = true
-		buttons["DUNGEONS"]["text"] = GetMenuButtonText(string.format('%s (%s)', LFDtext, FEATURE_NOT_AVAILBLE_PANDAREN), LFDKeybind)
+		buttons["DUNGEONS"]["text"] = GetMenuButtonText(string.format('%s (%s)', LFDtext, FEATURE_UNAVAILBLE_PLAYER_IS_NEUTRAL), LFDKeybind)
 	end
 
 	if not (C_AdventureJournal and C_AdventureJournal.CanBeShown()) then
