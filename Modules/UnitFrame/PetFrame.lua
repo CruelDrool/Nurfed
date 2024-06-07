@@ -202,7 +202,7 @@ end
 function module:OnEnable()
 
 	if not self.frame then
-		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PetFrameDropDown, true)
+		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PetFrameDropDown or "PET", true)
 	end
 
 	if self.frame then

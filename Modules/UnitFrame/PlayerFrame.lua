@@ -382,6 +382,16 @@ local function OnEvent(frame, event, ...)
 	end
 end
 
+local GetWatchedFactionInfo = _G.GetWatchedFactionInfo or function()
+	local info = C_Reputation and C_Reputation.GetWatchedFactionData() or {}
+	return info.name or nil,
+	info.reaction or 0,
+	info.currentReactionThreshold or 0,
+	info.nextReactionThreshold or 0,
+	info.currentStanding or 0,
+	info.factionID or 0
+end
+
 function module:RepBar_Update(frame)
 	local factionName, standingID, barMin, barMax, barValue, factionID = GetWatchedFactionInfo()
 	local currValue, maxValue = 0, 0
@@ -1010,7 +1020,7 @@ end
 function module:OnEnable()
 
 	if not self.frame then
-		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PlayerFrameDropDown)
+		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PlayerFrameDropDown or "SELF")
 		if self.frame.xp then XPbar_OnLoad(self.frame.xp) end
 		if self.frame.additionalPowerBar then AdditionalPowerBar_OnLoad(self.frame.additionalPowerBar) end
 		if self.frame.reputation then RepBar_OnLoad(self.frame.reputation) end

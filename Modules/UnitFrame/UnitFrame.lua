@@ -627,29 +627,38 @@ function module:CreateFrame(modName, unit, events, oneventfunc, dropDownMenu, is
 		frame:SetScript("OnEvent", oneventfunc)
 	end
 
-	frame:SetScript("OnMouseWheel", function(frame, delta) module:OnMouseWheel(frame, delta) end)
+	frame:SetScript("OnMouseWheel", function(f, delta) module:OnMouseWheel(f, delta) end)
 
 	frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 
-	local dropdown
-
-	if type(dropDownMenu) == "table" then
-		dropdown = dropDownMenu
-	elseif type(dropDownMenu) == "function" or type(dropDownMenu) == "string" then
-		dropdown = CreateFrame("Frame", frame, nil, nil, id)
-		dropdown.displayMode = "MENU"
-		local init
-		if type(dropDownMenu) == "function" then
-			init = dropDownMenu
-		elseif type(dropDownMenu) == "string" then
-			init = function() UnitPopup_ShowMenu(dropdown, dropDownMenu, frame.unit) end
+	local showmenu
+	if UnitPopup_OpenMenu and type(dropDownMenu) == "string" then
+		showmenu = function(f, ...)
+			UnitPopup_OpenMenu(dropDownMenu, {unit = f.unit});
 		end
-		dropdown.initialize = init
+	else
+		local dropdown
+		if type(dropDownMenu) == "table" then
+			dropdown = dropDownMenu
+		elseif type(dropDownMenu) == "function" or type(dropDownMenu) == "string" then
+			dropdown = CreateFrame("Frame", frame, nil, nil, id)
+			dropdown.displayMode = "MENU"
+			local init
+			if type(dropDownMenu) == "function" then
+				init = dropDownMenu
+			elseif type(dropDownMenu) == "string" then
+				init = function() UnitPopup_ShowMenu(dropdown, dropDownMenu, frame.unit) end
+			end
+			dropdown.initialize = init
+		end
+
+		-- frame.dropdown = dropdown
+
+		showmenu = function()
+			ToggleDropDownMenu(1, nil, dropdown, "cursor")
+		end
 	end
-	frame.dropdown = dropdown
-	local showmenu = function()
-		ToggleDropDownMenu(1, nil, dropdown, "cursor")
-	end
+
 	SecureUnitButton_OnLoad(frame, frame.unit, showmenu)
 
 	local db = self.db.profile[modName].frames[frame.unit]
@@ -1124,6 +1133,18 @@ function module:UpdatePartyLeader(frame)
 		frame.guide:Hide()
 	end
 end
+
+local GetTexCoordsForRoleSmallCircle = _G.GetTexCoordsForRoleSmallCircle  or function(role)
+	if ( role == "TANK" ) then
+		return 0, 19/64, 22/64, 41/64;
+	elseif ( role == "HEALER" ) then
+		return 20/64, 39/64, 1/64, 20/64;
+	elseif ( role == "DAMAGER" ) then
+		return 20/64, 39/64, 22/64, 41/64;
+	else
+		error("Unknown role: "..tostring(role));
+	end
+end;
 
 function module:UpdateRoles(frame)
     local LFGRole = UnitGroupRolesAssigned and UnitGroupRolesAssigned(frame.unit) or "NONE"

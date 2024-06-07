@@ -305,7 +305,7 @@ end
 function module:OnEnable()
 
 	if not self.frame then
-		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, TargetFrameDropDown or TargetFrameDropDown_Initialize, true)
+		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, TargetFrameDropDown or TargetFrameDropDown_Initialize or "TARGET", true)
 	end
 
 	if self.frame then

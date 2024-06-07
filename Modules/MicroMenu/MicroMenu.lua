@@ -206,6 +206,8 @@ end
 
 -- /run for i=1,GetNumBindings() do local a, b, c = GetBinding(i);if string.find(a, "^TOGGLE") then print(a, c) end end
 
+local HasPetSpells = _G.HasPetSpells or C_SpellBook.HasPetSpells
+
 -- This functions returns an array the contains the available buttons that can be used in main menu itself and submenus.
 local function ButtonsArray()
 	local minLevelSpec, minLevelLFD, minLevelAchi, talentsText, toggleRaidTabFunc, toggleGuildFrameFunc, toggleLFDFunc, LFDtext, LFDKeybind, optionsFunc
