@@ -1667,6 +1667,8 @@ local function PowerBar_Text(frame)
 	if frame.text then frame.text:SetText(text) end
 end
 
+local GetSpellPowerCost = _G.GetSpellPowerCost or C_Spell.GetSpellPowerCost
+
 local function PowerBar_CostPrediction(frame, isStarting, startTime, endTime, spellId)
 	local cost = 0
 	local powerType = frame.powerType or UnitPowerType(frame.unit)
