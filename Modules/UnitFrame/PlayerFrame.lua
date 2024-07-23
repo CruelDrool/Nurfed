@@ -252,8 +252,8 @@ local function Update(frame)
 	UnitFrames:PowerBar_Update(frame.powerBar)
 	UnitFrames:HealthBar_Update(frame.health)
 	UnitFrames:ShowHideHighlight(frame)
-		
-	if frame.model then UnitFrames:UpdateModel(frame.model, frame.unit) end
+
+	UnitFrames:UpdateModel(frame)
 	if UnitExists(frame.unit) then
 		UpdateStatus(frame)
 		UpdatePlaytime(frame.playTime)
@@ -333,7 +333,7 @@ local function OnEvent(frame, event, ...)
 	elseif event == "UNIT_MODEL_CHANGED" then
 		if arg1 == frame.unit then
 			-- if frame.model then frame.model:RefreshUnit() end
-			if frame.model then UnitFrames:UpdateModel(frame.model, frame.unit) end
+			UnitFrames:UpdateModel(frame)
 		end
 	elseif event == "UNIT_FACTION" then
 		if arg1 == frame.unit then

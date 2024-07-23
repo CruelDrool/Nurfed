@@ -174,9 +174,9 @@ local function Update(frame)
 	UnitFrames:PowerBar_Update(frame.powerBar, frame.unit)
 	UnitFrames:HealthBar_Update(frame.health)
 	if frame.threat then UnitFrames:ThreatBar_Update(frame.threat) end
-	if frame.model then UnitFrames:UpdateModel(frame.model, frame.unit) end
+	UnitFrames:UpdateModel(frame)
 	if UnitExists(frame.unit) then
-		-- if frame.model then UnitFrames:UpdateModel(frame.model, frame.unit) end
+		-- UnitFrames:UpdateModel(frame)
 		if frame.combo then UpdateCombo(frame.combo, frame.unit) end
 		UnitFrames:UpdateLoot(frame)
 		UnitFrames:UpdateReadyCheck(frame.unit, frame.readyCheck)
@@ -236,7 +236,7 @@ local function OnEvent(frame, event, ...)
 		end
 	elseif event == "UNIT_MODEL_CHANGED" then
 		if arg1 == frame.unit then
-			if frame.model then UnitFrames:UpdateModel(frame.model, frame.unit) end
+			UnitFrames:UpdateModel(frame)
 		end
 	elseif event == "GROUP_ROSTER_UPDATE" then
 		UnitFrames:UpdateInfo(frame)
@@ -265,7 +265,7 @@ local function OnEvent(frame, event, ...)
 			-- end
 		-- end
 	elseif event == "UI_SCALE_CHANGED" then
-		if frame.model then UnitFrames:UpdateModel(frame.model, frame.unit) end
+		UnitFrames:UpdateModel(frame)
 	end
 end
 

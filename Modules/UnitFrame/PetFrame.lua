@@ -95,7 +95,7 @@ local function Update(frame)
 	-- frame.cast.unit = frame.unit
 	UnitFrames:PowerBar_Update(frame.powerBar, frame.unit)
 	UnitFrames:HealthBar_Update(frame.health)
-	if frame.model then UnitFrames:UpdateModel(frame.model, frame.unit) end
+	UnitFrames:UpdateModel(frame)
 	if UnitExists(frame.unit) then
 		UnitFrames:UpdateInfo(frame)
 		UnitFrames:UpdateRaidIcon(frame)
@@ -153,10 +153,10 @@ local function OnEvent(frame, event, ...)
 		end
 	elseif event == "UNIT_MODEL_CHANGED" then
 		if arg1 == frame.unit then
-			if frame.model then UnitFrames:UpdateModel(frame.model, frame.unit) end
+			UnitFrames:UpdateModel(frame)
 		end
 	elseif event == "UI_SCALE_CHANGED" then
-		if frame.model then UnitFrames:UpdateModel(frame.model, frame.unit)end
+		UnitFrames:UpdateModel(frame)
 	end
 end
 

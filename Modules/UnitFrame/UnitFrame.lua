@@ -613,10 +613,10 @@ function module:CreateFrame(modName, unit, events, oneventfunc, dropDownMenu, is
 		end
 	end
 
-	if frame.health then self:HealthBar_OnLoad(frame.health) end
+	if frame.health then self:HealthBar_OnLoad(frame.health, frame.unit) end
 	if frame.powerBar then self:PowerBar_OnLoad(frame.powerBar, frame.unit) end
 	if frame.cast then self:CastBar_OnLoad(frame.cast, frame.unit) end
-	if frame.threat then self:ThreatBar_OnLoad(frame.threat, unit) end
+	if frame.threat then self:ThreatBar_OnLoad(frame.threat, frame.unit) end
 
 	if frame.target then self:TargetofTarget_Onload(frame.target, frame.unit.."target") end
 	if frame.targettarget then self:TargetofTarget_Onload(frame.targettarget, frame.unit.."targettarget") end
@@ -695,7 +695,7 @@ function module:EnableFrame(frame)
 	elseif not self.locked then
 		frame.overlay:Show()
 	end
-	if frame.model then module:UpdateModel(frame.model, frame.unit) end
+	self:UpdateModel(frame)
 	frame.isEnabled = true
 end
 
@@ -728,7 +728,7 @@ function module:Lock()
 					UnregisterUnitWatch(frame)
 				end
 				frame:Show()
-				if frame.model then module:UpdateModel(frame.model, frame.unit) end
+				self:UpdateModel(frame)
 			end
 		end
 	elseif not module.locked then
@@ -739,7 +739,7 @@ function module:Lock()
 			local frame = _G[f]
 			frame.overlay:Hide()
 			if frame.isEnabled then
-				if frame.model then module:UpdateModel(frame.model, frame.unit) end
+				self:UpdateModel(frame)
 				if frame.isWatched then
 					RegisterUnitWatch(frame)
 				elseif frame.hidden then
@@ -1263,23 +1263,24 @@ function module:UpdateReadyCheck(unit, frame)
     end
 end
 
-function module:UpdateModel(frame, unit)
+function module:UpdateModel(frame)
+	if not frame.model then return end
+	local unit = frame.unit
+	local model = frame.model
 	if not UnitExists(unit) then
-		frame:ClearModel()
-		frame.portrait:Hide()
+		model:ClearModel()
+		model.portrait:Hide()
 		return
 	end
-	frame:SetUnit(unit)
-	frame:RefreshUnit()
-	frame:SetPortraitZoom(1)
-	if frame.portrait then
-		if not InCombatLockdown() then
-			SetPortraitTexture(frame.portrait, unit)
-		end
+	model:SetUnit(unit)
+	model:RefreshUnit()
+	model:SetPortraitZoom(1)
+	if model.portrait then
+		SetPortraitTexture(model.portrait, unit)
 		if not UnitIsVisible(unit) then
-			frame.portrait:Show()
+			model.portrait:Show()
 		else
-			frame.portrait:Hide()
+			model.portrait:Hide()
 		end
 	end
 end
@@ -1295,7 +1296,7 @@ function module:OnMouseWheel(frame, delta)
 		if IsShiftKeyDown() and IsControlKeyDown() then
 			frame.SetScale(frame, 1)
 		end
-		if frame.model then self:UpdateModel(frame.model, frame.unit) end
+		self:UpdateModel(frame)
 	end
 end
 
@@ -1576,7 +1577,7 @@ local function HealPredictionBar_Update(frame)
 end
 
 local function HealthBar_OnUpdate(frame, e)
-	local unit = frame:GetParent().unit
+	local unit = frame.unit
     -- if UnitExists(unit) then
 		--if not frame.pauseUpdates then
 			local currValue = UnitHealth(unit)
@@ -1602,7 +1603,7 @@ local function HealthBar_OnUpdate(frame, e)
 end
 
 function module:HealthBar_Update(frame)
-	local unit = frame:GetParent().unit
+	local unit = frame.unit
 	-- if frame.unit == unit then
         local maxValue = UnitHealthMax(unit)
 		local currValue = UnitHealth(unit)
@@ -1626,7 +1627,9 @@ function module:HealthBar_Update(frame)
 	-- end
 end
 
-function module:HealthBar_OnLoad(frame)
+function module:HealthBar_OnLoad(frame, unit)
+
+	frame.unit = unit
 
 	frame.pauseUpdates = false
 
