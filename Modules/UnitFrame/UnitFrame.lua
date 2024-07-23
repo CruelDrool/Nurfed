@@ -1683,7 +1683,7 @@ local function PowerBar_CostPrediction(frame, isStarting, startTime, endTime, sp
 			frame.predictedPowerCost = nil
 		end
 	else
-		for _,info in pairs(GetSpellPowerCost(spellId)) do
+		for _,info in pairs(GetSpellPowerCost(spellId) or {}) do
 			if info.type == powerType and info.cost > 0 then
 				cost = info.cost
 				break
