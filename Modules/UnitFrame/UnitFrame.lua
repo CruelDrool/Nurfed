@@ -1375,7 +1375,7 @@ function HealthBar_Gradient(frame, elapsed, gradient)
 	local alpha = 1;
 	local perc = frame.currValue / frame.maxValue
 
-	if module.db.profile.lowHealthFlash.enabled and UnitIsFriend("player", frame:GetParent().unit) and perc <= module.db.profile.lowHealthFlash.warning.perc then
+	if module.db.profile.lowHealthFlash and module.db.profile.lowHealthFlash.enabled and UnitIsFriend("player", frame:GetParent().unit) and perc <= module.db.profile.lowHealthFlash.warning.perc then
 		local interval = module.db.profile.lowHealthFlash.warning.interval
 
 		if perc <= module.db.profile.lowHealthFlash.dangerous.perc then
