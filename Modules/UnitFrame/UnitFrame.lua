@@ -632,9 +632,13 @@ function module:CreateFrame(modName, unit, events, oneventfunc, dropDownMenu, is
 	frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 
 	local showmenu
-	if UnitPopup_OpenMenu and type(dropDownMenu) == "string" then
-		showmenu = function(f, ...)
-			UnitPopup_OpenMenu(dropDownMenu, {unit = f.unit});
+	if UnitPopup_OpenMenu then
+		if type(dropDownMenu) == "string" then
+			showmenu = function(f, ...)
+				UnitPopup_OpenMenu(dropDownMenu, {unit = f.unit});
+			end
+		elseif type(dropDownMenu) == "function" then
+			showmenu = dropDownMenu
 		end
 	else
 		local dropdown
