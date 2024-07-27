@@ -690,6 +690,13 @@ end
 
 function module:EnableFrame(frame)
 	frame:SetParent(UIParent)
+
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("SetFrameStrata", frame, "LOW")
+	else
+		frame:SetFrameStrata("LOW")
+	end
+
 	if frame.isWatched and self.locked then
 		if InCombatLockdown() then
 			addon:AddOutOfCombatQueue(RegisterUnitWatch, frame)
