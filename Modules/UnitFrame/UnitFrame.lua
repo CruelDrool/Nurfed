@@ -1331,6 +1331,22 @@ HEALTHBAR functions
 
 ]]
 
+local GetSpellInfo = _G.GetSpellInfo or function(...)
+	local info = C_Spell.GetSpellInfo(...)
+	if info then
+		return info.name,
+		nil,
+		info.iconID,
+		info.castTime,
+		info.minRange,
+		info.maxRange,
+		info.spellId,
+		info.originalIconID
+	end
+end
+
+local GHOST
+
 local function HealthBar_Text(frame)
 	local unit = frame:GetParent().unit
 
@@ -1343,7 +1359,10 @@ local function HealthBar_Text(frame)
 		perc = PLAYER_OFFLINE
 		miss = ""
 	elseif UnitIsGhost(unit) then
-		perc = GetSpellInfo(8326)
+		if not GHOST then
+			GHOST = GetSpellInfo(8326)
+		end
+		perc = GHOST
 		miss = ""
 	elseif (UnitIsDead(unit) or UnitIsCorpse(unit)) then
 		perc = DEAD
