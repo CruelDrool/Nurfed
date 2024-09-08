@@ -869,7 +869,7 @@ function module:Replace(unit, textFormat)
 			name = addon:Transliterate(name, self.db.profile.transliterate.mark)
 		end
 		local color
-		if UnitIsPlayer(unit) then
+		if UnitIsPlayer(unit) or (CreatureTypeReverseLocalisation[UnitCreatureType(unit)] == "Humanoid" and UnitIsFriend("player", unit) and UnitPlayerOrPetInParty(unit)) then
 			local _, englishClass = UnitClass(unit)
 			if RAID_CLASS_COLORS[englishClass] ~= nil then color = RAID_CLASS_COLORS[englishClass] else color = {UnitSelectionColor(unit)} end
 		else
