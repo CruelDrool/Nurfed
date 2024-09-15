@@ -70,7 +70,7 @@ if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
 		"SOCIAL_MENU", -- Submenu
 		"SEPARATOR",
 		"CHARACTER",
-		"SPELLBOOK_ABILITIES_MENU", -- Submenu
+		"PROFESSIONSBOOK",
 		"TALENTS",
 		"ACHIEVEMENTS",
 		"QUESTLOG",
@@ -86,32 +86,23 @@ if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
 
 	subMenus = {
 		GAME_MENU = {
-			"SUPPORT",
-			"BLIZZARD_STORE",
-			"WHATS_NEW",
-			"SEPARATOR",
 			"OPTIONS",
-			"MACROS",
+			"BLIZZARD_STORE",
+			"SEPARATOR",
 			"ADDONS",
+			"WHATS_NEW",
+			"EDIT_MODE",
+			"SUPPORT",
+			"MACROS",
 			-- "SEPARATOR",
 			-- "LOGOUT",
 			-- "EXIT_GAME",
 		},
 		SOCIAL_MENU = {
-			"FRIENDS_MENU", -- Submenu
+			"FRIENDS",
 			"WHO",
 			"RAID",
 			"QUICK_JOIN",
-		},
-		FRIENDS_MENU = {
-			"FRIENDS_LIST",
-			"IGNORE_LIST",
-			"RECRUIT_FRIEND",
-		},
-		SPELLBOOK_ABILITIES_MENU = {
-			"SPELLBOOK",
-			"PROFESSIONSBOOK",
-			"PETBOOK",
 		},
 	}
 elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CLASSIC then
@@ -143,14 +134,10 @@ elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CLASSIC then
 			-- "EXIT_GAME",
 		},
 		SOCIAL_MENU = { 
-			"FRIENDS_MENU", -- Submenu
+			"FRIENDS",
 			"WHO",
 			"GUILD",
 			"RAID",
-		},
-		FRIENDS_MENU = {
-			"FRIENDS_LIST",
-			"IGNORE_LIST",
 		},
 		SPELLBOOK_ABILITIES_MENU = {
 			"SPELLBOOK",
@@ -189,13 +176,9 @@ elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
 			-- "EXIT_GAME",
 		},
 		SOCIAL_MENU = {
-			"FRIENDS_MENU", -- Submenu
+			"FRIENDS",
 			"WHO",
 			"RAID",
-		},
-		FRIENDS_MENU = {
-			"FRIENDS_LIST",
-			"IGNORE_LIST",
 		},
 		SPELLBOOK_ABILITIES_MENU = {
 			"SPELLBOOK",
@@ -210,39 +193,49 @@ local HasPetSpells = _G.HasPetSpells or C_SpellBook.HasPetSpells
 
 -- This functions returns an array the contains the available buttons that can be used in main menu itself and submenus.
 local function ButtonsArray()
-	local minLevelSpec, minLevelLFD, minLevelAchi, talentsText, toggleRaidTabFunc, toggleGuildFrameFunc, toggleLFDFunc, LFDtext, LFDKeybind, optionsFunc
+	local inCombatLockdown = InCombatLockdown()
+	local minLevelSpec, minLevelLFD, minLevelAchi, talentsText, talentsFunc, toggleRaidTabFunc, toggleGuildFrameFunc, toggleLFDFunc, LFDtext, LFDKeybind, optionsFunc, addonsFunc, professionsFunc
 	if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
 		minLevelSpec = 10
 		minLevelLFD = 10
 		minLevelAchi = 1
-		talentsText = TALENTS_BUTTON
-		toggleRaidTabFunc = function() ToggleFriendsFrame(3) end
-		toggleGuildFrameFunc = function() GuildMicroButton:Click() end
-		toggleLFDFunc = function() LFDMicroButton:Click() end
+		talentsText = PLAYERSPELLS_BUTTON
+		talentsFunc = function() if InCombatLockdown() then return end; PlayerSpellsMicroButton:Click() end
+		toggleRaidTabFunc = function() if InCombatLockdown() then return end; ToggleFriendsFrame(3) end
+		toggleGuildFrameFunc = function() if InCombatLockdown() then return end; GuildMicroButton:Click() end
+		toggleLFDFunc = function() if InCombatLockdown() then return end; LFDMicroButton:Click() end
 		LFDtext = DUNGEONS_BUTTON
 		LFDKeybind = "TOGGLEGROUPFINDER"
-		optionsFunc = function() GameMenuButtonSettings:Click() end
+		optionsFunc = function() if InCombatLockdown() then return end; SettingsPanel.Open(SettingsPanel) end
+		addonsFunc = function() if InCombatLockdown() then return end; ShowUIPanel(AddonList, nil, G_GameMenuFrameContextKey) end
+		professionsFunc = function() if InCombatLockdown() then return end; ToggleProfessionsBook() end
 	elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CLASSIC then
 		minLevelSpec = SHOW_SPEC_LEVEL
 		minLevelLFD = SHOW_LFD_LEVEL
 		talentsText = TALENTS
-		toggleRaidTabFunc = function() ToggleFriendsFrame(4) end
-		toggleGuildFrameFunc = function() ToggleFriendsFrame(3) end
-		toggleLFDFunc = function() PVEFrame_ToggleFrame() end
+		talentsFunc = function() if InCombatLockdown() then return end; TalentMicroButton:Click() end
+		toggleRaidTabFunc = function() if InCombatLockdown() then return end; ToggleFriendsFrame(4) end
+		toggleGuildFrameFunc = function() if InCombatLockdown() then return end; ToggleFriendsFrame(3) end
+		toggleLFDFunc = function() if InCombatLockdown() then return end; PVEFrame_ToggleFrame() end
 		LFDtext = LFG_BUTTON or DUNGEONS_BUTTON
 		LFDKeybind = "TOGGLEGROUPFINDER"
-		optionsFunc = function() GameMenuButtonOptions:Click() end
+		optionsFunc = function() if InCombatLockdown() then return end; GameMenuButtonOptions:Click() end
+		addonsFunc = function() if InCombatLockdown() then return end; GameMenuButtonAddons:Click() end
+		professionsFunc = function() if InCombatLockdown() then return end; ToggleSpellBook(BOOKTYPE_PROFESSION) end
 	elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
 		minLevelSpec = SHOW_SPEC_LEVEL
 		minLevelLFD = SHOW_LFD_LEVEL
 		minLevelAchi = 1
 		talentsText = TALENTS
-		toggleRaidTabFunc = function() ToggleFriendsFrame(4) end
-		toggleGuildFrameFunc = function() GuildMicroButton:Click() end
-		toggleLFDFunc = function() PVEFrame_ToggleFrame() end
+		talentsFunc = function() if InCombatLockdown() then return end; TalentMicroButton:Click() end
+		toggleRaidTabFunc = function() if InCombatLockdown() then return end; ToggleFriendsFrame(4) end
+		toggleGuildFrameFunc = function() if InCombatLockdown() then return end; GuildMicroButton:Click() end
+		toggleLFDFunc = function() if InCombatLockdown() then return end; PVEFrame_ToggleFrame() end
 		LFDtext = LFG_BUTTON or DUNGEONS_BUTTON
 		LFDKeybind = "TOGGLEGROUPFINDER"
-		optionsFunc = function() GameMenuButtonOptions:Click() end
+		optionsFunc = function() if InCombatLockdown() then return end; GameMenuButtonOptions:Click() end
+		addonsFunc = function() if InCombatLockdown() then return end; GameMenuButtonAddons:Click() end
+		professionsFunc = function() if InCombatLockdown() then return end; ToggleSpellBook(BOOKTYPE_PROFESSION) end
 	end
 
 	local buttons = {
@@ -251,37 +244,34 @@ local function ButtonsArray()
 		CANCEL = { text = CANCEL },
 		TITLE = { text = displayName, isTitle = 1, notClickable = 1 },
 
-		SOCIAL_MENU = { text = GetMenuButtonText(SOCIAL_BUTTON, "TOGGLESOCIAL"), func = function() ToggleFriendsFrame() end, nested = 1, },
+		SOCIAL_MENU = { text = GetMenuButtonText(SOCIAL_BUTTON, "TOGGLESOCIAL"), func = function() if InCombatLockdown() then return end; ToggleFriendsFrame() end, nested = 1, disabled = inCombatLockdown, },
 
-		FRIENDS_MENU = { text = GetMenuButtonText(FRIENDS, "TOGGLEFRIENDSTAB"), func = function() ToggleFriendsFrame(1) end, nested = 1, },
-		FRIENDS_LIST = { text = FRIENDS_LIST, func = function() FriendsTabHeaderTab1:Click(); if FriendsFrame:IsShown() then FriendsFrameTab1:Click() else ToggleFriendsFrame(1) end end, },
-		IGNORE_LIST = {text = IGNORE_LIST, func = function() FriendsTabHeaderTab2:Click(); if FriendsFrame:IsShown() then FriendsFrameTab1:Click() else ToggleFriendsFrame(1) end end, },
-		RECRUIT_FRIEND = {text = RECRUIT_A_FRIEND, func = function() FriendsTabHeaderTab3:Click(); if FriendsFrame:IsShown() then FriendsFrameTab1:Click() else ToggleFriendsFrame(1) end end, },
+		FRIENDS = { text = GetMenuButtonText(FRIENDS, "TOGGLEFRIENDSTAB"), func = function() if InCombatLockdown() then return end; ToggleFriendsFrame(1) end, disabled = inCombatLockdown, },
+		WHO = { text = GetMenuButtonText(WHO, "TOGGLEWHOTAB"), func = function() if InCombatLockdown() then return end; ToggleFriendsFrame(2) end, disabled = inCombatLockdown, },
+		RAID = { text = GetMenuButtonText(RAID, "TOGGLERAIDTAB"), func = toggleRaidTabFunc, disabled = inCombatLockdown, },
+		QUICK_JOIN = { text = GetMenuButtonText(QUICK_JOIN, "TOGGLEQUICKJOINTAB"), func = function() if InCombatLockdown() then return end; ToggleFriendsFrame(4) end, disabled = inCombatLockdown, },
 
-		WHO = { text = GetMenuButtonText(WHO, "TOGGLEWHOTAB"), func = function() ToggleFriendsFrame(2) end, },
-		RAID = { text = GetMenuButtonText(RAID, "TOGGLERAIDTAB"), func = toggleRaidTabFunc, },
-		QUICK_JOIN = { text = GetMenuButtonText(QUICK_JOIN, "TOGGLEQUICKJOINTAB"), func = function() ToggleFriendsFrame(4) end, },
-
-		CHARACTER = { text = GetMenuButtonText(CHARACTER_BUTTON, "TOGGLECHARACTER0"), func = function() ToggleCharacter("PaperDollFrame"); end, },
+		CHARACTER = { text = GetMenuButtonText(CHARACTER_BUTTON, "TOGGLECHARACTER0"), func = function() if InCombatLockdown() then return end; ToggleCharacter("PaperDollFrame"); end, disabled = inCombatLockdown, },
 
 		-- SPELLBOOK_ABILITIES = { text = GetMenuButtonText(SPELLBOOK_ABILITIES_BUTTON, "TOGGLESPELLBOOK"), func = function() ToggleSpellBook(BOOKTYPE_SPELL) end, },
-		SPELLBOOK_ABILITIES_MENU = { text = GetMenuButtonText(SPELLBOOK_ABILITIES_BUTTON, "TOGGLESPELLBOOK"), func = function() ToggleSpellBook(BOOKTYPE_SPELL) end, nested = 1, },
-		SPELLBOOK = { text = GetMenuButtonText(SPELLBOOK, "TOGGLESPELLBOOK"), func = function() ToggleSpellBook(BOOKTYPE_SPELL) end, },
-		PROFESSIONSBOOK = { text = GetMenuButtonText(TRADE_SKILLS, "TOGGLEPROFESSIONBOOK"), func = function() ToggleSpellBook(BOOKTYPE_PROFESSION) end, },
-		PETBOOK = { text = GetMenuButtonText(PET, "TOGGLEPETBOOK"), func = function() ToggleSpellBook(BOOKTYPE_PET ) end, skip = not (HasPetSpells() or PetHasSpellbook()), },
+		SPELLBOOK_ABILITIES_MENU = { text = GetMenuButtonText(SPELLBOOK_ABILITIES_BUTTON, "TOGGLESPELLBOOK"), func = function() if InCombatLockdown() then return end; ToggleSpellBook(BOOKTYPE_SPELL) end, nested = 1, disabled = inCombatLockdown, },
+		SPELLBOOK = { text = GetMenuButtonText(SPELLBOOK, "TOGGLESPELLBOOK"), func = function() if InCombatLockdown() then return end; ToggleSpellBook(BOOKTYPE_SPELL) end, disabled = inCombatLockdown, },
+		PROFESSIONSBOOK = { text = GetMenuButtonText(TRADE_SKILLS, "TOGGLEPROFESSIONBOOK"), func = professionsFunc, disabled = inCombatLockdown, },
+		PETBOOK = { text = GetMenuButtonText(PET, "TOGGLEPETBOOK"), func = function() if InCombatLockdown() then return end; ToggleSpellBook(BOOKTYPE_PET ) end, skip = not (HasPetSpells() or PetHasSpellbook()), disabled = inCombatLockdown, },
 
-		TALENTS = { text = GetMenuButtonText(talentsText, "TOGGLETALENTS"), func = function() TalentMicroButton:Click() end, },
-		ACHIEVEMENTS = { text = ACHIEVEMENT_BUTTON, func = function() ToggleAchievementFrame() end, disabled = true },
-		PLAYER_V_PLAYER = { text = PLAYER_V_PLAYER, func = function() TogglePVPFrame() end, disabled = true },
-		QUESTLOG = { text = GetMenuButtonText(QUESTLOG_BUTTON, "TOGGLEQUESTLOG"), func = function() ToggleQuestLog() end, },
-		GUILD = { func = toggleGuildFrameFunc, },
+		TALENTS = { text = GetMenuButtonText(talentsText, "TOGGLETALENTS"), func = talentsFunc, disabled = inCombatLockdown, },
+		ACHIEVEMENTS = { text = ACHIEVEMENT_BUTTON, func = function() if InCombatLockdown() then return end; ToggleAchievementFrame() end, disabled = true },
+		PLAYER_V_PLAYER = { text = PLAYER_V_PLAYER, func = function() if InCombatLockdown() then return end; TogglePVPFrame() end, disabled = true },
+		QUESTLOG = { text = GetMenuButtonText(QUESTLOG_BUTTON, "TOGGLEQUESTLOG"), func = function() if InCombatLockdown() then return end; ToggleQuestLog() end, disabled = inCombatLockdown, },
+		GUILD = { func = toggleGuildFrameFunc },
 		DUNGEONS = { text = GetMenuButtonText(LFDtext, LFDKeybind), func = toggleLFDFunc, },
-		COLLECTIONS = { text = GetMenuButtonText(COLLECTIONS, "TOGGLECOLLECTIONS"), func = function() CollectionsMicroButton:Click() end, },
-		ADVENTURE_JOURNAL = { text = GetMenuButtonText(ADVENTURE_JOURNAL, "TOGGLEENCOUNTERJOURNAL"), func = function() ToggleEncounterJournal() end },
-		DUNGEON_JOURNAL = { text = GetMenuButtonText(ENCOUNTER_JOURNAL, "TOGGLEENCOUNTERJOURNAL"), func = function() ToggleEncounterJournal() end },
-		BLIZZARD_STORE = { text = BLIZZARD_STORE, func = ToggleStoreUI, },
+		COLLECTIONS = { text = GetMenuButtonText(COLLECTIONS, "TOGGLECOLLECTIONS"), func = function() if InCombatLockdown() then return end; CollectionsMicroButton:Click() end, disabled = inCombatLockdown, },
+		ADVENTURE_JOURNAL = { text = GetMenuButtonText(ADVENTURE_JOURNAL, "TOGGLEENCOUNTERJOURNAL"), func = function() if InCombatLockdown() then return end; ToggleEncounterJournal() end, disabled = inCombatLockdown, },
+		DUNGEON_JOURNAL = { text = GetMenuButtonText(ENCOUNTER_JOURNAL, "TOGGLEENCOUNTERJOURNAL"), func = function() if InCombatLockdown() then return end; ToggleEncounterJournal() end, disabled = inCombatLockdown,  },
+		BLIZZARD_STORE = { text = BLIZZARD_STORE, func = function() ToggleStoreUI() end, }, -- Can be opened in combat. Fascinating!
 
 		GAME_MENU = { text = GetMenuButtonText(MAINMENU_BUTTON, "TOGGLEGAMEMENU"), func = function()
+			if InCombatLockdown() then return end
 			if GameMenuFrame:IsShown() then
 				PlaySound(SOUNDKIT.IG_MAINMENU_QUIT)
 				HideUIPanel(GameMenuFrame)
@@ -289,17 +279,18 @@ local function ButtonsArray()
 				PlaySound(SOUNDKIT.IG_MAINMENU_OPEN)
 				ShowUIPanel(GameMenuFrame)
 			end
-		end, nested = 1, },
-		SUPPORT = { text = GAMEMENU_SUPPORT, func = function() ToggleHelpFrame() end, },
-		HELP_REQUEST = { text = HELP_BUTTON, func = function() ToggleHelpFrame() end, },
-		WHATS_NEW = { text = GAMEMENU_NEW_BUTTON, func = function() GameMenuButtonWhatsNew:Click() end, skip = IsTrialAccount() },
+		end, nested = 1, disabled = inCombatLockdown, },
+		SUPPORT = { text = GAMEMENU_SUPPORT, func = function() if InCombatLockdown() then return end; ToggleHelpFrame() end, disabled = inCombatLockdown, },
+		HELP_REQUEST = { text = HELP_BUTTON, func = function() if InCombatLockdown() then return end; ToggleHelpFrame() end, disabled = inCombatLockdown, },
+		WHATS_NEW = { text = GAMEMENU_NEW_BUTTON, func = function() if InCombatLockdown() then return end; C_SplashScreen.RequestLatestSplashScreen(true) end, skip = not ( C_SplashScreen.CanViewSplashScreen() and not IsCharacterNewlyBoosted() ), disabled = inCombatLockdown, },
 		OPTIONS = { text = GAMEMENU_OPTIONS, func = optionsFunc, },
 		-- UIOPTIONS = { text = UIOPTIONS_MENU, func = function() GameMenuButtonUIOptions:Click() end, },
 		-- KEY_BINDINGS = { text = KEY_BINDINGS, func = function() GameMenuButtonKeybindings:Click() end, },
-		MACROS = { text = MACROS, func = function() ShowMacroFrame() end, },
-		ADDONS = { text = ADDONS, func = function() GameMenuButtonAddons:Click() end, },
+		MACROS = { text = MACROS, func = function() if InCombatLockdown() then return end; ShowMacroFrame() end, disabled = inCombatLockdown, },
+		ADDONS = { text = ADDONS, func = addonsFunc, },
+		EDIT_MODE = {text = HUD_EDIT_MODE_MENU, func= function() if InCombatLockdown() then return end; ShowUIPanel(EditModeManagerFrame) end, disabled = inCombatLockdown, },
 
-		MAP = { text = GetMenuButtonText(WORLDMAP_BUTTON, "TOGGLEWORLDMAP"), func = function() ToggleWorldMap() end, },
+		MAP = { text = GetMenuButtonText(WORLDMAP_BUTTON, "TOGGLEWORLDMAP"), func = function() if InCombatLockdown() then return end; ToggleWorldMap() end, disabled = inCombatLockdown, },
 
 		-- The functions for the buttons below are now restricted by Blizzard. The buttons are now disabled.
 		LOGOUT = { text = LOGOUT, func = function() Logout() end, disabled = true, },
@@ -388,6 +379,14 @@ local function ButtonsArray()
 
 	if not (HasPetSpells() or PetHasSpellbook()) and addon.WOW_PROJECT_ID > addon.WOW_PROJECT_ID_MAINLINE then
 		buttons["SPELLBOOK_ABILITIES_MENU"]["nested"] = nil
+	end
+
+	if inCombatLockdown then
+		buttons["GUILD"]["disabled"] = true
+		buttons["DUNGEONS"]["disabled"] = true
+		buttons["ADVENTURE_JOURNAL"]["disabled"] = true
+		buttons["ACHIEVEMENTS"]["disabled"] = true
+		buttons["PLAYER_V_PLAYER"]["disabled"] = true
 	end
 
 	return buttons
