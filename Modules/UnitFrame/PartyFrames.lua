@@ -335,7 +335,7 @@ local function _ShowParty()
 		frame.hidden = false
 		-- Even if not registered with an actual unit watch, set as watched for the UnitFrames:Lock() function.
 		frame.isWatched = true
-		
+		frame:SetFrameStrata("LOW")
 	end
 end
 
