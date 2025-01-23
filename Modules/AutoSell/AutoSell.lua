@@ -56,12 +56,13 @@ module.options = {
 	},
 }
 
-local dnsLst = {
-		[20558] = true,
-		[20559] = true,
-		[20560] = true,
-		[29024] = true,
-		[32823] = true,
+local doNotSellList = {
+		-- [20558] = true, -- Warsong Gulch Mark of Honor (common)
+		-- [20559] = true, -- Arathi Basin Mark of Honor (common)
+		-- [20560] = true, -- Alterac Valley Mark of Honor (common)
+		-- [29024] = true, -- Eye of the Storm Mark of Honor (common)
+		[32823] = true, -- Illidari Lord Balthas' Instructions (poor)
+		[228431] = true, -- Rock Buddy (poor)
 }
 
 local GetContainerNumSlots = _G.GetContainerNumSlots or C_Container.GetContainerNumSlots
@@ -79,7 +80,8 @@ function module:MERCHANT_SHOW()
 		for slot=1, GetContainerNumSlots(bag), 1 do
 			if GetContainerItemLink(bag, slot) then
 				local name, link, rarity,_,_,_,_,_,_, _, sellPrice = GetItemInfo(GetContainerItemLink(bag, slot))
-				if name and not dnsLst[link:find("Hitem:(%d+)")] and rarity == 0 then
+				local itemId = link and tonumber(link:match("Hitem:(%d+)")) or 0
+				if name and not doNotSellList[itemId] and rarity == 0 then
 					local itemCount = GetItemCount(link)
 					if not soldLst[name] then
 						if itemCount > 1 then
