@@ -424,7 +424,7 @@ function module:RepBar_Update(frame)
 			barMin, barMax = 0, majorFactionInfo.renownLevelThreshold
 			isCapped = C_MajorFactions.HasMaximumRenown(factionID);
 			barValue = isCapped and majorFactionInfo.renownLevelThreshold or majorFactionInfo.renownReputationEarned or 0
-			standingText = RENOWN_LEVEL_LABEL .. majorFactionInfo.renownLevel
+			standingText = RENOWN_LEVEL_LABEL:format(majorFactionInfo.renownLevel)
 			r, g, b = addon:UnpackColorTable(BLUE_FONT_COLOR)
 		end
 
