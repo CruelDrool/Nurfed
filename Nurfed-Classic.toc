@@ -1,4 +1,4 @@
-## Interface: 11504
+## Interface: 11507
 ## Version: 1.0.0
 ## Title: Nurfed UI
 ## Notes: Inspired by Tivoli and Apoco.
