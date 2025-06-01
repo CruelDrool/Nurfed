@@ -1,4 +1,4 @@
-## Interface: 40401
+## Interface: 40402
 ## Version: 1.0.0
 ## Title: Nurfed UI
 ## Notes: Inspired by Tivoli and Apoco.
