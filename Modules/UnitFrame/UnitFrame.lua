@@ -505,82 +505,10 @@ function module:UpdateConfigs()
 	end
 end
 
-local function FrameDropDown_Initialize(frame, menu)
-	local menu;
-	local name;
-	local id = nil;
-	if frame.unit == "focus" then
-		menu = "FOCUS"
-	elseif frame.unit == "player" or UnitIsUnit("target", "player") then
-		menu = "SELF";
-	elseif UnitIsUnit(frame.unit, "vehicle") then
-		-- NOTE: vehicle check must come before pet check for accuracy's sake because
-		-- a vehicle may also be considered your pet
-		menu = "VEHICLE";
-	elseif UnitIsUnit(frame.unit, "pet") then
-		menu = "PET";
-	elseif frame.unit:find("boss") then
-		menu = "BOSS"
-	elseif UnitIsOtherPlayersBattlePet and UnitIsOtherPlayersBattlePet(frame.unit) then
-		menu = "OTHERBATTLEPET";
-	elseif UnitIsBattlePet and UnitIsBattlePet(frame.unit) then
-		menu = "BATTLEPET";
-	elseif UnitIsOtherPlayersPet(frame.unit) then
-		menu = "OTHERPET";
-	elseif UnitIsPlayer(frame.unit) then
-		id = UnitInRaid(frame.unit);
-		if id then
-			menu = "RAID_PLAYER";
-		elseif UnitInParty(frame.unit) then
-			menu = "PARTY";
-		else
-			if not (UnitIsMercenary and UnitIsMercenary("player")) then
-				if UnitCanCooperate("player", frame.unit) then
-					menu = "PLAYER";
-				else
-					menu = "ENEMY_PLAYER"
-				end
-			else
-				if UnitCanAttack("player", frame.unit) then
-					menu = "ENEMY_PLAYER"
-				else
-					menu = "PLAYER";
-				end
-			end
-		end
-	else
-		menu = "TARGET";
-		name = RAID_TARGET_ICON;
-	end
-	if menu then
-		if UnitPopupManager then
-			local tmpMenu = UnitPopupManager:GetMenu(menu)
-			if tmpMenu then
-				local buttons = {}
-				for k,v in ipairs(tmpMenu:GetButtons()) do
-					local text = v:GetText()
-					if not (text == SET_FOCUS or text == CLEAR_FOCUS or text == COPY_CHARACTER_NAME or text == HUD_EDIT_MODE_MENU) then
-						table.insert(buttons, v)
-					end
-				end
-				local menuName = addonName..menu
-				local UnitPopupMenu = CreateFromMixins(UnitPopupTopLevelMenuMixin)
-				UnitPopupManager:RegisterMenu(menuName, UnitPopupMenu)
-				function UnitPopupMenu:GetMenuButtons()
-					return buttons
-				end
-				menu = menuName
-			end
-		end
-		UnitPopup_ShowMenu(frame, menu, frame.unit, name, id);
-	end
-end
-
-function module:CreateFrame(modName, unit, events, oneventfunc, dropDownMenu, isWatched, id)
+function module:CreateFrame(modName, unit, events, oneventfunc, isWatched, id)
 	if not self:GetModule(modName) then return end
 	if not type(unit) == "string" then return end
 	if not type(events) == "table" then return end
-	if not dropDownMenu then return end
 	if not id then id = 0 end
 
 	local name = addonName.."_"..unit
@@ -630,40 +558,9 @@ function module:CreateFrame(modName, unit, events, oneventfunc, dropDownMenu, is
 	frame:SetScript("OnMouseWheel", function(f, delta) module:OnMouseWheel(f, delta) end)
 
 	frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-
-	local showmenu
-	if UnitPopup_OpenMenu then
-		if type(dropDownMenu) == "string" then
-			showmenu = function(f, ...)
-				UnitPopup_OpenMenu(dropDownMenu, {unit = f.unit});
-			end
-		elseif type(dropDownMenu) == "function" then
-			showmenu = dropDownMenu
-		end
-	else
-		local dropdown
-		if type(dropDownMenu) == "table" then
-			dropdown = dropDownMenu
-		elseif type(dropDownMenu) == "function" or type(dropDownMenu) == "string" then
-			dropdown = CreateFrame("Frame", frame, nil, nil, id)
-			dropdown.displayMode = "MENU"
-			local init
-			if type(dropDownMenu) == "function" then
-				init = dropDownMenu
-			elseif type(dropDownMenu) == "string" then
-				init = function() UnitPopup_ShowMenu(dropdown, dropDownMenu, frame.unit) end
-			end
-			dropdown.initialize = init
-		end
-
-		-- frame.dropdown = dropdown
-
-		showmenu = function()
-			ToggleDropDownMenu(1, nil, dropdown, "cursor")
-		end
-	end
-
-	SecureUnitButton_OnLoad(frame, frame.unit, showmenu)
+	frame:SetAttribute("*type1", "target")
+	frame:SetAttribute("*type2", "togglemenu")
+	frame:SetAttribute("unit", frame.unit)
 
 	local db = self.db.profile[modName].frames[frame.unit]
 	LibStub("LibWindow-1.1"):Embed(frame)

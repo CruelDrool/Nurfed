@@ -406,19 +406,27 @@ function module:OnInitialize()
 	-- Enable if we're supposed to be enabled
 	if self.db and self.db.enabled and UnitFrames:IsEnabled() then
 		self:Enable()
-		UnitFrames:RunOnPlayerEnteringWorld("DisableBlizz", self)
+		if #self.frames > 0 then
+			UnitFrames:RunOnPlayerEnteringWorld("DisableBlizz", self)
+		end
 	end
 end
 
 function module:OnEnable()
 
 	if #self.frames == 0 then
+		if InCombatLockdown() then
+			addon:AddOutOfCombatQueue("OnEnable", self)
+			addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+			return
+		end
+
 		if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
 			table.insert(events, "INCOMING_SUMMON_CHANGED")
 			table.insert(events, "UNIT_CTR_OPTIONS")
 		end
 		for i=1,MAX_PARTY_MEMBERS do
-			local frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, _G["PartyMemberFrame"..i.."DropDown"] or "PARTY", true, i)
+			local frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, true, i)
 			frame:SetScript("OnUpdate", OnUpdate)
 			table.insert(self.frames, frame)
 		end
@@ -429,22 +437,26 @@ function module:OnEnable()
 			UnitFrames:EnableFrame(frame)
 			Update(frame)
 		end
-	end
 
-	if HidePartyFrame and ShowPartyFrame then
-		self:SecureHook("HidePartyFrame", HideParty)
-		self:SecureHook("ShowPartyFrame", ShowParty)
-	else
-		self:SecureHook(PartyFrame, "UpdatePartyFrames", ToggleParty)
-	end
+		if HidePartyFrame and ShowPartyFrame then
+			self:SecureHook("HidePartyFrame", HideParty)
+			self:SecureHook("ShowPartyFrame", ShowParty)
+		else
+			self:SecureHook(PartyFrame, "UpdatePartyFrames", ToggleParty)
+		end
 
-	if UnitFrames:IsPlayerInWorld() then
-		self:DisableBlizz()
+		if UnitFrames:IsPlayerInWorld() then
+			self:DisableBlizz()
+		end
 	end
-
 end
 
 function module:OnDisable()
+	if #self.frames == 0 and InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnDisable", self)
+		return
+	end
+
 	self:EnableBlizz()
 	for _, frame in ipairs(self.frames) do
 		UnitFrames:DisableFrame(frame)

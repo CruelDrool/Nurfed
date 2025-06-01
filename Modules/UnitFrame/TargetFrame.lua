@@ -298,28 +298,40 @@ function module:OnInitialize()
 	-- Enable if we're supposed to be enabled
 	if self.db and self.db.enabled and UnitFrames:IsEnabled() then
 		self:Enable()
-		UnitFrames:RunOnPlayerEnteringWorld("DisableBlizz", self)
+		if self.frame then
+			UnitFrames:RunOnPlayerEnteringWorld("DisableBlizz", self)
+		end
 	end
 end
 
 function module:OnEnable()
 
 	if not self.frame then
-		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, TargetFrameDropDown or TargetFrameDropDown_Initialize or TargetFrame_OpenMenu, true)
+		if InCombatLockdown() then
+			addon:AddOutOfCombatQueue("OnEnable", self)
+			addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+			return
+		end
+
+		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, true)
 	end
 
 	if self.frame then
 		UnitFrames:EnableFrame(self.frame)
 		Update(self.frame)
-	end
 
-	if UnitFrames:IsPlayerInWorld() then
-		self:DisableBlizz()
+		if UnitFrames:IsPlayerInWorld() then
+			self:DisableBlizz()
+		end
 	end
-
 end
 
 function module:OnDisable()
+	if not self.frame and InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnDisable", self)
+		return
+	end
+
 	self:EnableBlizz()
 	UnitFrames:DisableFrame(self.frame)
 end

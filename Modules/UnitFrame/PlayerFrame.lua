@@ -1009,18 +1009,26 @@ function module:OnInitialize()
 	-- Enable if we're supposed to be enabled
 	if self.db and self.db.enabled and UnitFrames:IsEnabled() then
 		self:Enable()
-		UnitFrames:RunOnPlayerEnteringWorld(function()
-			self:DisableBlizz()
-			self:ClassResourceBars()
-			self:ToggleClassResourceBars()
-		end)
+		if self.frame then
+			UnitFrames:RunOnPlayerEnteringWorld(function()
+				self:DisableBlizz()
+				self:ClassResourceBars()
+				self:ToggleClassResourceBars()
+			end)
+		end
 	end
 end
 
 function module:OnEnable()
 
 	if not self.frame then
-		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, PlayerFrameDropDown or "SELF")
+		if InCombatLockdown() then
+			addon:AddOutOfCombatQueue("OnEnable", self)
+			addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
+			return
+		end
+
+		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent)
 		if self.frame.xp then XPbar_OnLoad(self.frame.xp) end
 		if self.frame.additionalPowerBar then AdditionalPowerBar_OnLoad(self.frame.additionalPowerBar) end
 		if self.frame.reputation then RepBar_OnLoad(self.frame.reputation) end
@@ -1038,16 +1046,21 @@ function module:OnEnable()
 		if self.frame.reputation then
 			self:RepBar_Update(self.frame.reputation)
 		end
-	end
 
-	if UnitFrames:IsPlayerInWorld() then
-		self:DisableBlizz()
-		self:ClassResourceBars()
-		self:ToggleClassResourceBars()
+		if UnitFrames:IsPlayerInWorld() then
+			self:DisableBlizz()
+			self:ClassResourceBars()
+			self:ToggleClassResourceBars()
+		end
 	end
 end
 
 function module:OnDisable()
+	if not self.frame and InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnDisable", self)
+		return
+	end
+
 	local _, classFileName = UnitClass("player")
 
 	if classFileName == "DEATHKNIGHT" and addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_WRATH_OF_THE_LICH_KING_CLASSIC then
