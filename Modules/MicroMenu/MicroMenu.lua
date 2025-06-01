@@ -78,7 +78,7 @@ if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
 		"DUNGEONS",
 		"COLLECTIONS",
 		"ADVENTURE_JOURNAL",
-		"BLIZZARD_STORE",
+		-- "BLIZZARD_STORE",
 		"GAME_MENU", -- Submenu
 		"SEPARATOR",
 		"CANCEL"
@@ -87,7 +87,7 @@ if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
 	subMenus = {
 		GAME_MENU = {
 			"OPTIONS",
-			"BLIZZARD_STORE",
+			-- "BLIZZARD_STORE",
 			"SEPARATOR",
 			"ADDONS",
 			"WHATS_NEW",
@@ -124,7 +124,7 @@ elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CLASSIC then
 	subMenus = {
 		GAME_MENU = {
 			"SUPPORT",
-			"BLIZZARD_STORE",
+			-- "BLIZZARD_STORE",
 			"SEPARATOR",
 			"OPTIONS",
 			"MACROS",
@@ -166,7 +166,7 @@ elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
 	subMenus = {
 		GAME_MENU = {
 			"SUPPORT",
-			"BLIZZARD_STORE",
+			-- "BLIZZARD_STORE",
 			"SEPARATOR",
 			"OPTIONS",
 			"MACROS",
@@ -268,7 +268,6 @@ local function ButtonsArray()
 		COLLECTIONS = { text = GetMenuButtonText(COLLECTIONS, "TOGGLECOLLECTIONS"), func = function() if InCombatLockdown() then return end; CollectionsMicroButton:Click() end, disabled = inCombatLockdown, },
 		ADVENTURE_JOURNAL = { text = GetMenuButtonText(ADVENTURE_JOURNAL, "TOGGLEENCOUNTERJOURNAL"), func = function() if InCombatLockdown() then return end; ToggleEncounterJournal() end, disabled = inCombatLockdown, },
 		DUNGEON_JOURNAL = { text = GetMenuButtonText(ENCOUNTER_JOURNAL, "TOGGLEENCOUNTERJOURNAL"), func = function() if InCombatLockdown() then return end; ToggleEncounterJournal() end, disabled = inCombatLockdown,  },
-		BLIZZARD_STORE = { text = BLIZZARD_STORE, func = function() ToggleStoreUI() end, }, -- Can be opened in combat. Fascinating!
 
 		GAME_MENU = { text = GetMenuButtonText(MAINMENU_BUTTON, "TOGGLEGAMEMENU"), func = function()
 			if InCombatLockdown() then return end
@@ -282,7 +281,7 @@ local function ButtonsArray()
 		end, nested = 1, disabled = inCombatLockdown, },
 		SUPPORT = { text = GAMEMENU_SUPPORT, func = function() if InCombatLockdown() then return end; ToggleHelpFrame() end, disabled = inCombatLockdown, },
 		HELP_REQUEST = { text = HELP_BUTTON, func = function() if InCombatLockdown() then return end; ToggleHelpFrame() end, disabled = inCombatLockdown, },
-		WHATS_NEW = { text = GAMEMENU_NEW_BUTTON, func = function() if InCombatLockdown() then return end; C_SplashScreen.RequestLatestSplashScreen(true) end, skip = not ( C_SplashScreen.CanViewSplashScreen() and not IsCharacterNewlyBoosted() ), disabled = inCombatLockdown, },
+		WHATS_NEW = { text = GAMEMENU_NEW_BUTTON, func = function() if InCombatLockdown() then return end; C_SplashScreen.RequestLatestSplashScreen(true) end, skip = not ( (C_SplashScreen and C_SplashScreen.CanViewSplashScreen()) and not IsCharacterNewlyBoosted() ), disabled = inCombatLockdown, },
 		OPTIONS = { text = GAMEMENU_OPTIONS, func = optionsFunc, },
 		-- UIOPTIONS = { text = UIOPTIONS_MENU, func = function() GameMenuButtonUIOptions:Click() end, },
 		-- KEY_BINDINGS = { text = KEY_BINDINGS, func = function() GameMenuButtonKeybindings:Click() end, },
@@ -295,11 +294,12 @@ local function ButtonsArray()
 		-- The functions for the buttons below are now restricted by Blizzard. The buttons are now disabled.
 		LOGOUT = { text = LOGOUT, func = function() Logout() end, disabled = true, },
 		EXIT_GAME = { text = EXIT_GAME, func = function() Quit() end, disabled = true, },
+		BLIZZARD_STORE = { text = BLIZZARD_STORE, func = function() ToggleStoreUI() end, disabled = true },
 	}
 
 	local level = UnitLevel("player")
 
-	if C_SpecializationInfo and not C_SpecializationInfo.CanPlayerUseTalentSpecUI() then
+	if (C_SpecializationInfo and C_SpecializationInfo.CanPlayerUseTalentSpecUI) and not C_SpecializationInfo.CanPlayerUseTalentSpecUI() then
 		local _, failureReason = C_SpecializationInfo.CanPlayerUseTalentSpecUI();
 		buttons["TALENTS"]["disabled"] = true
 		buttons["TALENTS"]["text"] = GetMenuButtonText(string.format('%s (%s)', talentsText, failureReason), "TOGGLETALENTS")
