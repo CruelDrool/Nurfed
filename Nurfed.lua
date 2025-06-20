@@ -313,3 +313,9 @@ end
 function addon:PLAYER_REGEN_ENABLED()
 	addon:EmptyFuncQueue(OutOfCombatQueue)
 end
+
+function addon:DebugLog(...)
+	if DLAPI then
+		DLAPI.DebugLog(addonName, ...)
+	end
+end
