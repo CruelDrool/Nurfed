@@ -271,9 +271,11 @@ end
 
 function module:DisableBlizz()
 	if TargetFrame.ApplySystemAnchor then
-		---@diagnostic disable-next-line: redefined-local
-		self:SecureHook(TargetFrame, "ApplySystemAnchor", function(self)
-			self:SetParent(UnitFrames.UIhider)
+		self:SecureHook(TargetFrame, "ApplySystemAnchor", function(frame)
+			if frame:IsVisible() then
+				addon:DebugLog("UI~6~WARN~TargetFrame.ApplySystemAnchor: frame is visible.")
+				UnitFrames:SetParent(frame, UnitFrames.UIhider)
+			end
 		end)
 	end
 
@@ -305,14 +307,13 @@ function module:OnInitialize()
 end
 
 function module:OnEnable()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnEnable", self)
+		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(displayName, addon.colors.moduleName)))
+		return
+	end
 
 	if not self.frame then
-		if InCombatLockdown() then
-			addon:AddOutOfCombatQueue("OnEnable", self)
-			addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
-			return
-		end
-
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, true)
 	end
 
@@ -327,8 +328,9 @@ function module:OnEnable()
 end
 
 function module:OnDisable()
-	if not self.frame and InCombatLockdown() then
+	if InCombatLockdown() then
 		addon:AddOutOfCombatQueue("OnDisable", self)
+		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(displayName, addon.colors.moduleName)))
 		return
 	end
 

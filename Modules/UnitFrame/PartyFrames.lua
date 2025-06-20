@@ -298,10 +298,15 @@ local function ShouldShowParty()
 	return not(IsInRaid() or raidStyle)
 end
 
-local function _HideParty()
-	for _,frame in pairs(module.frames) do
-		frame:SetParent(UIParent)
+local function HideParty()
+	if ShouldShowParty() then return end
 
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue(HideParty)
+		return
+	end
+
+	for _,frame in pairs(module.frames) do
 		if frame.isWatched then
 			UnregisterUnitWatch(frame)
 			frame.isWatched = false
@@ -315,19 +320,14 @@ local function _HideParty()
 	end
 end
 
-local function HideParty()
-	if ShouldShowParty() then return end
-	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue(_HideParty)
-		for _,frame in pairs(module.frames) do
-			frame:SetParent(UnitFrames.UIhider)
-		end
-	else
-		_HideParty()
-	end
-end
+local function ShowParty()
+	if not ShouldShowParty() then return end
 
-local function _ShowParty()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue(ShowParty)
+		return
+	end
+
 	for _,frame in pairs(module.frames) do
 		if UnitFrames.locked and not frame.isWatched then
 			RegisterUnitWatch(frame)
@@ -339,19 +339,6 @@ local function _ShowParty()
 	end
 end
 
-local function ShowParty()
-	if not ShouldShowParty() then return end
-	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue(_ShowParty)
-		for _,frame in pairs(module.frames) do
-			frame:SetParent(UIParent)
-			UnitFrames:UpdateReadyCheck(frame.unit, frame.readyCheck)
-		end
-	else
-		_ShowParty()
-	end
-end
-
 local function ToggleParty()
 	ShowParty()
 	HideParty()
@@ -359,9 +346,11 @@ end
 
 function module:DisableBlizz()
 	if PartyFrame then
-		---@diagnostic disable-next-line: redefined-local
-		self:SecureHook(PartyFrame, "ApplySystemAnchor", function(self)
-			self:SetParent(UnitFrames.UIhider)
+		self:SecureHook(PartyFrame, "ApplySystemAnchor", function(frame)
+			if frame:IsVisible() then
+				addon:DebugLog("UI~6~WARN~PartyFrame.ApplySystemAnchor: frame is visible.")
+				UnitFrames:SetParent(frame, UnitFrames.UIhider)
+			end
 		end)
 
 		PartyFrame:SetParent(UnitFrames.UIhider)
@@ -413,14 +402,13 @@ function module:OnInitialize()
 end
 
 function module:OnEnable()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnEnable", self)
+		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(displayName, addon.colors.moduleName)))
+		return
+	end
 
 	if #self.frames == 0 then
-		if InCombatLockdown() then
-			addon:AddOutOfCombatQueue("OnEnable", self)
-			addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
-			return
-		end
-
 		if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
 			table.insert(events, "INCOMING_SUMMON_CHANGED")
 			table.insert(events, "UNIT_CTR_OPTIONS")
@@ -452,8 +440,9 @@ function module:OnEnable()
 end
 
 function module:OnDisable()
-	if #self.frames == 0 and InCombatLockdown() then
+	if InCombatLockdown() then
 		addon:AddOutOfCombatQueue("OnDisable", self)
+		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(displayName, addon.colors.moduleName)))
 		return
 	end
 

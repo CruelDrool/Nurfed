@@ -952,21 +952,31 @@ function module:ClassResourceBars()
 end
 
 function module:DisableBlizzCastBar()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("DisableBlizzCastBar", self)
+		return
+	end
+
 	if not self.db.disableBlizzCastBar then return end
+
 	if PlayerCastingBarFrame then
 		PlayerCastingBarFrame:SetParent(UnitFrames.UIhider)
 
-		---@diagnostic disable-next-line: redefined-local
-		self:SecureHook(PlayerCastingBarFrame, "ApplySystemAnchor", function(self)
+		self:SecureHook(PlayerCastingBarFrame, "ApplySystemAnchor", function(frame)
 			if not PlayerCastingBarFrame.attachedToPlayerFrame then
-				self:SetParent(UnitFrames.UIhider)
+				if frame:IsVisible() then
+					addon:DebugLog("UI~6~WARN~PlayerCastingBarFrame.ApplySystemAnchor: frame is visible.")
+					UnitFrames:SetParent(frame, UnitFrames.UIhider)
+				end
 			end
 		end)
 
-		---@diagnostic disable-next-line: redefined-local
-		self:SecureHook(PlayerCastingBarFrame, "UpdateShownState", function(self)
+		self:SecureHook(PlayerCastingBarFrame, "UpdateShownState", function(frame)
 			if not PlayerCastingBarFrame.attachedToPlayerFrame then
-				self:SetParent(UnitFrames.UIhider)
+				if frame:IsVisible() then
+					addon:DebugLog("UI~6~WARN~PlayerCastingBarFrame.UpdateShownState: frame is visible.")
+					UnitFrames:SetParent(frame, UnitFrames.UIhider)
+				end
 			end
 		end)
 	else
@@ -975,6 +985,11 @@ function module:DisableBlizzCastBar()
 end
 
 function module:EnableBlizzCastBar()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("EnableBlizzCastBar", self)
+		return
+	end
+
 	if PlayerCastingBarFrame then
 		self:Unhook(PlayerCastingBarFrame, "ApplySystemAnchor")
 		self:Unhook(PlayerCastingBarFrame, "UpdateShownState")
@@ -986,9 +1001,11 @@ end
 
 function module:DisableBlizz()
 	if PlayerFrame.ApplySystemAnchor then
-		---@diagnostic disable-next-line: redefined-local
-		self:SecureHook(PlayerFrame, "ApplySystemAnchor", function(self)
-			self:SetParent(UnitFrames.UIhider)
+		self:SecureHook(PlayerFrame, "ApplySystemAnchor", function(frame)
+			if frame:IsVisible() then
+				addon:DebugLog("UI~6~WARN~PlayerFrame.ApplySystemAnchor: frame is visible.")
+				UnitFrames:SetParent(frame, UnitFrames.UIhider)
+			end
 		end)
 	end
 	PlayerFrame:SetParent(UnitFrames.UIhider)
@@ -1020,14 +1037,13 @@ function module:OnInitialize()
 end
 
 function module:OnEnable()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnEnable", self)
+		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(displayName, addon.colors.moduleName)))
+		return
+	end
 
 	if not self.frame then
-		if InCombatLockdown() then
-			addon:AddOutOfCombatQueue("OnEnable", self)
-			addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
-			return
-		end
-
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent)
 		if self.frame.xp then XPbar_OnLoad(self.frame.xp) end
 		if self.frame.additionalPowerBar then AdditionalPowerBar_OnLoad(self.frame.additionalPowerBar) end
@@ -1056,8 +1072,9 @@ function module:OnEnable()
 end
 
 function module:OnDisable()
-	if not self.frame and InCombatLockdown() then
+	if InCombatLockdown() then
 		addon:AddOutOfCombatQueue("OnDisable", self)
+		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(displayName, addon.colors.moduleName)))
 		return
 	end
 

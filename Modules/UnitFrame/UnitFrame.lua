@@ -457,20 +457,20 @@ function module:OnDisable()
 end
 
 function module:EnableUnitframes()
-	-- if InCombatLockdown() then
-	-- 	addon:AddOutOfCombatQueue("Enable", module)
-	-- 	addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
-	-- 	return
-	-- end
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("Enable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(displayName, addon.colors.moduleName)))
+		return
+	end
 	self:Enable()
 end
 
 function module:DisableUnitframes()
-	-- if InCombatLockdown() then
-	-- 	addon:AddOutOfCombatQueue("Disable", module)
-	-- 	addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
-	-- 	return
-	-- end
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("Disable", module)
+		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(displayName, addon.colors.moduleName)))
+		return
+	end
 	self:Disable()
 end
 
@@ -572,34 +572,30 @@ function module:CreateFrame(modName, unit, events, oneventfunc, isWatched, id)
 	return frame
 end
 
+function module:SetParent(frame, parent)
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("SetParent", self, frame, parent)
+		return
+	end
+
+	frame:SetParent(parent)
+end
+
 function module:DisableFrame(frame)
 	frame.isEnabled = false
 	frame:SetParent(self.UIhider)
 	if frame.isWatched then
-		if InCombatLockdown() then
-			addon:AddOutOfCombatQueue(function() UnregisterUnitWatch(frame);frame:Show() end)
-		else
-			UnregisterUnitWatch(frame)
-			frame:Show()
-		end
+		UnregisterUnitWatch(frame)
+		frame:Show()
 	end
 end
 
 function module:EnableFrame(frame)
 	frame:SetParent(UIParent)
-
-	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue("SetFrameStrata", frame, "LOW")
-	else
-		frame:SetFrameStrata("LOW")
-	end
+	frame:SetFrameStrata("LOW")
 
 	if frame.isWatched and self.locked then
-		if InCombatLockdown() then
-			addon:AddOutOfCombatQueue(RegisterUnitWatch, frame)
-		else
-			RegisterUnitWatch(frame)
-		end
+		RegisterUnitWatch(frame)
 	elseif not self.locked then
 		frame.overlay:Show()
 	end
@@ -2085,12 +2081,7 @@ end
 
 function module:TargetofTarget_Onload(frame, unit)
 	frame.unit = unit
-	if InCombatLockdown() then
-		addon:AddOutOfCombatQueue(RegisterUnitWatch, frame)
-	else
-		RegisterUnitWatch(frame)
-	end
-
+	RegisterUnitWatch(frame)
 	-- self.isWatched = true
 	-- self:RegisterEvent("PLAYER_ENTERING_WORLD");
 	-- self:RegisterEvent("UNIT_FACTION")

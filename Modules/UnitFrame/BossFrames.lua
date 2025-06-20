@@ -175,14 +175,18 @@ function module:DisableBlizz()
 	if BossTargetFrameContainer then
 		BossTargetFrameContainer:SetParent(UnitFrames.UIhider)
 
-		---@diagnostic disable-next-line: redefined-local
-		self:SecureHook(BossTargetFrameContainer, "ApplySystemAnchor", function(self)
-			self:SetParent(UnitFrames.UIhider)
+		self:SecureHook(BossTargetFrameContainer, "ApplySystemAnchor", function(frame)
+			if frame:IsVisible() then
+				addon:DebugLog("UI~6~WARN~BossTargetFrameContainer.ApplySystemAnchor: frame is visible.")
+				UnitFrames:SetParent(frame, UnitFrames.UIhider)
+			end
 		end)
 
-		---@diagnostic disable-next-line: redefined-local
-		self:SecureHook(BossTargetFrameContainer, "UpdateShownState", function(self)
-			self:SetParent(UnitFrames.UIhider)
+		self:SecureHook(BossTargetFrameContainer, "UpdateShownState", function(frame)
+			if frame:IsVisible() then
+				addon:DebugLog("UI~6~WARN~BossTargetFrameContainer.UpdateShownState: frame is visible.")
+				UnitFrames:SetParent(frame, UnitFrames.UIhider)
+			end
 		end)
 
 		BossTargetFrameContainer:SetParent(UnitFrames.UIhider)
@@ -220,14 +224,13 @@ function module:OnInitialize()
 end
 
 function module:OnEnable()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnEnable", self)
+		addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(displayName, addon.colors.moduleName)))
+		return
+	end
 
 	if #self.frames == 0 then
-		if InCombatLockdown() then
-			addon:AddOutOfCombatQueue("OnEnable", self)
-			addon:InfoMessage(string.format(addon.infoMessages.enableModuleInCombat, addon:WrapTextInColorCode(moduleName, addon.colors.moduleName)))
-			return
-		end
-
 		for i=1,MAX_BOSS_FRAMES do
 			local frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, true, i)
 			table.insert(self.frames, frame)
@@ -247,6 +250,12 @@ function module:OnEnable()
 end
 
 function module:OnDisable()
+	if InCombatLockdown() then
+		addon:AddOutOfCombatQueue("OnDisable", self)
+		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(displayName, addon.colors.moduleName)))
+		return
+	end
+
 	self:EnableBlizz()
 	for _, frame in ipairs(self.frames) do
 		UnitFrames:DisableFrame(frame)
