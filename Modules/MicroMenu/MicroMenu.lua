@@ -144,7 +144,7 @@ elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CLASSIC then
 			"PETBOOK",
 		},
 	}
-elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
+elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MISTS_OF_PANDARIA_CLASSIC then
 	mainMenu = {
 		"TITLE",
 		"BLANK",
@@ -154,9 +154,9 @@ elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
 		"ACHIEVEMENTS",
 		"QUESTLOG",
 		"GUILD",
-		"COLLECTIONS",
 		"PLAYER_V_PLAYER",
 		"DUNGEONS",
+		"COLLECTIONS",
 		"DUNGEON_JOURNAL",
 		"GAME_MENU", -- Submenu
 		"HELP_REQUEST",
@@ -222,8 +222,8 @@ local function ButtonsArray()
 		optionsFunc = function() if InCombatLockdown() then return end; GameMenuButtonOptions:Click() end
 		addonsFunc = function() if InCombatLockdown() then return end; GameMenuButtonAddons:Click() end
 		professionsFunc = function() if InCombatLockdown() then return end; ToggleSpellBook(BOOKTYPE_PROFESSION) end
-	elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
-		minLevelSpec = SHOW_SPEC_LEVEL
+	elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MISTS_OF_PANDARIA_CLASSIC then
+		minLevelSpec = 10
 		minLevelLFD = SHOW_LFD_LEVEL
 		minLevelAchi = 1
 		talentsText = TALENTS
@@ -365,7 +365,7 @@ local function ButtonsArray()
 		buttons["ACHIEVEMENTS"]["text"] = text
 	end
 
-	if TogglePVPFrame and addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
+	if TogglePVPFrame and addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
 		local text
 		local binding = "TOGGLECHARACTER4"
 		if level < SHOW_PVP_LEVEL then
