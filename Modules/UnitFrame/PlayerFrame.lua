@@ -549,7 +549,7 @@ end
 
 local function AdditionalPowerBar_OnLoad(frame)
 	local _, classFileName = UnitClass(unit)
-	if classFileName == "DRUID" or classFileName == "SHAMAN" or classFileName == "PRIEST" then
+	if classFileName == "DRUID" or classFileName == "SHAMAN" or classFileName == "PRIEST" or ( addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_MISTS_OF_PANDARIA_CLASSIC and classFileName =="MONK" ) then
 		local statusbar
 		if frame.statusbar then
 			statusbar = frame.statusbar
@@ -559,6 +559,12 @@ local function AdditionalPowerBar_OnLoad(frame)
 		end
 
 		statusbar.powerType = Enum.PowerType.Mana
+
+		if classFileName =="MONK" then
+			statusbar.specRestriction = SPEC_MONK_MISTWEAVER;
+			statusbar:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+		end
+
 		statusbar.updateFunc = function(self)
 			local f
 			if self.isChild then
@@ -566,7 +572,7 @@ local function AdditionalPowerBar_OnLoad(frame)
 			else
 				f = self
 			end
-			if UnitPowerType(self.unit) ~= statusbar.powerType and UnitPowerMax(self.unit, statusbar.powerType) ~= 0 and (not statusbar.specRestriction or statusbar.specRestriction == GetSpecialization()) then
+			if UnitPowerType(self.unit) ~= statusbar.powerType and UnitPowerMax(self.unit, statusbar.powerType) ~= 0 and (not statusbar.specRestriction or statusbar.specRestriction == C_SpecializationInfo.GetSpecialization()) then
 				statusbar.pauseUpdates = false
 				f:Show()
 		
@@ -884,20 +890,24 @@ end
 
 function module:ClassResourceBars()
 	if not self.frame then return end
-	if self.frame.resourceBars then return end
 
-	self.frame.resourceBars = CreateFrame("Frame",nil, self.frame)
-	self.frame.resourceBars:SetAllPoints()
-	-- self.frame.resourceBars.unit = unit
+	local createNewBars = false
+
+	if not self.frame.resourceBars then
+		self.frame.resourceBars = CreateFrame("Frame",nil, self.frame)
+		self.frame.resourceBars:SetAllPoints()
+		self.frame.resourceBars.unit = "player"
+		createNewBars = true
+	end
 
 	local resourceBars = self.frame.resourceBars
 	local relativeTo = "TOP"
 	local relativePoint = "BOTTOM"
 	local xOffset = 0
 	local yOffset =  0
+	local _, classFileName = UnitClass(resourceBars.unit)
 
-	local _, classFileName = UnitClass("player")
-	if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
+	if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE and createNewBars then
 		if classFileName == "ROGUE" then
 			resourceBars.comboPoints = CreateClassResourceBar(resourceBars, "RogueComboPointBarTemplate", relativeTo, relativePoint, xOffset, yOffset)
 		elseif classFileName == "DRUID" then
@@ -926,27 +936,40 @@ function module:ClassResourceBars()
 		else
 			resourceBars.totems = CreateClassResourceBar(resourceBars, "Nurfed_TotemFrame_Horizontal_Template", "BOTTOMLEFT", "TOPLEFT", -2, 3)
 		end
-		
 	end
 
 	-- Yoink! Let's hope nothing yoinks it back.
-	if classFileName == "DEATHKNIGHT" and addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_WRATH_OF_THE_LICH_KING_CLASSIC then
-		RuneFrame:ClearAllPoints()
-		RuneFrame:SetPoint(relativeTo, resourceBars, relativePoint, xOffset, yOffset)
-		RuneFrame:SetParent(resourceBars )
-	elseif addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
-		if classFileName == "WARLOCK" then
-			ShardBarFrame:ClearAllPoints()
-			ShardBarFrame:SetPoint(relativeTo, resourceBars, relativePoint, xOffset, yOffset)
-			ShardBarFrame:SetParent(resourceBars )
+	if addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_MISTS_OF_PANDARIA_CLASSIC then
+		if classFileName == "DEATHKNIGHT" then
+			RuneFrame:ClearAllPoints()
+			RuneFrame:SetPoint(relativeTo, resourceBars, relativePoint, xOffset, yOffset)
+			RuneFrame:SetParent(resourceBars)
+		elseif classFileName == "WARLOCK" then
+			WarlockPowerFrame:ClearAllPoints()
+			WarlockPowerFrame:SetPoint(relativeTo, resourceBars, relativePoint, xOffset, yOffset)
+			WarlockPowerFrame:SetParent(resourceBars)
 		elseif classFileName == "DRUID" then
 			EclipseBarFrame:ClearAllPoints()
 			EclipseBarFrame:SetPoint(relativeTo, resourceBars, relativePoint, xOffset, yOffset)
-			EclipseBarFrame:SetParent(resourceBars )
+			EclipseBarFrame:SetParent(resourceBars)
 		elseif classFileName == "PALADIN" then
 			PaladinPowerBar:ClearAllPoints()
 			PaladinPowerBar:SetPoint(relativeTo, resourceBars, relativePoint, xOffset, yOffset + 6)
-			PaladinPowerBar:SetParent(resourceBars )
+			PaladinPowerBar:SetParent(resourceBars)
+		elseif classFileName == "MONK" then
+			MonkHarmonyBar:ClearAllPoints()
+			MonkHarmonyBar:SetPoint(relativeTo, resourceBars, relativePoint, xOffset, yOffset + 14)
+			MonkHarmonyBar:SetParent(resourceBars)
+
+			local MonkStaggerUpdatePosition = function()
+				MonkStaggerBar:ClearAllPoints()
+				MonkStaggerBar:SetPoint(relativeTo, resourceBars, relativePoint, xOffset, yOffset - 30)
+				MonkStaggerBar:SetParent(resourceBars)
+			end
+
+			MonkStaggerUpdatePosition()
+
+			self:SecureHook("AlternatePowerBar_SetLook", MonkStaggerUpdatePosition)
 		end
 	end
 end
@@ -1078,27 +1101,38 @@ function module:OnDisable()
 		return
 	end
 
-	local _, classFileName = UnitClass("player")
+	if addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_MISTS_OF_PANDARIA_CLASSIC then
+		local _, classFileName = UnitClass("player")
 
-	if classFileName == "DEATHKNIGHT" and addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_WRATH_OF_THE_LICH_KING_CLASSIC then
-		RuneFrame:ClearAllPoints()
-		RuneFrame:SetPoint("TOP",PlayerFrame,"BOTTOM", 54, 34)
-		RuneFrame:SetParent(PlayerFrame)
-	elseif addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
-		if classFileName == "WARLOCK" then
-			ShardBarFrame:ClearAllPoints()
-			ShardBarFrame:SetPoint("TOP",PlayerFrame,"BOTTOM", 50, 34)
-			ShardBarFrame:SetParent(PlayerFrame)
+		if classFileName == "DEATHKNIGHT" then
+			RuneFrame:ClearAllPoints()
+			RuneFrame:SetPoint("TOP",PlayerFrame,"BOTTOM", 54, 34)
+			RuneFrame:SetParent(PlayerFrame)
+		elseif classFileName == "WARLOCK" then
+			WarlockPowerFrame:ClearAllPoints()
+			WarlockPowerFrame:SetPoint("TOP",PlayerFrame,"BOTTOM", 50, 34)
+			WarlockPowerFrame:SetParent(PlayerFrame)
 		elseif classFileName == "DRUID" then
 			EclipseBarFrame:ClearAllPoints()
 			EclipseBarFrame:SetPoint("TOP",PlayerFrame,"BOTTOM", 48, 40)
 			EclipseBarFrame:SetParent(PlayerFrame)
 		elseif classFileName == "PALADIN" then
 			PaladinPowerBar:ClearAllPoints()
-			PaladinPowerBar:SetPoint("TOP",PlayerFrame,"BOTTOM", 43,39)
+			PaladinPowerBar:SetPoint("TOP",PlayerFrame,"BOTTOM", 43, 39)
 			PaladinPowerBar:SetParent(PlayerFrame)
+		elseif classFileName == "MONK" then
+			MonkHarmonyBar:ClearAllPoints()
+			MonkHarmonyBar:SetPoint("TOP",PlayerFrame,"TOP", 49, -46)
+			MonkHarmonyBar:SetParent(PlayerFrame)
+
+			MonkStaggerBar:ClearAllPoints()
+			MonkStaggerBar:SetPoint("BOTTOMLEFT",PlayerFrame,"BOTTOMLEFT", 118, 4)
+			MonkStaggerBar:SetParent(PlayerFrame)
 		end
 	end
+
 	self:EnableBlizz()
+	self:UnhookAll()
+
 	UnitFrames:DisableFrame(self.frame)
 end
