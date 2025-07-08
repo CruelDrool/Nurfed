@@ -562,7 +562,6 @@ local function AdditionalPowerBar_OnLoad(frame)
 
 		if classFileName =="MONK" then
 			statusbar.specRestriction = SPEC_MONK_MISTWEAVER;
-			statusbar:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 		end
 
 		statusbar.updateFunc = function(self)
