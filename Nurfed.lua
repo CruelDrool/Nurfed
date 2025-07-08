@@ -60,6 +60,7 @@ addon.WOW_PROJECT_ID_CLASSIC = 2
 addon.WOW_PROJECT_ID_THE_BURNING_CRUSADE_CLASSIC = 3
 addon.WOW_PROJECT_ID_WRATH_OF_THE_LICH_KING_CLASSIC = 4
 addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC = 5
+addon.WOW_PROJECT_ID_MISTS_OF_PANDARIA_CLASSIC = 6
 
 function addon:SetupOptions()
 	self.options.plugins.profiles = { profiles = LibStub("AceDBOptions-3.0"):GetOptionsTable(self.db) }
