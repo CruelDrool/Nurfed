@@ -475,6 +475,11 @@ function module:DisableUnitframes()
 end
 
 function module:UpdateConfigs()
+	-- Go through the modules again to give them access to their databases.
+	for name, m in self:IterateModules() do
+		m.db = self.db.profile[name]
+	end
+
 	if self.db.profile.enabled then
 		-- If profile says that the module is supposed to enabled, but it isn't already, then go ahead and enable it.
 		if not self:IsEnabled() then
@@ -501,6 +506,13 @@ function module:UpdateConfigs()
 			if frame.model then
 				frame.model:RefreshUnit()
 			end
+		end
+	end
+
+	-- Go through the modules again, run :UpdateConfigs() if they have one.
+	for _, m in self:IterateModules() do
+		if m.UpdateConfigs then
+			m:UpdateConfigs()
 		end
 	end
 end
@@ -565,7 +577,6 @@ function module:CreateFrame(modName, unit, events, oneventfunc, isWatched, id)
 	local db = self.db.profile[modName].frames[frame.unit]
 	LibStub("LibWindow-1.1"):Embed(frame)
 	frame.RegisterConfig(frame, db)
-	frame:RestorePosition(frame)
 
 	self.frames[name] = modName
 
@@ -593,7 +604,7 @@ end
 function module:EnableFrame(frame)
 	frame:SetParent(UIParent)
 	frame:SetFrameStrata("LOW")
-
+	frame:RestorePosition(frame)
 	if frame.isWatched and self.locked then
 		RegisterUnitWatch(frame)
 	elseif not self.locked then

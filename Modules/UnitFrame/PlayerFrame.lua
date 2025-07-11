@@ -1135,3 +1135,26 @@ function module:OnDisable()
 
 	UnitFrames:DisableFrame(self.frame)
 end
+
+function module:UpdateConfigs()
+	if self.frame then
+
+		Update(self.frame)
+
+		if self.frame.xp then
+			self:XPbar_Update(self.frame.xp)
+		end
+
+		if self.frame.reputation then
+			self:RepBar_Update(self.frame.reputation)
+		end
+
+		if self.db.disableBlizzCastBar then
+			self:DisableBlizzCastBar()
+		else
+			self:EnableBlizzCastBar()
+		end
+
+		self:ToggleClassResourceBars()
+	end
+end
