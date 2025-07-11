@@ -342,10 +342,10 @@ local function ButtonsArray()
 		end
 	else
 		buttons["GUILD"]["disabled"] = true
-		buttons["GUILD"]["text"] = GetMenuButtonText(string.format('%s (%s)', LOOKINGFORGUILD, FEATURE_UNAVAILBLE_PLAYER_IS_NEUTRAL), "TOGGLEGUILDTAB")
+		buttons["GUILD"]["text"] = GetMenuButtonText(string.format('%s (%s)', LOOKINGFORGUILD, FEATURE_NOT_AVAILBLE_PANDAREN or FEATURE_UNAVAILBLE_PLAYER_IS_NEUTRAL), "TOGGLEGUILDTAB")
 
 		buttons["DUNGEONS"]["disabled"] = true
-		buttons["DUNGEONS"]["text"] = GetMenuButtonText(string.format('%s (%s)', LFDtext, FEATURE_UNAVAILBLE_PLAYER_IS_NEUTRAL), LFDKeybind)
+		buttons["DUNGEONS"]["text"] = GetMenuButtonText(string.format('%s (%s)', LFDtext, FEATURE_NOT_AVAILBLE_PANDAREN or FEATURE_UNAVAILBLE_PLAYER_IS_NEUTRAL), LFDKeybind)
 	end
 
 	if not (C_AdventureJournal and C_AdventureJournal.CanBeShown()) then
