@@ -995,7 +995,20 @@ end
 
 --------------------------------------------
 
-local GetLootMethod = _G.GetLootMethod or C_PartyInfo.GetLootMethod
+ -- TODO: Check that Classic can use C_PartyInfo.GetLootMethod().
+local lootMethods = {
+	[0] = "freeforall", -- Enum.LootMethod.Freeforall
+	[1] = "roundrobin", -- Enum.LootMethod.Roundrobin
+	[2] = "master", -- Enum.LootMethod.Masterlooter
+	[3] = "group", -- Enum.LootMethod.Group
+	[4] = "needbeforegreed", -- Enum.LootMethod.Needbeforegreed
+	[5] = "personalloot", -- Enum.LootMethod.Personal
+}
+
+local GetLootMethod = _G.GetLootMethod or function()
+	local lootMethodId, masterlooterPartyID, masterlooterRaidID = C_PartyInfo.GetLootMethod()
+	return lootMethods[lootMethodId], masterlooterPartyID, masterlooterRaidID
+end
 
 function module:UpdateLoot(frame)
 	local icon = frame.master
