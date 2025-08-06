@@ -995,6 +995,8 @@ end
 
 --------------------------------------------
 
+local GetLootMethod = _G.GetLootMethod or C_PartyInfo.GetLootMethod
+
 function module:UpdateLoot(frame)
 	local icon = frame.master
 	local unit = frame.unit
