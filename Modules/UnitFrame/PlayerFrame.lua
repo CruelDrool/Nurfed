@@ -871,10 +871,53 @@ local function StaggerBar_Init(parent, relativeTo, relativePoint, xOffset, yOffs
 end
 
 local function CreateClassResourceBar(parent, template, relativeTo, relativePoint, xOffset, yOffset)
-	local frame =  CreateFrame("Frame", nil, parent, template..", Nurfed_Class_Resource_Bar_Template")
+	local frame =  CreateFrame("Frame", nil, parent, template)
+
+	if frame.resourceBarMixin and frame.resourceBarMixin.Setup then
+	--[[
+		1. Template Nurfed_Class_Resource_Bar_Template will empty the these two keys: .class and .class. Instead, the keys .classFileName and .specialization will be used in invdiual templates.
+		2. A copy of the table frame.resourceBarMixin, since all tables in lua are by reference. Need a new memory allocation, free of taint.
+		3. Re-define the function frame.resourceBarMixin.Setup to remove this line: "PlayerFrame.classPowerBar = self;".
+
+		May this last a long time!
+	--]]
+
+		-- Copy the table.
+		frame.resourceBarMixin = CopyTable(frame.resourceBarMixin)
+
+		-- Re-define the function.
+		frame.resourceBarMixin.Setup = function(f)
+			local _, class = UnitClass(unit)
+			local spec = C_SpecializationInfo.GetSpecialization()
+			local showBar = false
+
+			if class == f.classFileName then
+				if not f.specialization or spec == f.specialization then
+					f:RegisterUnitEvent("UNIT_POWER_FREQUENT", unit)
+					f:RegisterEvent("PLAYER_ENTERING_WORLD")
+					f:RegisterUnitEvent("UNIT_DISPLAYPOWER", unit) -- The original had :RegisterEvent() here.
+					showBar = true
+				else
+					f:UnregisterEvent("UNIT_POWER_FREQUENT")
+					f:UnregisterEvent("PLAYER_ENTERING_WORLD")
+					f:UnregisterEvent("UNIT_DISPLAYPOWER")
+				end
+
+				f:RegisterEvent("PLAYER_TALENT_UPDATE")
+			end
+
+			f:SetShown(showBar)
+			return showBar
+		end
+
+		-- Re-run ClassResourceBarMixin:Setup(). This will also run frame.resourceBarMixin.Setup()
+		frame:Setup()
+	end
+
 	frame:ClearAllPoints()
 	frame:SetPoint(relativeTo, parent, relativePoint, xOffset, yOffset)
 	frame:SetParent(parent)
+
 	return frame
 end
 
@@ -908,9 +951,18 @@ function module:ClassResourceBars()
 
 	if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE and createNewBars then
 		if classFileName == "ROGUE" then
-			resourceBars.comboPoints = CreateClassResourceBar(resourceBars, "RogueComboPointBarTemplate", relativeTo, relativePoint, xOffset, yOffset)
+			resourceBars.comboPoints = CreateClassResourceBar(resourceBars, "Nurfed_Rogue_Resource_Bar_Template", relativeTo, relativePoint, xOffset, yOffset)
+
+			local RogueComboPointsUpdatePosition = function()
+				local maxPoints = UnitPowerMax(unit, Enum.PowerType.ComboPoints)
+				resourceBars.comboPoints:SetPoint(relativeTo, resourceBars, relativePoint, xOffset + UnitPowerMax(unit, Enum.PowerType.ComboPoints) > 5 and ( 10 * (maxPoints - 5) ) or 0, yOffset)
+			end
+
+			RogueComboPointsUpdatePosition()
+
+			self:SecureHook(resourceBars.comboPoints, "UpdateMaxPower", RogueComboPointsUpdatePosition)
 		elseif classFileName == "DRUID" then
-			resourceBars.comboPoints = CreateClassResourceBar(resourceBars, "DruidComboPointBarTemplate", relativeTo, relativePoint, xOffset, yOffset)
+			resourceBars.comboPoints = CreateClassResourceBar(resourceBars, "Nurfed_Druid_Resource_Bar_Template", relativeTo, relativePoint, xOffset, yOffset)
 		elseif classFileName == "MONK" then
 			resourceBars.stagger = StaggerBar_Init(resourceBars, relativeTo, relativePoint, xOffset, yOffset)
 			resourceBars.harmony = CreateClassResourceBar(resourceBars, "Nurfed_Monk_Resource_Bar_Template", relativeTo, relativePoint, xOffset, yOffset)
@@ -918,7 +970,7 @@ function module:ClassResourceBars()
 			resourceBars.arcaneCharges = CreateClassResourceBar(resourceBars, "Nurfed_Mage_Arcane_Resource_Bar_Template", relativeTo, relativePoint, xOffset, yOffset)
 			resourceBars.arcaneCharges:SetScale(0.9)
 		elseif classFileName == "WARLOCK" then
-			resourceBars.soulShards = CreateClassResourceBar(resourceBars, "WarlockPowerFrameTemplate", relativeTo, relativePoint, xOffset, yOffset)
+			resourceBars.soulShards = CreateClassResourceBar(resourceBars, "Nurfed_Warlock_Resource_Bar_Template", relativeTo, relativePoint, xOffset, yOffset)
 			resourceBars.soulShards:SetScale(0.9)
 		elseif classFileName == "EVOKER" then
 			resourceBars.essence = CreateClassResourceBar(resourceBars, "Nurfed_Evoker_Resource_Bar_Template", relativeTo, relativePoint, xOffset, yOffset+4)
@@ -957,12 +1009,13 @@ function module:ClassResourceBars()
 			PaladinPowerBar:SetParent(resourceBars)
 		elseif classFileName == "MONK" then
 			MonkHarmonyBar:ClearAllPoints()
-			MonkHarmonyBar:SetPoint(relativeTo, resourceBars, relativePoint, xOffset, yOffset + 14)
+			MonkHarmonyBar:SetPoint(relativeTo, resourceBars, relativePoint, xOffset, yOffset + 20)
 			MonkHarmonyBar:SetParent(resourceBars)
+			MonkHarmonyBar:SetFrameLevel(0)
 
 			local MonkStaggerUpdatePosition = function()
 				MonkStaggerBar:ClearAllPoints()
-				MonkStaggerBar:SetPoint(relativeTo, resourceBars, relativePoint, xOffset, yOffset - 30)
+				MonkStaggerBar:SetPoint(relativeTo, resourceBars, relativePoint, xOffset, yOffset - 18)
 				MonkStaggerBar:SetParent(resourceBars)
 			end
 
@@ -1123,10 +1176,13 @@ function module:OnDisable()
 			MonkHarmonyBar:ClearAllPoints()
 			MonkHarmonyBar:SetPoint("TOP",PlayerFrame,"TOP", 49, -46)
 			MonkHarmonyBar:SetParent(PlayerFrame)
+			MonkHarmonyBar:SetFrameLevel(3)
 
+			self:Unhook("AlternatePowerBar_SetLook")
 			MonkStaggerBar:ClearAllPoints()
 			MonkStaggerBar:SetPoint("BOTTOMLEFT",PlayerFrame,"BOTTOMLEFT", 118, 4)
 			MonkStaggerBar:SetParent(PlayerFrame)
+			AlternatePowerBar_SetLook(MonkStaggerBar)
 		end
 	end
 

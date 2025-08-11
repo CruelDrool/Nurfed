@@ -685,6 +685,8 @@
 			<KeyValue key="showTooltip" value="true" type="boolean"/>
 			<KeyValue key="isManagedFrame" value="false" type="boolean"/>
 			<KeyValue key="isPlayerFrameBottomManagedFrame" value="false" type="boolean"/>
+			<KeyValue key="class" value="" type="string"/>
+			<KeyValue key="spec" value="" type="global"/>
 		</KeyValues>
 		<Scripts>
 			<OnShow/>
@@ -692,35 +694,60 @@
 		</Scripts>
 	</Frame>
 
-	<Frame name="Nurfed_Evoker_Resource_Bar_Template" inherits="EssencePlayerFrameTemplate" virtual="true">
+	<Frame name="Nurfed_Evoker_Resource_Bar_Template" inherits="EssencePlayerFrameTemplate, Nurfed_Class_Resource_Bar_Template" virtual="true">
 		<KeyValues>
-			<!-- Blizzard's own EssencePlayerFrameTemplate has this value set to "DRACTHYR"! Why?! -->
-			<KeyValue key="class" value="EVOKER" type="string"/>
+			<KeyValue key="classFileName" value="EVOKER" type="string"/>
 		</KeyValues>
 	</Frame>
 
-	<Frame name="Nurfed_Mage_Arcane_Resource_Bar_Template" inherits="MageArcaneChargesFrameTemplate" mixin="MagePowerBar" virtual="true">
-	<!-- Blizzard's own MageArcaneChargesFrameTemplate has no Mixin set. Instead it's on MageArcaneChargesFrame -->
+	<Frame name="Nurfed_Mage_Arcane_Resource_Bar_Template" inherits="MageArcaneChargesFrameTemplate, Nurfed_Class_Resource_Bar_Template" mixin="MagePowerBar" virtual="true">
+		<!-- Blizzard's own MageArcaneChargesFrameTemplate has no Mixin set. Instead it's on MageArcaneChargesFrame -->
+		<KeyValues>
+			<KeyValue key="classFileName" value="MAGE" type="string"/>
+			<KeyValue key="specialization" value="SPEC_MAGE_ARCANE" type="global"/>
+		</KeyValues>
 	</Frame>
 	
-	<Frame name="Nurfed_Monk_Resource_Bar_Template" inherits="MonkHarmonyBarFrameTemplate" virtual="true">
+	<Frame name="Nurfed_Monk_Resource_Bar_Template" inherits="MonkHarmonyBarFrameTemplate, Nurfed_Class_Resource_Bar_Template" virtual="true">
 		<KeyValues>
+			<KeyValue key="classFileName" value="MONK" type="string"/>
+			<KeyValue key="specialization" value="" type="global"/>
 			<KeyValue key="tooltip1" value="CHI_POWER" type="global"/>
 			<KeyValue key="tooltip2" value="CHI_TOOLTIP" type="global"/>
 		</KeyValues>
 	</Frame>
 
-	<Frame name="Nurfed_Paladin_Resource_Bar_Template" inherits="PaladinPowerBarFrameTemplate" virtual="true">
+	<Frame name="Nurfed_Paladin_Resource_Bar_Template" inherits="PaladinPowerBarFrameTemplate, Nurfed_Class_Resource_Bar_Template" virtual="true">
 		<KeyValues>
+			<KeyValue key="classFileName" value="PALADIN" type="string"/>
 			<KeyValue key="tooltip1" value="HOLY_POWER" type="global"/>
 			<KeyValue key="tooltip2" value="HOLY_POWER_TOOLTIP" type="global"/>
 		</KeyValues>
 	</Frame>
 
-	<Frame name="Nurfed_DeathKnight_Resource_Bar_Template" inherits="RuneFrameTemplate" virtual="true">
+	<Frame name="Nurfed_DeathKnight_Resource_Bar_Template" inherits="RuneFrameTemplate, Nurfed_Class_Resource_Bar_Template" virtual="true">
 		<KeyValues>
+			<KeyValue key="classFileName" value="DEATHKNIGHT" type="string"/>
 			<KeyValue key="tooltip" value="RUNES_TOOLTIP" type="global"/>
 			<KeyValue key="tooltipTitle" value="COMBAT_TEXT_RUNE_DEATH" type="global"/>
+		</KeyValues>
+	</Frame>
+
+	<Frame name="Nurfed_Druid_Resource_Bar_Template" inherits="DruidComboPointBarTemplate, Nurfed_Class_Resource_Bar_Template" virtual="true">
+		<KeyValues>
+			<KeyValue key="classFileName" value="DRUID" type="string"/>
+		</KeyValues>
+	</Frame>
+
+	<Frame name="Nurfed_Rogue_Resource_Bar_Template" inherits="RogueComboPointBarTemplate, Nurfed_Class_Resource_Bar_Template" virtual="true">
+		<KeyValues>
+			<KeyValue key="classFileName" value="ROGUE" type="string"/>
+		</KeyValues>
+	</Frame>
+
+	<Frame name="Nurfed_Warlock_Resource_Bar_Template" inherits="WarlockPowerFrameTemplate, Nurfed_Class_Resource_Bar_Template" virtual="true">
+		<KeyValues>
+			<KeyValue key="classFileName" value="WARLOCK" type="string"/>
 		</KeyValues>
 	</Frame>
 
