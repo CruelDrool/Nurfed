@@ -875,7 +875,7 @@ local function CreateClassResourceBar(parent, template, relativeTo, relativePoin
 
 	if frame.resourceBarMixin and frame.resourceBarMixin.Setup then
 	--[[
-		1. Template Nurfed_Class_Resource_Bar_Template will empty the these two keys: .class and .class. Instead, the keys .classFileName and .specialization will be used in invdiual templates.
+		1. Template Nurfed_Class_Resource_Bar_Template will empty the these two keys: .class and .class. Instead, the keys .classFileName and .specialization will be used in individual templates.
 		2. A copy of the table frame.resourceBarMixin, since all tables in lua are by reference. Need a new memory allocation, free of taint.
 		3. Re-define the function frame.resourceBarMixin.Setup to remove this line: "PlayerFrame.classPowerBar = self;".
 
@@ -960,7 +960,7 @@ function module:ClassResourceBars()
 
 			RogueComboPointsUpdatePosition()
 
-			self:SecureHook(resourceBars.comboPoints, "UpdateMaxPower", RogueComboPointsUpdatePosition)
+			hooksecurefunc(resourceBars.comboPoints, "UpdateMaxPower", RogueComboPointsUpdatePosition)
 		elseif classFileName == "DRUID" then
 			resourceBars.comboPoints = CreateClassResourceBar(resourceBars, "Nurfed_Druid_Resource_Bar_Template", relativeTo, relativePoint, xOffset, yOffset)
 		elseif classFileName == "MONK" then
