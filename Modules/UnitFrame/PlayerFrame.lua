@@ -871,7 +871,7 @@ local function StaggerBar_Init(parent, relativeTo, relativePoint, xOffset, yOffs
 end
 
 local function CreateClassResourceBar(parent, template, relativeTo, relativePoint, xOffset, yOffset)
-	local frame =  securecallfunction(CreateFrame, "Frame", nil, parent, template..", Nurfed_Class_Resource_Bar_Template")
+	local frame =  CreateFrame("Frame", nil, parent, template..", Nurfed_Class_Resource_Bar_Template")
 	frame:ClearAllPoints()
 	frame:SetPoint(relativeTo, parent, relativePoint, xOffset, yOffset)
 	frame:SetParent(parent)
