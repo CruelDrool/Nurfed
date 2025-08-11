@@ -1317,7 +1317,7 @@ local function HealthBar_Text(frame)
 
 end
 
-function HealthBar_Gradient(frame, elapsed, gradient)
+local function HealthBar_Gradient(frame, elapsed, gradient)
 	if not gradient then gradient = 0 end
 	if frame.maxValue == 0 then return end
 	-- local unit = frame:GetParent().unit

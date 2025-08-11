@@ -162,7 +162,7 @@ local function UpdateCombo(frame)
 	end
 end
 
-function UpdateQuestionIcon(frame)
+local function UpdateQuestionIcon(frame)
 	if (UnitIsQuestBoss and UnitIsQuestBoss(frame.unit)) then
 		frame.questIcon:Show()
 	else
