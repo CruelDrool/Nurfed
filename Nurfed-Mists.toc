@@ -4,6 +4,7 @@
 ## Notes: Inspired by Tivoli and Apoco.
 ## Author: CruelDrool
 ## SavedVariables: NurfedDB
+## OptionalDeps: _DebugLog
 ## X-Category: Interface Enhancements
 
 Libs\LibStub\LibStub.lua

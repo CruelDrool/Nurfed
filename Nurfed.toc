@@ -5,6 +5,7 @@
 ## Author: CruelDrool
 ## IconTexture: Interface\AddOns\Nurfed\Images\locked
 ## SavedVariables: NurfedDB
+## OptionalDeps: _DebugLog
 ## X-Category: Interface Enhancements
 
 Libs\LibStub\LibStub.lua
