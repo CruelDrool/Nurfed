@@ -1,7 +1,13 @@
+---@diagnostic disable: undefined-global
+
 local addonName = ...
 local moduleName = "ShamanClassColor"
 local displayName = "%s class color"
+
+---@class Addon
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
+
+---@class ShamanClassColor: AddonModule
 local module = addon:NewModule(moduleName)
 
 local defaults = {

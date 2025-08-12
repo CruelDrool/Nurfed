@@ -1,7 +1,13 @@
+---@diagnostic disable: undefined-global
+
 local addonName = ...
 local moduleName = "Chat"
 local displayName = moduleName
+
+---@class Addon
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
+
+---@class Chat: AddonModule
 local module = addon:NewModule(moduleName)
 
 local defaults = {
@@ -138,7 +144,7 @@ function module:Scrolling()
 
 	if enabled then
 		SetCVar("chatMouseScroll","1")
-		if not self:IsHooked("FloatingChatFrame_OnMouseScroll", ScrollingHook) then
+		if not self:IsHooked("FloatingChatFrame_OnMouseScroll") then
 			self:SecureHook("FloatingChatFrame_OnMouseScroll", ScrollingHook)
 		end
 		-- InterfaceOptionsSocialPanelChatMouseScroll_SetScrolling("1")
@@ -146,8 +152,8 @@ function module:Scrolling()
 	
 	if not enabled then
 		SetCVar("chatMouseScroll","0")
-		if self:IsHooked("FloatingChatFrame_OnMouseScroll", ScrollingHook) then
-			self:Unhook("FloatingChatFrame_OnMouseScroll", ScrollingHook)
+		if self:IsHooked("FloatingChatFrame_OnMouseScroll") then
+			self:Unhook("FloatingChatFrame_OnMouseScroll")
 		end
 		-- InterfaceOptionsSocialPanelChatMouseScroll_SetScrolling("0")
 	end

@@ -1,7 +1,13 @@
+---@diagnostic disable: undefined-global
+
 local addonName = ...
 local moduleName = "MicroMenu"
 local displayName = "WoW micro menu"
+
+---@class Addon
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
+
+---@class MicroMenu: AddonModule
 local module = addon:NewModule(moduleName)
 
 local defaults = {
@@ -189,7 +195,7 @@ end
 
 -- /run for i=1,GetNumBindings() do local a, b, c = GetBinding(i);if string.find(a, "^TOGGLE") then print(a, c) end end
 
-local HasPetSpells = _G.HasPetSpells or C_SpellBook.HasPetSpells
+local HasPetSpells = _G["HasPetSpells"] or C_SpellBook.HasPetSpells
 
 -- This functions returns an array the contains the available buttons that can be used in main menu itself and submenus.
 local function ButtonsArray()
@@ -207,6 +213,7 @@ local function ButtonsArray()
 		LFDtext = DUNGEONS_BUTTON
 		LFDKeybind = "TOGGLEGROUPFINDER"
 		optionsFunc = function() if InCombatLockdown() then return end; SettingsPanel.Open(SettingsPanel) end
+		---@diagnostic disable-next-line: redundant-parameter
 		addonsFunc = function() if InCombatLockdown() then return end; ShowUIPanel(AddonList, nil, G_GameMenuFrameContextKey) end
 		professionsFunc = function() if InCombatLockdown() then return end; ToggleProfessionsBook() end
 	elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CLASSIC then

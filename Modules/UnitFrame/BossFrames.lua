@@ -1,9 +1,17 @@
+---@diagnostic disable: undefined-global
+
 local addonName = ...
 local moduleName = "BossFrames"
 local displayName = moduleName
+
+---@class Addon
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
+
+---@class UnitFrames
 local UnitFrames = addon:GetModule("UnitFrames")
-local module = UnitFrames:NewModule(moduleName, "AceHook-3.0")
+
+---@class BossFrames: UnitFramesModule
+local module = UnitFrames:NewModule(moduleName)
 local unit = "boss"
 
 module.defaults = {
@@ -116,7 +124,7 @@ local events = {
 
 
 local function Update(frame)
-	UnitFrames:PowerBar_Update(frame.powerBar, frame.unit)
+	UnitFrames:PowerBar_Update(frame.powerBar)
 	UnitFrames:HealthBar_Update(frame.health)
 	UnitFrames:UpdateModel(frame)
 	if UnitExists(frame.unit) then

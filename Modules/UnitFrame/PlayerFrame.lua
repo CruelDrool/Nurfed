@@ -1,9 +1,17 @@
+---@diagnostic disable: undefined-global
+
 local addonName = ...
 local moduleName = "PlayerFrame"
 local displayName = moduleName
+
+---@class Addon
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
+
+---@class UnitFrames
 local UnitFrames = addon:GetModule("UnitFrames")
-local module = UnitFrames:NewModule(moduleName, "AceHook-3.0")
+
+---@class PlayerFrame: UnitFramesModule
+local module = UnitFrames:NewModule(moduleName)
 local unit = "player"
 
 module.defaults = {
@@ -382,7 +390,7 @@ local function OnEvent(frame, event, ...)
 	end
 end
 
-local GetWatchedFactionInfo = _G.GetWatchedFactionInfo or function()
+local GetWatchedFactionInfo = _G["GetWatchedFactionInfo"] or function()
 	local info = C_Reputation and C_Reputation.GetWatchedFactionData() or {}
 	return info.name or nil,
 	info.reaction or 0,
@@ -421,11 +429,13 @@ function module:RepBar_Update(frame)
 
 		if isMajorFaction then
 			local majorFactionInfo = C_MajorFactions.GetMajorFactionData(factionID)
-			barMin, barMax = 0, majorFactionInfo.renownLevelThreshold
-			isCapped = C_MajorFactions.HasMaximumRenown(factionID);
-			barValue = isCapped and majorFactionInfo.renownLevelThreshold or majorFactionInfo.renownReputationEarned or 0
-			standingText = RENOWN_LEVEL_LABEL:format(majorFactionInfo.renownLevel)
-			r, g, b = addon:UnpackColorTable(BLUE_FONT_COLOR)
+			if majorFactionInfo then
+				barMin, barMax = 0, majorFactionInfo.renownLevelThreshold
+				isCapped = C_MajorFactions.HasMaximumRenown(factionID);
+				barValue = isCapped and majorFactionInfo.renownLevelThreshold or majorFactionInfo.renownReputationEarned or 0
+				standingText = RENOWN_LEVEL_LABEL:format(majorFactionInfo.renownLevel)
+				r, g, b = addon:UnpackColorTable(BLUE_FONT_COLOR)
+			end
 		end
 
 		if paragonID and isCapped then
@@ -843,6 +853,7 @@ local function StaggerBar_Init(parent, relativeTo, relativePoint, xOffset, yOffs
 
 	statusbar.Spark = statusbar:CreateTexture(nil, "OVERLAY","TextStatusBarSparkTemplate" )
 	statusbar:InitializeTextStatusBar()
+	---@diagnostic disable-next-line :undefined-field
 	statusbar.Spark:SetVisuals(frame.artInfo.spark)
 
 	local powerMaskAtlas = "UI-HUD-UnitFrame-Player-PortraitOn-Bar-Mana-Mask"
@@ -1012,6 +1023,7 @@ function module:ClassResourceBars()
 			MonkHarmonyBar:SetPoint(relativeTo, resourceBars, relativePoint, xOffset, yOffset + 20)
 			MonkHarmonyBar:SetParent(resourceBars)
 			MonkHarmonyBar:SetFrameLevel(0)
+			
 
 			local MonkStaggerUpdatePosition = function()
 				MonkStaggerBar:ClearAllPoints()
@@ -1155,7 +1167,6 @@ function module:OnDisable()
 
 	if addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_MISTS_OF_PANDARIA_CLASSIC then
 		local _, classFileName = UnitClass("player")
-
 		if classFileName == "DEATHKNIGHT" then
 			RuneFrame:ClearAllPoints()
 			RuneFrame:SetPoint("TOP",PlayerFrame,"BOTTOM", 54, 34)

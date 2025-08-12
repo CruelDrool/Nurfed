@@ -1,9 +1,17 @@
+---@diagnostic disable: undefined-global
+
 local addonName = ...
 local moduleName = "FocusFrame"
 local displayName = moduleName
+
+---@class Addon
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
+
+---@class UnitFrames
 local UnitFrames = addon:GetModule("UnitFrames")
-local module = UnitFrames:NewModule(moduleName, "AceHook-3.0")
+
+---@class FocusFrame: UnitFramesModule
+local module = UnitFrames:NewModule(moduleName)
 local unit = "focus"
 
 module.defaults = {
@@ -114,7 +122,7 @@ local events = {
 }
 
 local function Update(frame)
-	UnitFrames:PowerBar_Update(frame.powerBar, frame.unit)
+	UnitFrames:PowerBar_Update(frame.powerBar)
 	UnitFrames:HealthBar_Update(frame.health)
 	if frame.threat then UnitFrames:ThreatBar_Update(frame.threat) end
 	UnitFrames:UpdateModel(frame)

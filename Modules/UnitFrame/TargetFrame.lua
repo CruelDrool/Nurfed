@@ -1,9 +1,17 @@
+---@diagnostic disable: undefined-global
+
 local addonName = ...
 local moduleName = "TargetFrame"
 local displayName = moduleName
+
+---@class Addon
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
+
+---@class UnitFrames
 local UnitFrames = addon:GetModule("UnitFrames")
-local module = UnitFrames:NewModule(moduleName, "AceHook-3.0")
+
+---@class TargetFrame: UnitFramesModule
+local module = UnitFrames:NewModule(moduleName)
 local unit = "target"
 
 module.defaults = {
@@ -171,13 +179,13 @@ local function UpdateQuestionIcon(frame)
 end
 
 local function Update(frame)
-	UnitFrames:PowerBar_Update(frame.powerBar, frame.unit)
+	UnitFrames:PowerBar_Update(frame.powerBar)
 	UnitFrames:HealthBar_Update(frame.health)
 	if frame.threat then UnitFrames:ThreatBar_Update(frame.threat) end
 	UnitFrames:UpdateModel(frame)
 	if UnitExists(frame.unit) then
 		-- UnitFrames:UpdateModel(frame)
-		if frame.combo then UpdateCombo(frame.combo, frame.unit) end
+		if frame.combo then UpdateCombo(frame.combo) end
 		UnitFrames:UpdateLoot(frame)
 		UnitFrames:UpdateReadyCheck(frame.unit, frame.readyCheck)
 		UnitFrames:UpdateRaidIcon(frame)

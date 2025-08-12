@@ -1,15 +1,23 @@
+---@diagnostic disable: undefined-global
+
 local addonName = ...
 local moduleName = "PetFrame"
 local displayName = moduleName
+
+---@class Addon
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
+
+---@class UnitFrames
 local UnitFrames = addon:GetModule("UnitFrames")
-local module = UnitFrames:NewModule(moduleName, "AceHook-3.0")
+
+---@class PetFrame: UnitFramesModule
+local module = UnitFrames:NewModule(moduleName)
 local unit = "pet"
 
 module.defaults = {
 	enabled = true,
 	formats = {
-		name = "[$level] $name",	
+		name = "[$level] $name",
 	},
 
 	frames = {
@@ -93,7 +101,7 @@ local events = {
 
 local function Update(frame)
 	-- frame.cast.unit = frame.unit
-	UnitFrames:PowerBar_Update(frame.powerBar, frame.unit)
+	UnitFrames:PowerBar_Update(frame.powerBar)
 	UnitFrames:HealthBar_Update(frame.health)
 	UnitFrames:UpdateModel(frame)
 	if UnitExists(frame.unit) then

@@ -1,7 +1,13 @@
+---@diagnostic disable: undefined-global
+
 local addonName = ...
 local moduleName = "AutoSell"
 local displayName = "Auto sell"
+
+---@class Addon
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
+
+---@class AutoSell: AddonModule
 local module = addon:NewModule(moduleName)
 
 local defaults = {
@@ -65,11 +71,13 @@ local doNotSellList = {
 		[228431] = true, -- Rock Buddy (poor)
 }
 
-local GetContainerNumSlots = _G.GetContainerNumSlots or C_Container.GetContainerNumSlots
-local GetContainerItemLink = _G.GetContainerItemLink or C_Container.GetContainerItemLink
-local UseContainerItem = _G.UseContainerItem or C_Container.UseContainerItem
-local GetItemInfo = _G.GetItemInfo or C_Item.GetItemInfo
-local GetItemCount = _G.GetItemCount or C_Item.GetItemCount
+local GetContainerNumSlots = _G["GetContainerNumSlots"] or C_Container.GetContainerNumSlots
+local GetContainerItemLink = _G["GetContainerItemLink"] or C_Container.GetContainerItemLink
+local UseContainerItem = _G["UseContainerItem"] or C_Container.UseContainerItem
+---@diagnostic disable: deprecated
+local GetItemInfo = _G["GetItemInfo"] or C_Item.GetItemInfo
+local GetItemCount = _G["GetItemCount"] or C_Item.GetItemCount
+---@diagnostic enable
 
 function module:MERCHANT_SHOW()
 	-- local soldNum, soldItems, sold, startMoney = 0, "", nil, GetMoney()
@@ -109,8 +117,7 @@ function module:MERCHANT_SHOW()
 		end
 
 		if self.db.profile.summaries.moneyReceived then
-			earned = GetMoneyString(earned, true)
-			addon:SystemMessageInPrimary(string.format("Received %s from selling trash loot.", addon:WrapTextInColorCode(earned, {1,1,1})))
+			addon:SystemMessageInPrimary(string.format("Received %s from selling trash loot.", addon:WrapTextInColorCode(GetMoneyString(earned, true), {1,1,1})))
 		end
 	end
 end

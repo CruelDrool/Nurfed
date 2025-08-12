@@ -1,9 +1,17 @@
+---@diagnostic disable: undefined-global
+
 local addonName = ...
 local moduleName = "PartyFrames"
 local displayName = moduleName
+
+---@class Addon
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
+
+---@class UnitFrames
 local UnitFrames = addon:GetModule("UnitFrames")
-local module = UnitFrames:NewModule(moduleName, "AceHook-3.0")
+
+---@class PartyFrames: UnitFramesModule
+local module = UnitFrames:NewModule(moduleName)
 local unit = "party"
 
 module.defaults = {
@@ -201,7 +209,7 @@ local function UpdateRange(frame)
 end
 
 local function Update(frame)
-	UnitFrames:PowerBar_Update(frame.powerBar,frame.unit)
+	UnitFrames:PowerBar_Update(frame.powerBar)
 	UnitFrames:HealthBar_Update(frame.health)
 	if UnitExists(frame.unit) then
 		UnitFrames:UpdateInfo(frame)
@@ -427,6 +435,7 @@ function module:OnEnable()
 		end
 		for i=1,MAX_PARTY_MEMBERS do
 			local frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent, true, i)
+			---@diagnostic disable-next-line: need-check-nil
 			frame:SetScript("OnUpdate", OnUpdate)
 			table.insert(self.frames, frame)
 		end
@@ -438,6 +447,7 @@ function module:OnEnable()
 			Update(frame)
 		end
 
+		---@diagnostic disable-next-line: undefined-global
 		if HidePartyFrame and ShowPartyFrame then
 			self:SecureHook("HidePartyFrame", HideParty)
 			self:SecureHook("ShowPartyFrame", ShowParty)

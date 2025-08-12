@@ -1,8 +1,20 @@
+---@diagnostic disable: undefined-global
+
 local addonName = ...
 local chatCommand = addonName:lower()
+
+---@class Addon:AceAddon
+---@class Addon:AceConsole-3.0
+---@class Addon:AceEvent-3.0
+---@class Addon:AceHook-3.0
 local addon = LibStub("AceAddon-3.0"):NewAddon(addonName, "AceConsole-3.0", "AceEvent-3.0", "AceHook-3.0")
 addon:SetDefaultModuleLibraries("AceEvent-3.0", "AceHook-3.0")
 addon:SetDefaultModuleState(false)
+
+---@class AddonModule:AceModule
+---@class AddonModule:AceEvent-3.0
+---@class AddonModule:AceHook-3.0
+
 _G[addonName] = addon -- uncomment for debugging purposess
 
 -- local LDB = LibStub("LibDataBroker-1.1", true)

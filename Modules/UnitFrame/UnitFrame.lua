@@ -1,9 +1,21 @@
+---@diagnostic disable: undefined-global
+---@diagnostic disable: cast-local-type
+
 local addonName = ...
 local moduleName = "UnitFrames"
 local displayName = moduleName
+
+---@class Addon
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
+
+---@class UnitFrames:AddonModule
 local module = addon:NewModule(moduleName)
+module:SetDefaultModuleLibraries("AceHook-3.0")
 module:SetDefaultModuleState(false)
+
+---@class UnitFramesModule:AceModule
+---@class UnitFramesModule:AceHook-3.0
+---@field db table
 
 local defaults = {
 	profile = {
@@ -1005,7 +1017,7 @@ local lootMethods = {
 	[5] = "personalloot", -- Enum.LootMethod.Personal
 }
 
-local GetLootMethod = _G.GetLootMethod or function()
+local GetLootMethod = _G["GetLootMethod"] or function()
 	local lootMethodId, masterlooterPartyID, masterlooterRaidID = C_PartyInfo.GetLootMethod()
 	return lootMethods[lootMethodId], masterlooterPartyID, masterlooterRaidID
 end
@@ -1064,7 +1076,7 @@ function module:UpdatePartyLeader(frame)
 	end
 end
 
-local GetTexCoordsForRoleSmallCircle = _G.GetTexCoordsForRoleSmallCircle  or function(role)
+local GetTexCoordsForRoleSmallCircle = _G["GetTexCoordsForRoleSmallCircle"]  or function(role)
 	if ( role == "TANK" ) then
 		return 0, 19/64, 22/64, 41/64;
 	elseif ( role == "HEALER" ) then
@@ -1250,7 +1262,8 @@ HEALTHBAR functions
 
 ]]
 
-local GetSpellInfo = _G.GetSpellInfo or function(...)
+
+local GetSpellInfo = _G["GetSpellInfo"] or function(...)
 	local info = C_Spell.GetSpellInfo(...)
 	if info then
 		return info.name,
@@ -1259,7 +1272,7 @@ local GetSpellInfo = _G.GetSpellInfo or function(...)
 		info.castTime,
 		info.minRange,
 		info.maxRange,
-		info.spellId,
+		info.spellID,
 		info.originalIconID
 	end
 end
@@ -1619,7 +1632,7 @@ local function PowerBar_Text(frame)
 	if frame.text then frame.text:SetText(text) end
 end
 
-local GetSpellPowerCost = _G.GetSpellPowerCost or C_Spell.GetSpellPowerCost
+local GetSpellPowerCost = _G["GetSpellPowerCost"] or C_Spell.GetSpellPowerCost
 
 local function PowerBar_CostPrediction(frame, isStarting, startTime, endTime, spellId)
 	local cost = 0
@@ -1768,8 +1781,8 @@ if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CLASSIC then
 		return LibCC:UnitChannelInfo(unit)
 	end
 else
-	UnitCastingInfo = _G.UnitCastingInfo
-	UnitChannelInfo = _G.UnitChannelInfo
+	UnitCastingInfo = _G["UnitCastingInfo"]
+	UnitChannelInfo = _G["UnitChannelInfo"]
 end
 
 local function CastBar_Text(text, statusbar, short)
@@ -2131,7 +2144,7 @@ THREATBAR functions
 
 ]]
 
-local GetThreatStatusColor = _G.GetThreatStatusColor or function(status)
+local GetThreatStatusColor = _G["GetThreatStatusColor"] or function(status)
 	local r, g, b
 	if status == 0 then
 		r = 0.69
@@ -2314,13 +2327,15 @@ local PLAYER_UNITS = {
 	pet = true,
 }
 
-local ShouldShowDebuffs = TargetFrame_ShouldShowDebuffs or function(unit, caster, nameplateShowAll, casterIsAPlayer) return TargetFrame:ShouldShowDebuffs(unit, caster, nameplateShowAll, casterIsAPlayer) end
+local ShouldShowDebuffs = _G["TargetFrame_ShouldShowDebuffs"] or function(unit, caster, nameplateShowAll, casterIsAPlayer)
+	return TargetFrame:ShouldShowDebuffs(unit, caster, nameplateShowAll, casterIsAPlayer)
+end
 
-local UnitBuff = _G.UnitBuff or function(unitToken, index, filter)
+local UnitBuff = _G["UnitBuff"] or function(unitToken, index, filter)
 	 return AuraUtil.UnpackAuraData(C_UnitAuras.GetBuffDataByIndex(unitToken, index, filter))
 end
 
-local UnitDebuff = _G.UnitDebuff or function(unitToken, index, filter)
+local UnitDebuff = _G["UnitDebuff"] or function(unitToken, index, filter)
 	return AuraUtil.UnpackAuraData(C_UnitAuras.GetDebuffDataByIndex(unitToken, index, filter))
 end
 
@@ -2341,9 +2356,9 @@ function module:UpdateAuras(frame)
 	local canAssist = UnitCanAssist("player", frame.unit)
 
 	local filter;
-	if SHOW_CASTABLE_BUFFS == "1" and canAssist then
-		filter = "RAID";
-	end
+	-- if SHOW_CASTABLE_BUFFS == "1" and canAssist then
+	-- 	filter = "RAID";
+	-- end
 
 	local maxBuffs = frame.maxBuffs or MAX_TARGET_BUFFS
 	auraFrame = frame.buffs
@@ -2418,11 +2433,11 @@ function module:UpdateAuras(frame)
 
 	auraFrame:SetHeight(auraFrameHeight)
 
-	if SHOW_DISPELLABLE_DEBUFFS == "1" and canAssist then
-		filter = "RAID";
-	else
-		filter = nil;
-	end
+	-- if SHOW_DISPELLABLE_DEBUFFS == "1" and canAssist then
+	-- 	filter = "RAID";
+	-- else
+	-- 	filter = nil;
+	-- end
 
 	local frameNum = 1;
 	local index = 1;

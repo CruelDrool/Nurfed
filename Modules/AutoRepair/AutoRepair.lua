@@ -1,7 +1,13 @@
+---@diagnostic disable: undefined-global
+
 local addonName = ...
 local moduleName = "AutoRepair"
 local displayName = "Auto repair"
+
+---@class Addon
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
+
+---@class AutoRepair: AddonModule
 local module = addon:NewModule(moduleName)
 
 local defaults = {
@@ -133,7 +139,7 @@ function module:MERCHANT_SHOW()
 		local cost = GetMoneyString(repairAllCost, true)
 		local message
 		if self.db.profile.guildBank and IsInGuild() and CanGuildBankRepair() and min(GetGuildBankWithdrawMoney(), GetGuildBankMoney()) > repairAllCost then
-			RepairAllItems(1)
+			RepairAllItems(true)
 			message = string.format("Spent %s on repairs (guild).", addon:WrapTextInColorCode(cost, {1,1,1}))
 		else
 			RepairAllItems()

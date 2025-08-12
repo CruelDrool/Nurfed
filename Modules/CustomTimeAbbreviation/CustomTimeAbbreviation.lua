@@ -1,7 +1,13 @@
+---@diagnostic disable: undefined-global
+
 local addonName = ...
 local moduleName = "CustomTimeAbbreviation"
 local displayName = "Aura timers"
+
+---@class Addon
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
+
+---@class AuraTimers: AddonModule
 local module = addon:NewModule(moduleName)
 
 local defaults = {

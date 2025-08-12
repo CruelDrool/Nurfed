@@ -1,7 +1,13 @@
+---@diagnostic disable: undefined-global
+
 local addonName = ...
 local moduleName = "MoneyReceipt"
 local displayName = "Money receipt"
+
+---@class Addon
 local addon = LibStub("AceAddon-3.0"):GetAddon(addonName)
+
+---@class MoneyReceipt: AddonModule
 local module = addon:NewModule(moduleName)
 
 local defaults = {
