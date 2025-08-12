@@ -326,11 +326,15 @@ end
 local OutOfCombatQueue = {}
 
 function addon:AddOutOfCombatQueue(...)
-	addon:AddToFuncQueue(OutOfCombatQueue, ...)
+	self:AddToFuncQueue(OutOfCombatQueue, ...)
+
+	if not InCombatLockdown() then
+		self:EmptyFuncQueue(OutOfCombatQueue)
+	end
 end
 
 function addon:PLAYER_REGEN_ENABLED()
-	addon:EmptyFuncQueue(OutOfCombatQueue)
+	self:EmptyFuncQueue(OutOfCombatQueue)
 end
 
 function addon:DebugLog(...)
