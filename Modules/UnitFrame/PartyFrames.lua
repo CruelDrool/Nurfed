@@ -224,6 +224,7 @@ end
 local function OnEvent(frame, event, ...)
 
 	if not frame.isEnabled then return end
+	if frame.hidden then return end
 
 	local arg1, arg2, arg3, arg4, arg5 = ...
 
@@ -303,6 +304,15 @@ local function HideParty()
 
 	if InCombatLockdown() then
 		addon:AddOutOfCombatQueue(HideParty)
+
+		for _,frame in pairs(module.frames) do
+			-- Prevent updates (specificically phasing)
+			frame.hidden = true
+
+			-- Fake hiding the frame. It's still there to be interacted with. The proper hiding will happen when not in combat.
+			frame:SetAlpha(0)
+		end
+
 		return
 	end
 
@@ -313,6 +323,7 @@ local function HideParty()
 		end
 
 		frame.hidden = true
+		frame:SetAlpha(1)
 
 		if UnitFrames.locked and not frame.isWatched then
 			frame:Hide()
@@ -336,6 +347,7 @@ local function ShowParty()
 		-- Even if not registered with an actual unit watch, set as watched for the UnitFrames:Lock() function.
 		frame.isWatched = true
 		frame:SetFrameStrata("LOW")
+		Update(frame)
 	end
 end
 
