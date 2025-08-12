@@ -250,31 +250,49 @@ function addon:Binding(bind)
 	return bind
 end
 
-function addon:AddToFuncQueue(funcQueueTable, ...)
-	local arg1 = ...
+function addon:AddToFuncQueue(funcQueueTable, arg1, ...)
+
+	if not funcQueueTable or type(funcQueueTable) ~= "table" then
+		self:DebugLog("Core~1~ERR~AddToFuncQueue - The provided value to 'funcQueueTable' was not a table.")
+		return
+	end
+
 	if type(arg1) == "function" then
-		local func = arg1
-		local args = {select(2, ...)}
+		local args = {...}
 		if #args > 0 then
-			table.insert(funcQueueTable, {func, args})
+			table.insert(funcQueueTable, {arg1, args})
 		else
-			table.insert(funcQueueTable, func)
+			table.insert(funcQueueTable, {arg1})
 		end
-	elseif type(arg1) == "string" then
-		local funcName = arg1
-		local tbl = select(2, ...)
-		-- Name of method. Will need the table where it is located.
-		if type(tbl)  ~= "table" then
-			error(string.format("Please provide the table where the method '%s' is located.", funcName))
-			return
+	elseif type(arg1) == "table" or type(arg1) == "string" then
+		local tbl, funcName
+
+		if type(arg1) == "table" then
+			tbl = arg1
+			funcName = ...
+
+			-- Table provided. Next argument will need to be the name of a method.
+			if type(funcName)  ~= "string" then
+				self:DebugLog("Core~1~ERR~AddToFuncQueue - Missing name of a method to look for in the provided table.")
+				return
+			end
+		elseif type(arg1) == "string" then
+			tbl =  ...
+			funcName = arg1
+
+			-- Name of method provided. Next argument will need to be the table where it is located.
+			if type(tbl)  ~= "table" then
+				self:DebugLog("Core~1~ERR~AddToFuncQueue - Missing table to look for the method '%s'.", funcName)
+				return
+			end
 		end
 
 		if not tbl[funcName] then
-			error(string.format("The method '%s' doesn't exist in the the provided table.", funcName))
+			self:DebugLog("Core~1~ERR~AddToFuncQueue -The method '%s' doesn't exist in the the provided table.", funcName)
 			return
 		end
 
-		local args = {select(3, ...)}
+		local args = {select(2, ...)}
 		if #args > 0 then
 			table.insert(funcQueueTable, {tbl, funcName, args})
 		else
@@ -284,21 +302,21 @@ function addon:AddToFuncQueue(funcQueueTable, ...)
 end
 
 function addon:EmptyFuncQueue(funcQueueTable)
-	for i, entry in pairs(funcQueueTable) do
-		if type(entry) == "function" then
-			entry()
-		elseif type(entry) == "table" then
-			if type(entry[1]) == "function" then
-				local func = entry[1]
+	for i, entry in ipairs(funcQueueTable) do
+		if type(entry[1]) == "function" then
+			local func = entry[1]
+			if entry[2] then
 				func(unpack(entry[2]))
-			elseif type(entry[1]) == "table" then
-				local tbl = entry[1]
-				local funcName = entry[2]
-				if entry[3] then
-					tbl[funcName](tbl, unpack(entry[3]))
-				else
-					tbl[funcName](tbl)
-				end
+			else
+				func()
+			end
+		elseif type(entry[1]) == "table" then
+			local tbl = entry[1]
+			local funcName = entry[2]
+			if entry[3] then
+				tbl[funcName](tbl, unpack(entry[3]))
+			else
+				tbl[funcName](tbl)
 			end
 		end
 		funcQueueTable[i] = nil
