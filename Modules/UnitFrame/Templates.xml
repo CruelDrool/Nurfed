@@ -711,7 +711,7 @@
 	<Frame name="Nurfed_Monk_Resource_Bar_Template" inherits="MonkHarmonyBarFrameTemplate, Nurfed_Class_Resource_Bar_Template" virtual="true">
 		<KeyValues>
 			<KeyValue key="classFileName" value="MONK" type="string"/>
-			<KeyValue key="specialization" value="" type="global"/>
+			<KeyValue key="specialization" value="SPEC_MONK_WINDWALKER" type="global"/>
 			<KeyValue key="tooltip1" value="CHI_POWER" type="global"/>
 			<KeyValue key="tooltip2" value="CHI_TOOLTIP" type="global"/>
 		</KeyValues>
