@@ -455,10 +455,6 @@ function module:OnEnable()
 end
 
 function module:OnDisable()
-	if not self.locked then
-		self:Lock()
-	end
-
 	self:UnhookAll()
 	self:UnregisterAllEvents()
 	self.db.profile.enabled = false
@@ -483,6 +479,11 @@ function module:DisableUnitframes()
 		addon:InfoMessage(string.format(addon.infoMessages.disableModuleInCombat, addon:WrapTextInColorCode(displayName, addon.colors.moduleName)))
 		return
 	end
+
+	if not self.locked then
+		self:Lock()
+	end
+
 	self:Disable()
 end
 
