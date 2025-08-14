@@ -642,6 +642,10 @@ function module:Lock()
 		return
 	end
 
+	if not self:IsEnabled() then
+		return
+	end
+
 	-- if module.locked and not InCombatLockdown() then
 	if module.locked then
 		module.locked = false
