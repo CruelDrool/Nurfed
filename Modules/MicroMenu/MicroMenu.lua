@@ -78,7 +78,7 @@ if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
 		"CHARACTER",
 		"PROFESSIONSBOOK",
 		"TALENTS",
-		"ACHIEVEMENTS",
+		-- "ACHIEVEMENTS",
 		"QUESTLOG",
 		"GUILD",
 		"DUNGEONS",
@@ -157,7 +157,7 @@ elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MISTS_OF_PANDARIA_CLASSIC th
 		"CHARACTER",
 		"SPELLBOOK_ABILITIES_MENU", -- Submenu
 		"TALENTS",
-		"ACHIEVEMENTS",
+		-- "ACHIEVEMENTS",
 		"QUESTLOG",
 		"GUILD",
 		"PLAYER_V_PLAYER",
@@ -267,7 +267,6 @@ local function ButtonsArray()
 		PETBOOK = { text = GetMenuButtonText(PET, "TOGGLEPETBOOK"), func = function() if InCombatLockdown() then return end; ToggleSpellBook(BOOKTYPE_PET ) end, skip = not (HasPetSpells() or PetHasSpellbook()), disabled = inCombatLockdown, },
 
 		TALENTS = { text = GetMenuButtonText(talentsText, "TOGGLETALENTS"), func = talentsFunc, disabled = inCombatLockdown, },
-		ACHIEVEMENTS = { text = ACHIEVEMENT_BUTTON, func = function() if InCombatLockdown() then return end; ToggleAchievementFrame() end, disabled = true },
 		PLAYER_V_PLAYER = { text = PLAYER_V_PLAYER, func = function() if InCombatLockdown() then return end; TogglePVPFrame() end, disabled = true },
 		QUESTLOG = { text = GetMenuButtonText(QUESTLOG_BUTTON, "TOGGLEQUESTLOG"), func = function() if InCombatLockdown() then return end; ToggleQuestLog() end, disabled = inCombatLockdown, },
 		GUILD = { func = toggleGuildFrameFunc },
@@ -299,9 +298,10 @@ local function ButtonsArray()
 		MAP = { text = GetMenuButtonText(WORLDMAP_BUTTON, "TOGGLEWORLDMAP"), func = function() if InCombatLockdown() then return end; ToggleWorldMap() end, disabled = inCombatLockdown, },
 
 		-- The functions for the buttons below are now restricted by Blizzard. The buttons are now disabled.
-		LOGOUT = { text = LOGOUT, func = function() Logout() end, disabled = true, },
-		EXIT_GAME = { text = EXIT_GAME, func = function() Quit() end, disabled = true, },
-		BLIZZARD_STORE = { text = BLIZZARD_STORE, func = function() ToggleStoreUI() end, disabled = true },
+		LOGOUT = { text = string.format('%s (%s)', LOGOUT, "Restricted"), func = function() Logout() end, disabled = true, },
+		EXIT_GAME = { text = string.format('%s (%s)', EXIT_GAME, "Restricted"), func = function() Quit() end, disabled = true, },
+		BLIZZARD_STORE = { text = string.format('%s (%s)', BLIZZARD_STORE, "Restricted"), func = function() ToggleStoreUI() end, disabled = true },
+		ACHIEVEMENTS = { text = GetMenuButtonText(string.format('%s (%s)', ACHIEVEMENT_BUTTON, "Restricted"), "TOGGLEACHIEVEMENT"), func = function() if InCombatLockdown() then return end; ToggleAchievementFrame() end, disabled = true },
 	}
 
 	local level = UnitLevel("player")
@@ -314,12 +314,12 @@ local function ButtonsArray()
 		buttons["TALENTS"]["disabled"] = true
 		buttons["TALENTS"]["text"] = GetMenuButtonText(string.format('%s (%s)', talentsText, string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, minLevelSpec)), "TOGGLETALENTS")
 	end
-
+--[[
 	if not C_StorePublic.IsEnabled() then
 		buttons["BLIZZARD_STORE"]["disabled"] = true
 		buttons["BLIZZARD_STORE"]["text"] = string.format('%s (%s)',  BLIZZARD_STORE, BLIZZARD_STORE_ERROR_UNAVAILABLE )
 	end
-
+--]]
 	if UnitFactionGroup("player") ~= "Neutral" then
 		local disabled, text = false, ""
 		if IsTrialAccount() then
@@ -359,7 +359,7 @@ local function ButtonsArray()
 		buttons["ADVENTURE_JOURNAL"]["disabled"] = true
 		buttons["ADVENTURE_JOURNAL"]["text"] = GetMenuButtonText(string.format('%s (%s)', ADVENTURE_JOURNAL, FEATURE_NOT_YET_AVAILABLE), "TOGGLEENCOUNTERJOURNAL")
 	end
-
+--[[
 	if ToggleAchievementFrame and addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE or addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_WRATH_OF_THE_LICH_KING_CLASSIC then
 		local text
 		local binding = "TOGGLEACHIEVEMENT"
@@ -371,7 +371,7 @@ local function ButtonsArray()
 		end
 		buttons["ACHIEVEMENTS"]["text"] = text
 	end
-
+]]--
 	if TogglePVPFrame and addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_CATACLYSM_CLASSIC then
 		local text
 		local binding = "TOGGLECHARACTER4"
