@@ -558,8 +558,16 @@ local function XPbar_OnLoad(frame)
 end
 
 local function AdditionalPowerBar_OnLoad(frame)
+	local hasAdditionalPowerBar = {
+		["DRUID"] = true,
+		["PRIEST"] = true,
+		["SHAMAN"] = true,
+		["MONK"] = addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_MISTS_OF_PANDARIA_CLASSIC,
+	}
+
 	local _, classFileName = UnitClass(unit)
-	if classFileName == "DRUID" or classFileName == "SHAMAN" or classFileName == "PRIEST" or ( addon.WOW_PROJECT_ID >= addon.WOW_PROJECT_ID_MISTS_OF_PANDARIA_CLASSIC and classFileName =="MONK" ) then
+
+	if hasAdditionalPowerBar[classFileName] then
 		local statusbar
 		if frame.statusbar then
 			statusbar = frame.statusbar
@@ -584,7 +592,6 @@ local function AdditionalPowerBar_OnLoad(frame)
 			if UnitPowerType(self.unit) ~= statusbar.powerType and UnitPowerMax(self.unit, statusbar.powerType) ~= 0 and (not statusbar.specRestriction or statusbar.specRestriction == C_SpecializationInfo.GetSpecialization()) then
 				statusbar.pauseUpdates = false
 				f:Show()
-		
 			else
 				statusbar.pauseUpdates = true
 				f:Hide()
