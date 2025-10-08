@@ -31,7 +31,7 @@ local defaults = {
 			["4"] = "%%I:%%M %%p",
 			["5"] = "%%I:%%M:%%S %%p",
 			["6"] = "%%I:%%M:%%S.%.3i %%p",
-			
+
 		},
 		outputformats = {
 			selected = "2",
@@ -39,14 +39,14 @@ local defaults = {
 				["1"] = "None",
 				["2"] = "[ ]",
 				["3"] = "< >",
-				["4"] = "- -",				
+				["4"] = "- -",
 				["5"] = "| |",
-				
+
 			},
 			["1"] = "%s",
 			["2"] = "[%s]",
 			["3"] = "<%s>",
-			["4"] = "-%s-",				
+			["4"] = "-%s-",
 			["5"] = "|%s|",
 		}
 	}
@@ -137,67 +137,81 @@ end
 
 function module:Scrolling()
 	local enabled = self.db.profile.scrolling
-	
+
 	if not self.db.profile.enabled then
 		enabled = false
 	end
 
 	if enabled then
 		SetCVar("chatMouseScroll","1")
-		if not self:IsHooked("FloatingChatFrame_OnMouseScroll") then
+		if addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_MAINLINE then
 			self:SecureHook("FloatingChatFrame_OnMouseScroll", ScrollingHook)
 		end
-		-- InterfaceOptionsSocialPanelChatMouseScroll_SetScrolling("1")
 	end
-	
+
 	if not enabled then
 		SetCVar("chatMouseScroll","0")
-		if self:IsHooked("FloatingChatFrame_OnMouseScroll") then
+		if addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_MAINLINE then
 			self:Unhook("FloatingChatFrame_OnMouseScroll")
 		end
-		-- InterfaceOptionsSocialPanelChatMouseScroll_SetScrolling("0")
 	end
 end
 
-local function TimeStamp(self, elapsed)
-	local time = GetTime()
-	-- local ms = (time-math.floor(time))*1000
-	local timestampformat = tostring(module.db.profile.timestampformats[module.db.profile.timestampformats.selected])
-	module.timestamp = string.format(tostring(module.db.profile.outputformats[module.db.profile.outputformats.selected]), date(string.format(timestampformat, (time-math.floor(time))*1000)))
-end
+-- local currentTime
+-- local function TimeKeepingOnUpdate(self, elapsed)
+-- 	currentTime = GetTime()
+-- end
 
 local function AddMessage(self, msg, ...)
-	if (msg and type(msg) == "string") then
-		msg = module.timestamp .. " " .. msg
+	if msg and type(msg) == "string" then
+		-- local ms = (currentTime-math.floor(currentTime))*1000
+
+		if GetCVar("showTimestamps") ~= "none" then
+			local blizzStamp = date( GetCVar("showTimestamps") )
+			blizzStamp = blizzStamp:gsub("%[", "%%[")
+			blizzStamp = blizzStamp:gsub("%]", "%%]")
+			msg = msg:gsub("^" .. blizzStamp, "")
+		end
+
+		local currentTime = GetTimePreciseSec()
+		local timestampformat = tostring(module.db.profile.timestampformats[module.db.profile.timestampformats.selected])
+		local outputFormat = tostring(module.db.profile.outputformats[module.db.profile.outputformats.selected])
+		local timestamp = outputFormat:format( date( timestampformat:format( ( currentTime - math.floor(currentTime) ) * 1000) )  )
+		msg = timestamp .. " " .. msg
 		return self:O_AddMessage(msg, ...)
 	end
 end
 
 function module:TimeStamp()
 	local enabled = self.db.profile.timestamp
-	
+
 	if not self.db.profile.enabled then
 		enabled = false
 	end
-	
+
 	if enabled then
-		if not self.timekeeping then
-			self.timekeeping = CreateFrame("Frame")
-			self.timestamp = ""
-		end
-		if self.timekeeping then
-			self.timekeeping:SetScript("OnUpdate", TimeStamp)
-		end
-		local timestampformat = self.db.profile.timestampformat
-		for i = 1, NUM_CHAT_WINDOWS, 1 do
-			local chatframe = _G["ChatFrame"..i]
-			if not chatframe.O_AddMessage then
-				chatframe.O_AddMessage = chatframe.AddMessage
+		-- if not self.timekeeping then
+			-- self.timekeeping = CreateFrame("Frame")
+			-- currentTime = GetTime()
+			-- self.timekeeping:SetScript("OnUpdate", TimeKeepingOnUpdate)
+		-- end
+
+		local skip = {
+			[2] = true, -- Combat Log
+			[3] = true, -- Voice
+		}
+
+		for i = 1, NUM_CHAT_WINDOWS do
+			if not skip[i] then
+				local chatframe = _G["ChatFrame"..i]
+				if not chatframe.O_AddMessage then
+					chatframe.O_AddMessage = chatframe.AddMessage
+				end
+				chatframe.AddMessage = AddMessage
 			end
-			chatframe.AddMessage = AddMessage
 		end
 	end
-	
+
 	if not enabled then
 		for i = 1, NUM_CHAT_WINDOWS, 1 do
 			local chatframe = _G["ChatFrame"..i]
@@ -207,17 +221,16 @@ function module:TimeStamp()
 			end
 			if self.timekeeping then
 				self.timekeeping:SetScript("OnUpdate", nil)
-				self.timestamp = nil
 			end
 		end
 	end
-	
+
 end
 
 function module:OnInitialize()
 	-- Register DB namespace
 	self.db = addon.db:RegisterNamespace(moduleName, defaults)
-	
+
 	-- Register callbacks
 	self.db.RegisterCallback(self, "OnProfileChanged", "UpdateConfigs")
 	self.db.RegisterCallback(self, "OnProfileCopied", "UpdateConfigs")
