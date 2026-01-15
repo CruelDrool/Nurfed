@@ -4,6 +4,7 @@
 ## Notes: Inspired by Tivoli and Apoco.
 ## Author: CruelDrool
 ## SavedVariables: NurfedDB
+## IconTexture: Interface\AddOns\Nurfed\Images\locked
 ## X-Category: Interface Enhancements
 
 Libs\LibStub\LibStub.lua
