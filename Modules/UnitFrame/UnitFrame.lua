@@ -566,15 +566,19 @@ function module:CreateFrame(modName, unit, events, oneventfunc, isWatched, id)
 		end
 	end
 
-	if frame.health then self:HealthBar_OnLoad(frame.health, frame.unit) end
-	if frame.powerBar then self:PowerBar_OnLoad(frame.powerBar, frame.unit) end
-	if frame.cast then self:CastBar_OnLoad(frame.cast, frame.unit) end
+	if addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_MAINLINE then
+		if frame.health then self:HealthBar_OnLoad(frame.health, frame.unit) end
+		if frame.powerBar then self:PowerBar_OnLoad(frame.powerBar, frame.unit) end
+		if frame.cast then self:CastBar_OnLoad(frame.cast, frame.unit) end
+		if frame.buffs or frame.debuffs then frame.showAuraCount = true end
+	end
+
 	if frame.threat then self:ThreatBar_OnLoad(frame.threat, frame.unit) end
 
 	if frame.target then self:TargetofTarget_Onload(frame.target, frame.unit.."target") end
 	if frame.targettarget then self:TargetofTarget_Onload(frame.targettarget, frame.unit.."targettarget") end
 	if frame.pet then self:TargetofTarget_Onload(frame.pet, unit.."pet"..id) end -- partypetN, not partyNpet!
-	if frame.buffs or frame.debuffs then frame.showAuraCount = true end
+	
 
 	if type(oneventfunc) == "function" then
 		frame:SetScript("OnEvent", oneventfunc)
@@ -2354,6 +2358,8 @@ local function UpdateAuraAnchor(auraFrame, index, size)
 end
 
 function module:UpdateAuras(frame)
+	if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then return end
+
 	local normalSize, largeSize = 17, 21
 	local aura, auraFrame, auraFrameHeight
 	-- local name, rank, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, spellId, _

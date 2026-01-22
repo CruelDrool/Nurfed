@@ -142,11 +142,12 @@ module.options = {
 			get = function() return module.db.shortenStandingRepName end,
 			set = function(info, value) module.db.shortenStandingRepName = value;if module.frame then module:RepBar_Update(module.frame.reputation) end end,
 		},
-		blizzCastBar = {
+		blizzCastBar =  {
 			order = 5,
 			type = "toggle",
 			name = "Disable Blizzard Castbar",
 			width = "full",
+			hidden = addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE,
 			get = function() return module.db.disableBlizzCastBar end,
 			set = 
 			function(info, value)
@@ -257,8 +258,10 @@ local function UpdatePlaytime(frame)
 end
 
 local function Update(frame)
-	UnitFrames:PowerBar_Update(frame.powerBar)
-	UnitFrames:HealthBar_Update(frame.health)
+	if addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_MAINLINE then
+		UnitFrames:PowerBar_Update(frame.powerBar)
+		UnitFrames:HealthBar_Update(frame.health)
+	end
 	UnitFrames:ShowHideHighlight(frame)
 
 	UnitFrames:UpdateModel(frame)
@@ -1046,6 +1049,8 @@ function module:ClassResourceBars()
 end
 
 function module:DisableBlizzCastBar()
+	if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then return end
+
 	if InCombatLockdown() then
 		addon:AddOutOfCombatQueue("DisableBlizzCastBar", self)
 		return
@@ -1093,14 +1098,82 @@ function module:EnableBlizzCastBar()
 	end
 end
 
+local powerBarAtlas
+local powerBarColors
+
 function module:DisableBlizz()
 	if PlayerFrame.ApplySystemAnchor then
+
 		self:SecureHook(PlayerFrame, "ApplySystemAnchor", function(frame)
 			if frame:IsVisible() then
 				addon:DebugLog("UI~6~WARN~PlayerFrame.ApplySystemAnchor: frame is visible.")
 				UnitFrames:SetParent(frame, UnitFrames.UIhider)
 			end
 		end)
+
+		self.frame.health:SetStatusBarColor(0,0,0,0)
+		self.frame.powerBar:SetStatusBarColor(0,0,0,0)
+
+		local healthContainer = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.HealthBarsContainer
+		local healthBar = healthContainer.HealthBar
+		local powerContainer = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.ManaBarArea
+		local powerBar = powerContainer.ManaBar
+
+		healthContainer:SetParent(self.frame)
+		healthContainer:SetUsingParentLevel(false)
+		healthContainer.HealthBarText:SetFontObject("Nurfed_UnitFontShadow")
+		healthContainer.LeftText:SetFontObject("Nurfed_UnitFontShadow")
+		healthContainer.RightText:SetFontObject("Nurfed_UnitFontShadow")
+		healthBar:SetStatusBarTexture(self.frame.health:GetStatusBarTexture():GetTextureFilePath())
+		healthBar:SetStatusBarColor(0,1,0,1)
+
+		powerContainer:SetParent(self.frame)
+		powerContainer:SetUsingParentLevel(false)
+
+		powerBar.ManaBarText:SetFontObject("Nurfed_UnitFontShadow")
+		powerBar.LeftText:SetFontObject("Nurfed_UnitFontShadow")
+		powerBar.RightText:SetFontObject("Nurfed_UnitFontShadow")
+
+		local function UpdatePowerBarColor(bar)
+			if bar.unit == unit then
+				powerBarAtlas = bar:GetStatusBarTexture():GetAtlas()
+				powerBarColors = {bar:GetStatusBarColor()}
+				local powerType = UnitPowerType(unit) or 0
+				local powerBarColor = PowerBarColor[powerType]
+				bar:SetStatusBarTexture(self.frame.powerBar:GetStatusBarTexture():GetTextureFilePath())
+				bar:SetStatusBarColor(powerBarColor.r, powerBarColor.g,powerBarColor.b, 1)
+				self.frame.powerBar.bg:SetVertexColor(powerBarColor.r, powerBarColor.g,powerBarColor.b)
+				bar.ManaBarMask:Hide()
+			end
+		end
+
+		UpdatePowerBarColor(powerBar)
+
+		self:SecureHook("UnitFrameManaBar_UpdateType", UpdatePowerBarColor)
+
+		local function UpdateArtHookFunc()
+			healthContainer.HealthBarMask:Hide()
+			healthContainer:ClearAllPoints()
+			healthContainer:SetPoint(self.frame.health:GetPoint())
+			healthContainer:SetFrameStrata(self.frame.health:GetFrameStrata())
+			healthContainer:SetSize(self.frame.health:GetSize())
+			healthBar:SetFrameStrata(self.frame.health:GetFrameStrata())
+			healthBar:SetSize(self.frame.health:GetSize())
+			healthBar.Background:Hide()
+
+			powerContainer:ClearAllPoints()
+			powerContainer:SetPoint(self.frame.powerBar:GetPoint())
+			powerContainer:SetFrameStrata(self.frame.powerBar:GetFrameStrata())
+			powerContainer:SetSize(self.frame.powerBar:GetSize())
+			powerBar:SetFrameStrata(self.frame.powerBar:GetFrameStrata())
+			powerBar:SetSize(self.frame.powerBar:GetSize())
+			powerBar:SetPoint("TOPLEFT", powerContainer, "TOPLEFT", 0,0)
+		end
+
+		self:SecureHook("PlayerFrame_UpdateArt", UpdateArtHookFunc)
+
+		UpdateArtHookFunc()
+
 	end
 	PlayerFrame:SetParent(UnitFrames.UIhider)
 	self:DisableBlizzCastBar()
@@ -1110,6 +1183,42 @@ function module:EnableBlizz()
 	if PlayerFrame.ApplySystemAnchor then
 		self:Unhook(PlayerFrame, "ApplySystemAnchor")
 	end
+
+	local healthContainer = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.HealthBarsContainer
+	local healthBar = healthContainer.HealthBar
+	local powerContainer = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.ManaBarArea
+	local powerBar = powerContainer.ManaBar
+
+	healthContainer:SetParent(PlayerFrame.PlayerFrameContent.PlayerFrameContentMain)
+	healthContainer:ClearAllPoints()
+	healthContainer:SetPoint("TOPLEFT", healthContainer:GetParent(), "TOPLEFT", 85, -40)
+	healthContainer:SetFrameStrata("LOW")
+	healthContainer:SetUsingParentLevel(true)
+	healthContainer.HealthBarMask:Show()
+	healthContainer.HealthBarText:SetFontObject("TextStatusBarText")
+	healthContainer.LeftText:SetFontObject("TextStatusBarText")
+	healthContainer.RightText:SetFontObject("TextStatusBarText")
+	healthContainer:SetSize(124, 20)
+	healthBar:SetStatusBarColor(1,1,1,1)
+	healthBar:SetFrameStrata("LOW")
+	healthBar:SetSize(124, 20)
+	healthBar:SetStatusBarTexture("UI-HUD-UnitFrame-Player-PortraitOn-Bar-Health")
+
+	powerContainer:SetParent(PlayerFrame.PlayerFrameContent.PlayerFrameContentMain)
+	powerContainer:ClearAllPoints()
+	powerContainer:SetAllPoints()
+	powerContainer:SetUsingParentLevel(true)
+	powerContainer:SetFrameStrata("LOW")
+
+	powerBar:SetFrameStrata("LOW")
+	powerBar:SetSize(124, 10)
+	powerBar:SetPoint("TOPLEFT", powerContainer, "TOPLEFT", 85, -61)
+	powerBar:SetStatusBarColor(unpack(powerBarColors))
+	powerBar:SetStatusBarTexture(powerBarAtlas)
+	powerBar.ManaBarText:SetFontObject("TextStatusBarText")
+	powerBar.LeftText:SetFontObject("TextStatusBarText")
+	powerBar.RightText:SetFontObject("TextStatusBarText")
+	powerBar.ManaBarMask:Show()
 
 	PlayerFrame:SetParent(UIParent)
 
@@ -1140,8 +1249,11 @@ function module:OnEnable()
 	if not self.frame then
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent)
 		if self.frame.xp then XPbar_OnLoad(self.frame.xp) end
-		if self.frame.additionalPowerBar then AdditionalPowerBar_OnLoad(self.frame.additionalPowerBar) end
 		if self.frame.reputation then RepBar_OnLoad(self.frame.reputation) end
+
+		if addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_MAINLINE then
+			if self.frame.additionalPowerBar then AdditionalPowerBar_OnLoad(self.frame.additionalPowerBar) end
+		end
 	end
 
 	if self.frame then
@@ -1204,9 +1316,9 @@ function module:OnDisable()
 		end
 	end
 
+
 	self:EnableBlizz()
 	self:UnhookAll()
-
 	UnitFrames:DisableFrame(self.frame)
 end
 

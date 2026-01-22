@@ -61,7 +61,7 @@ end
 
 if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
 	local updateAura = function(aura, timeleft)
-		if timeleft and module.db.profile.enabled then
+		if timeleft and not addon:IsSecretValue(timeleft) and module.db.profile.enabled then
 			aura.Duration:SetText(module:SecondsToTimeAbbrev(timeleft))
 		end
 	end
@@ -78,7 +78,7 @@ if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
     end
 else
 	local updateAura = function(aura, timeleft)
-		if timeleft and module.db.profile.enabled then
+		if timeleft and not addon:IsSecretValue(timeleft) and module.db.profile.enabled then
 			local duration = _G[aura:GetName().."Duration"]
 			duration:SetText(module:SecondsToTimeAbbrev(timeleft))
 		end

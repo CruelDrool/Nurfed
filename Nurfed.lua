@@ -354,3 +354,7 @@ function addon:DebugLog(...)
 		DLAPI.DebugLog(addonName, ...)
 	end
 end
+
+function addon:IsSecretValue(value)
+	return issecretvalue and issecretvalue(value) or false
+end
