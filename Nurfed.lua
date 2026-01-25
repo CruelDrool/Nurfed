@@ -186,12 +186,15 @@ function addon:rgbhex(r, g, b)
 end
 
 function addon:CommaNumber(n)
+	if addon:IsSecretValue(n) then return BreakUpLargeNumbers(n) end
 	n = ("%.0f"):format(n)
    	local left,num,right = string.match(n,'^([^%d]*%d)(%d+)(.-)$')
    	return left and left..(num:reverse():gsub('(%d%d%d)','%1,'):reverse()) or n --..right
 end
 
 function addon:FormatNumber(n, threshold)
+	if addon:IsSecretValue(n) then return AbbreviateNumbers(n) end
+
 	threshold = threshold or 10000
 	local number = math.abs(n)
 	local text

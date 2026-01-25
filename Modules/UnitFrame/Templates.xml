@@ -186,7 +186,53 @@
 	
 	<StatusBar name="Nurfed_Unit_hp" virtual="true">
 		<Frames>
-			<Frame parentKey="healAbsorb" frameLevel="2">
+			<StatusBar parentKey="predictMyHeals" frameLevel="2" minValue="0" maxValue="0" defaultValue="0">
+				<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5" />
+				<BarColor r="0.0" g="0.827" b="0.765" />
+			</StatusBar>
+
+			<StatusBar parentKey="predictOtherHeals" frameLevel="2" minValue="0" maxValue="0" defaultValue="0">
+				<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5" />
+				<BarColor r="0.0" g="0.631" b="0.557" />
+			</StatusBar>
+
+			<StatusBar parentKey="damageAbsorb" frameLevel="3" minValue="0" maxValue="0" defaultValue="0" reverseFill="true" alpha="0.75">
+				<Layers>
+					<Layer level="OVERLAY" textureSubLevel="1">
+						<Texture parentKey="overlay" file="Interface\RaidFrame\Shield-Overlay" vertTile="true" horizTile="true"/>
+					</Layer>
+					<Layer level="OVERLAY"  textureSubLevel="2">
+						<Texture parentKey="overflowIndicator" file="Interface\RaidFrame\Shield-Overshield" alphaMode="ADD" alpha="0">
+							<Size x="16" y="0"/>
+							<Anchors>
+								<Anchor point="TOPLEFT" relativeTo="$parent" relativePoint="TOPRIGHT" x="-7" y="0"/>
+								<Anchor point="BOTTOMLEFT" relativeTo="$parent" relativePoint="BOTTOMRIGHT" x="-7" y="0"/>
+							</Anchors>
+						</Texture>
+					</Layer>
+				</Layers>
+				<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5" vertTile="true" horizTile="true"/>
+				<BarColor r="0.6745" g="0.759" b="0.9765" />
+			</StatusBar>
+
+			<StatusBar parentKey="healAbsorb" frameLevel="4" minValue="0" maxValue="0" defaultValue="0" reverseFill="true">
+				<Layers>
+					<Layer level="OVERLAY">
+						<Texture parentKey="overflowIndicator" file="Interface\RaidFrame\Absorb-Overabsorb" alphaMode="ADD" alpha="0">
+							<Size x="16" y="0"/>
+							<Anchors>
+								<Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOMLEFT" x="7" y="0"/>
+								<Anchor point="TOPRIGHT" relativeTo="$parent" relativePoint="TOPLEFT" x="7" y="0"/>
+							</Anchors>
+						</Texture>
+						
+					</Layer>
+				</Layers>
+				<BarTexture file="Interface\RaidFrame\Absorb-Fill" vertTile="true" horizTile="true" parentKey="absorbFill" />
+			</StatusBar>
+
+			<!-- START - Old healing prediction frames -->
+			<Frame parentKey="healAbsorbOld" frameLevel="2">
 				<Layers>
 					<Layer level="OVERLAY">
 						<Texture parentKey="leftShadow" file="Interface\RaidFrame\Absorb-Edge">
@@ -240,9 +286,8 @@
 					</Layer>
 				</Layers>
 			</Frame>
-			
 		</Frames>
-		
+		<!-- END - Old healing prediction frames -->
 		<Layers>
 			<Layer level="BACKGROUND">
 				<Texture parentKey="bg" file="Interface\AddOns\Nurfed\Images\statusbar5">
@@ -250,6 +295,7 @@
 				</Texture>
 			</Layer>
 
+			<!-- START - Old overflow indicators -->
 			<Layer level="OVERLAY">
 				<Texture parentKey="overAbsorbGlow" file="Interface\RaidFrame\Shield-Overshield" alphaMode="ADD" hidden="true">
 					<Size x="16" y="0"/>
@@ -267,7 +313,7 @@
 					</Anchors>
 				</Texture>
 			</Layer>
-
+			<!-- END - Old overflow indicators -->
 			<Layer level="OVERLAY" textureSubLevel="1">
 				<FontString parentKey="text" inherits="Nurfed_UnitFont" justifyH="LEFT">
 					<Shadow x="-1" y="-1">

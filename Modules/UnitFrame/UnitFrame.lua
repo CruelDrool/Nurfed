@@ -566,19 +566,18 @@ function module:CreateFrame(modName, unit, events, oneventfunc, isWatched, id)
 		end
 	end
 
-	if addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_MAINLINE then
-		if frame.health then self:HealthBar_OnLoad(frame.health, frame.unit) end
-		if frame.powerBar then self:PowerBar_OnLoad(frame.powerBar, frame.unit) end
-		if frame.cast then self:CastBar_OnLoad(frame.cast, frame.unit) end
-		if frame.buffs or frame.debuffs then frame.showAuraCount = true end
-	end
-
-	if frame.threat then self:ThreatBar_OnLoad(frame.threat, frame.unit) end
-
+	if frame.health then self:HealthBar_OnLoad(frame.health, frame.unit) end
+	if frame.powerBar then self:PowerBar_OnLoad(frame.powerBar, frame.unit) end
 	if frame.target then self:TargetofTarget_Onload(frame.target, frame.unit.."target") end
 	if frame.targettarget then self:TargetofTarget_Onload(frame.targettarget, frame.unit.."targettarget") end
 	if frame.pet then self:TargetofTarget_Onload(frame.pet, unit.."pet"..id) end -- partypetN, not partyNpet!
-	
+	if frame.buffs or frame.debuffs then frame.showAuraCount = true end
+
+	if addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_MAINLINE then
+		if frame.cast then self:CastBar_OnLoad(frame.cast, frame.unit) end
+	end
+
+	if frame.threat then self:ThreatBar_OnLoad(frame.threat, frame.unit) end
 
 	if type(oneventfunc) == "function" then
 		frame:SetScript("OnEvent", oneventfunc)
@@ -783,52 +782,80 @@ end
 
 local CreatureTypeReverseLocalisation = LibStub("LibBabble-CreatureType-3.0"):GetReverseLookupTable()
 
+local function GetUnitClassColor(unit)
+	local creatureType = not addon:IsSecretValue(UnitCreatureType(unit)) and CreatureTypeReverseLocalisation[UnitCreatureType(unit)] or ""
+	local color = {1,1,1}
+	if UnitIsPlayer(unit) or (creatureType == "Humanoid" and UnitIsFriend("player", unit) and UnitPlayerOrPetInParty(unit)) then
+		local _, englishClass = UnitClass(unit)
+		if RAID_CLASS_COLORS[englishClass] ~= nil then color = RAID_CLASS_COLORS[englishClass] else color = {UnitSelectionColor(unit)} end
+	else
+		-- if not UnitPlayerControlled(unit) and UnitIsTapped(unit) then
+			-- if not UnitIsTappedByPlayer(unit) and not UnitIsTappedByAllThreatList(unit) then
+				-- color = "|cff7f7f7f"
+			-- elseif UnitIsTappedByPlayer(unit) or UnitIsTappedByAllThreatList(unit) then
+				-- color = addon:rgbhex(UnitSelectionColor(unit))
+			-- end
+		if not UnitPlayerControlled(unit) then
+			if UnitIsTapDenied(unit) then
+				-- color = "ff7f7f7f"
+				color = {0.5,0.5,0.5}
+			else
+				color = {UnitSelectionColor(unit)}
+			end
+		else
+			if UnitPlayerControlled(unit) and (creatureType == "Beast" or creatureType == "Demon" or creatureType == "Elemental" or creatureType == "Undead") then
+				-- unit is a pet/minion
+				-- color = "ff005500"
+				color = {0,1/3,0}
+			else
+				-- color = addon:rgbhex(UnitSelectionColor(unit))
+				color = FACTION_BAR_COLORS[UnitReaction(unit, "player")]
+			end
+		end
+	end
+
+	return color
+end
+
 function module:Replace(unit, textFormat)
 	if textFormat == nil then return "" end
 	if not UnitExists(unit) then return textFormat end
 	-- local unit = frame.unit
+
+	local textReplacements = {}
+
 	local out = textFormat
 	if string.find(textFormat,"$name") then
 		local name = UnitName(unit)
-		if self.db.profile.transliterate.enabled then
+
+		if not addon:IsSecretValue(name) and self.db.profile.transliterate.enabled then
 			name = addon:Transliterate(name, self.db.profile.transliterate.mark)
 		end
-		local color
-		if UnitIsPlayer(unit) or (CreatureTypeReverseLocalisation[UnitCreatureType(unit)] == "Humanoid" and UnitIsFriend("player", unit) and UnitPlayerOrPetInParty(unit)) then
-			local _, englishClass = UnitClass(unit)
-			if RAID_CLASS_COLORS[englishClass] ~= nil then color = RAID_CLASS_COLORS[englishClass] else color = {UnitSelectionColor(unit)} end
-		else
-			-- if not UnitPlayerControlled(unit) and UnitIsTapped(unit) then
-				-- if not UnitIsTappedByPlayer(unit) and not UnitIsTappedByAllThreatList(unit) then
-					-- color = "|cff7f7f7f"
-				-- elseif UnitIsTappedByPlayer(unit) or UnitIsTappedByAllThreatList(unit) then
-					-- color = addon:rgbhex(UnitSelectionColor(unit))
-				-- end
-			if not UnitPlayerControlled(unit) then
-				if UnitIsTapDenied(unit) then
-					-- color = "ff7f7f7f"
-					color = {0.5,0.5,0.5}
-				else
-					color = {UnitSelectionColor(unit)}
-				end
-			else
-				local creatureType = CreatureTypeReverseLocalisation[UnitCreatureType(unit)]
-				if UnitPlayerControlled(unit) and (creatureType == "Beast" or creatureType == "Demon" or creatureType == "Elemental" or creatureType == "Undead") then
-					-- unit is a pet/minion
-					-- color = "ff005500"
-					color = {0,1/3,0}
-				else
-					-- color = addon:rgbhex(UnitSelectionColor(unit))
-					color = FACTION_BAR_COLORS[UnitReaction(unit, "player")]
-				end
-			end
-		end
+
+		local color = GetUnitClassColor(unit)
+
 		name = addon:WrapTextInColorCode(name, color)
-		out = out:gsub("$name", name)
+
+		table.insert(textReplacements, {"$name", name})
 	end
+
+	if string.find(textFormat,"$pvpname") then
+		local name = UnitPVPName(unit)
+
+		if not addon:IsSecretValue(name) and self.db.profile.transliterate.enabled then
+			name = addon:Transliterate(name, self.db.profile.transliterate.mark)
+		end
+
+		local color = GetUnitClassColor(unit)
+
+		name = addon:WrapTextInColorCode(name, color)
+
+		table.insert(textReplacements, {"$pvpname", name})
+	end
+
 	if string.find(textFormat,"$guild") then
-		local guildName = GetGuildInfo(unit)
-		if guildName ~= nil then
+		local guildName = GetGuildInfo(unit) or ""
+		if guildName ~= "" then
 			-- local color = "ff00bfff"
 			local color = {0,0.75,1}
 			if UnitIsInMyGuild(unit) then
@@ -840,10 +867,10 @@ function module:Replace(unit, textFormat)
 				guildName = addon:Transliterate(guildName, self.db.profile.transliterate.mark)
 			end
 			guildName = addon:WrapTextInColorCode(guildName, color)
-			out = out:gsub("$guild", guildName)
-		else
-			out = out:gsub("%S*$guild%S*%s?", "")
+
 		end
+
+		table.insert(textReplacements, {"$guild", guildName})
 	end
 
 	if string.find(textFormat,"$level") then
@@ -895,7 +922,8 @@ function module:Replace(unit, textFormat)
 			r, g, b =  addon:UnpackColorTable(GetRelativeDifficultyColor(highestLevelPet, level))
 		end
 		level = addon:WrapTextInColorCode(level, {r, g, b})
-		out = out:gsub("$level", level)
+
+		table.insert(textReplacements, {"$level", level})
 	end
 
 	if string.find(textFormat,"$class") then
@@ -910,7 +938,9 @@ function module:Replace(unit, textFormat)
 				class = addon:WrapTextInColorCode(class, {UnitSelectionColor(unit)})
 			end
 		else
-			if CreatureTypeReverseLocalisation[UnitCreatureType(unit)] == "Humanoid" and UnitIsFriend("player", unit) then
+			local creatureType = not addon:IsSecretValue(UnitCreatureType(unit)) and CreatureTypeReverseLocalisation[UnitCreatureType(unit)] or ""
+
+			if creatureType == "Humanoid" and UnitIsFriend("player", unit) then
 				class = "NPC"
 			elseif UnitCreatureFamily(unit) then
 				class = UnitCreatureFamily(unit)
@@ -931,87 +961,86 @@ function module:Replace(unit, textFormat)
 				class = ELITE.." "..class
 			end
 		end
-		out = out:gsub("$class", class)
+
+		table.insert(textReplacements, {"$class", class})
 	end
 
 	if string.find(textFormat,"$race") then
+		local race = ""
 		if UnitIsPlayer(unit) then
-			local race = UnitRace(unit)
-			out = out:gsub("$race", race)
-		else
-			out = out:gsub("%S*$race%S*%s?", "")
+			race = UnitRace(unit)
 		end
+		table.insert(textReplacements, {"$race", race})
 	end
 
 	if string.find(textFormat,"$sex") then
-		local sex = UnitSex(unit)
-		if sex > 1 then
-			if sex == 2 then sex = MALE else sex = FEMALE end
-			out = out:gsub("$sex", sex)
-		else
-			-- out = out:gsub("%S*$sex%S*%s?", "")
-			out = out:gsub("$sex", NONE)
-		end
+		local sexes = {UNKNOWN, MALE, FEMALE}
+		table.insert(textReplacements, {"$sex", sexes[UnitSex(unit)]})
 	end
 
 	if string.find(textFormat,"$group") then
+		local group = ""
+		local groupNumber = NONE
 		if UnitIsPlayer(unit) and UnitPlayerOrPetInParty(unit) and IsInRaid() then
-			local groupNumber = RaidInfo(unit)
-			if groupNumber then
-				groupNumber = addon:WrapTextInColorCode(groupNumber, {1,1,0})
-				out = out:gsub("$group", string.format("%s: %s", GROUP, groupNumber))
-			end
-		else
-			out = out:gsub("%S*$group%S*%s?", "")
+			groupNumber = RaidInfo(unit)
 		end
+
+		groupNumber = addon:WrapTextInColorCode(groupNumber, {1,1,0})
+		group = string.format("%s: %s", GROUP, groupNumber)
+		table.insert(textReplacements, {"$group", group})
 	end
+
 	if string.find(textFormat,"$g") then
+		local g = ""
+		local groupNumber = NONE
 		if UnitIsPlayer(unit) and UnitPlayerOrPetInParty(unit) and IsInRaid() then
-			local groupNumber = RaidInfo(unit)
-			if groupNumber then
-				groupNumber = addon:WrapTextInColorCode(groupNumber, {1,1,0})
-				out = out:gsub("$g", string.format("%s: %s", string.sub(GROUP, 0, 1), groupNumber))
-			end
-		else
-			out = out:gsub("%S*$g%S*%s?", "")
+			groupNumber = RaidInfo(unit)
 		end
+
+		groupNumber = addon:WrapTextInColorCode(groupNumber, {1,1,0})
+		g = string.format("%s: %s", string.sub(GROUP, 0, 1), groupNumber)
+		table.insert(textReplacements, {"$g", g})
 	end
+
 	if string.find(textFormat,"$realm") then
-		local realm = select(2,UnitFullName(unit))
-		if realm ~= nil then
-			out = out:gsub("$realm", realm)
-		else
-			out = out:gsub("%S*$realm%S*%s?", "")
-		end
-		realm = nil
+		local realm = select(2,UnitFullName(unit)) or ""
+		table.insert(textReplacements, {"$realm", realm})
 	end
+
 	if string.find(textFormat,"$title") then
 		local title = UnitPVPName(unit)
-		title = title:gsub(UnitName(unit).."%p?%s?","")
-		title = title:gsub("^%l?", function(l)
-				return string.upper(l)
-			end)
-		if title ~= nil then
-			out = out:gsub("$title", title)
+
+		if not addon:IsSecretValue(title) then
+			title = title:gsub(UnitName(unit).."%p?%s?","")
+
+			title = title:gsub("^%l?", function(l)
+					return string.upper(l)
+				end)
+
 		else
-			out = out:gsub("%S*$title%S*%s?", "")
+			title = ""
 		end
-		title = nil
+
+		table.insert(textReplacements, {"$title", title})
 	end
+
 	if string.find(textFormat,"$key") then
 		local binding = ""
 		if keyBindingsMap[unit] then
 			binding = addon:Binding(GetBindingKey(keyBindingsMap[unit]))
 		end
 
-		if binding ~= "" then
-			out = out:gsub("$key", binding)
-		else
-			out = out:gsub("%S*$key%S*%s?", "")
-		end
-		binding = nil
+		table.insert(textReplacements, {"$key", binding})
 	end
-	return out
+
+	local subtitutes = {}
+	for k, v in ipairs(textReplacements) do
+		out = out:gsub(v[1], format("%%%%%d$%s", k, type(v[1]) == "string" and "s" or "d"))
+		table.insert(subtitutes, v[2])
+	end
+
+	return out:format(unpack(subtitutes))
+
 end
 
 --------------------------------------------
@@ -1308,6 +1337,9 @@ local function HealthBar_Text(frame)
 	elseif (UnitIsDead(unit) or UnitIsCorpse(unit)) then
 		perc = DEAD
 		miss = ""
+	elseif UnitHealthPercent then
+		perc = format("%.2f",UnitHealthPercent(frame.unit))
+		miss = AbbreviateNumbers(UnitHealthMissing(frame.unit))
 	else
 		if miss ~= nil then
 			local missing = frame.currValue - frame.maxValue
@@ -1329,8 +1361,9 @@ local function HealthBar_Text(frame)
 	end
 
 	if text ~= nil then
-		text = text:gsub("$cur", addon:CommaNumber(frame.currValue))
-		text = text:gsub("$max", addon:FormatNumber(frame.maxValue))
+		text = text:gsub("$cur", "%%1$s")
+		text = text:gsub("$max", "%%2$s")
+		text = text:format(addon:CommaNumber(frame.currValue), addon:FormatNumber(frame.maxValue))
 	end
 
 	if frame.miss then frame.miss:SetText(miss) end
@@ -1340,6 +1373,11 @@ local function HealthBar_Text(frame)
 end
 
 local function HealthBar_Gradient(frame, elapsed, gradient)
+	if C_CurveUtil then
+		local color = UnitHealthPercent(frame.unit, true, frame.curve)
+		frame:GetStatusBarTexture():SetVertexColor(color:GetRGBA())
+		return
+	end
 	if not gradient then gradient = 0 end
 	if frame.maxValue == 0 then return end
 	-- local unit = frame:GetParent().unit
@@ -1404,7 +1442,7 @@ local function HealthBar_Gradient(frame, elapsed, gradient)
 	frame:SetStatusBarColor(r, g, b, alpha)
 end
 
-local function PredictionBar_Fill(frame, previousTexture, bar, amount, barOffsetXPercent)
+local function PredictionBar_Fill(frame, previousTexture, bar, amount, barOffsetXPercent, totalMax)
 	if amount == 0 then
 		bar:Hide()
 		return previousTexture
@@ -1418,8 +1456,9 @@ local function PredictionBar_Fill(frame, previousTexture, bar, amount, barOffset
 	bar:SetPoint("TOPLEFT", previousTexture, "TOPRIGHT", barOffsetX, 0)
 	bar:SetPoint("BOTTOMLEFT", previousTexture, "BOTTOMRIGHT", barOffsetX, 0)
 
-	local totalWidth, totalHeight = frame:GetSize()
-	local _, totalMax = frame:GetMinMaxValues()
+	local totalWidth = frame:GetWidth()
+	totalMax = totalMax or frame:GetMinMaxValues()
+	-- local _, totalMax = frame:GetMinMaxValues()
 
 	local barSize = (amount / totalMax) * totalWidth
 
@@ -1429,10 +1468,12 @@ local function PredictionBar_Fill(frame, previousTexture, bar, amount, barOffset
 end
 
 local function HealPredictionBar_Update(frame)
+	if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then return end
 
-	if not frame.myHealPrediction or not frame.otherHealPrediction or not frame.totalAbsorb or not frame.healAbsorb then
+	if not frame.myHealPrediction or not frame.otherHealPrediction or not frame.totalAbsorb or not frame.healAbsorbOld then
 		return
 	end
+
 	local unit = frame:GetParent().unit
 	local health = frame:GetValue()
     local _, maxHealth = frame:GetMinMaxValues()
@@ -1503,25 +1544,25 @@ local function HealPredictionBar_Update(frame)
 		local shownHealAbsorb = healAbsorb - allIncomingHeal
 		local shownHealAbsorbPercent = shownHealAbsorb / maxHealth
 
-		healAbsorbTexture = PredictionBar_Fill(frame, healthTexture, frame.healAbsorb, shownHealAbsorb, -shownHealAbsorbPercent)
+		healAbsorbTexture = PredictionBar_Fill(frame, healthTexture, frame.healAbsorbOld, shownHealAbsorb, -shownHealAbsorbPercent)
 
 		-- If there are incoming heals the left shadow would be overlayed by the incoming heals so it isn't shown.
 		if ( allIncomingHeal > 0 ) then
-			frame.healAbsorb.leftShadow:Hide();
+			frame.healAbsorbOld.leftShadow:Hide();
 		else
-			frame.healAbsorb.leftShadow:Show();
+			frame.healAbsorbOld.leftShadow:Show();
 		end
 
 		-- The right shadow is only shown if there are absorbs on the health bar.
 		if ( totalAbsorb > 0 ) then
-			frame.healAbsorb.rightShadow:Show();
+			frame.healAbsorbOld.rightShadow:Show();
 		else
-			frame.healAbsorb.rightShadow:Hide();
+			frame.healAbsorbOld.rightShadow:Hide();
 		end
 	else
-		frame.healAbsorb:Hide()
-		-- frame.healAbsorbLeftShadow:Hide()
-		-- frame.healAbsorbRightShadow:Hide()
+		frame.healAbsorbOld:Hide()
+		-- frame.healAbsorbOldLeftShadow:Hide()
+		-- frame.healAbsorbOldRightShadow:Hide()
 	end
 
 	-- Show myIncomingHeal on the health bar.
@@ -1552,19 +1593,27 @@ local function HealthBar_OnUpdate(frame, e)
     -- if UnitExists(unit) then
 		--if not frame.pauseUpdates then
 			local currValue = UnitHealth(unit)
-			local maxValue = UnitHealthMax(unit)
+			local maxValue = UnitHealthMax(unit) -- Sometimes not a secret value. Very confusing.
 
-			if maxValue ~= frame.maxValue then
-				frame:SetMinMaxValues(0, maxValue)
+			if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
+				frame.currValue = currValue
 				frame.maxValue = maxValue
+				frame:SetValue(currValue)
+				frame:SetMinMaxValues(0, maxValue)
+			else
+				if maxValue ~= frame.maxValue then
+					frame:SetMinMaxValues(0, maxValue)
+					frame.maxValue = maxValue
+				end
+
+				frame.endvalue = currValue
+				if currValue ~= frame.currValue then
+					frame.currValue = currValue
+				end
+
+				Glide(frame, e)
 			end
 
-			frame.endvalue = currValue
-			if currValue ~= frame.currValue then
-				frame.currValue = currValue
-			 end
-
-			Glide(frame, e)
 
 			HealthBar_Gradient(frame,e)
 			HealthBar_Text(frame)
@@ -1590,7 +1639,7 @@ function module:HealthBar_Update(frame)
 		frame:SetValue(currValue)
 
 		HealthBar_Text(frame)
-		HealPredictionBar_Update(frame)
+		-- HealPredictionBar_Update(frame)
 
 		if UnitExists(frame.unit) then
 			HealthBar_Gradient(frame)
@@ -1598,15 +1647,113 @@ function module:HealthBar_Update(frame)
 	-- end
 end
 
+function HealthBar_OnEvent(frame, event, ...)
+	local maxHealth = UnitHealthMax(frame.unit)
+	local healerUnit = "player"
+	UnitGetDetailedHealPrediction(frame.unit, healerUnit, frame.predictionCalc)
+
+	local totalHealAmount, amountFromHealer, amountFromOthers, healClamped = frame.predictionCalc:GetIncomingHeals()
+
+	if frame.predictMyHeals then
+		frame.predictMyHeals:SetMinMaxValues(0, maxHealth)
+		frame.predictMyHeals:SetValue(amountFromHealer)
+	end
+
+	if frame.predictOtherHeals then
+		frame.predictOtherHeals:SetMinMaxValues(0, maxHealth)
+		frame.predictOtherHeals:SetValue(amountFromOthers)
+	end
+
+	local damageAbsorbAmount, damageAbsorbClamped = frame.predictionCalc:GetDamageAbsorbs()
+
+	if frame.damageAbsorb then
+		frame.damageAbsorb:SetMinMaxValues(0,maxHealth)
+		frame.damageAbsorb:SetValue(damageAbsorbAmount)
+
+		frame.damageAbsorb.overflowIndicator:SetAlphaFromBoolean(damageAbsorbClamped, 1, 0)
+	end
+
+	local healAbsorbAmount, healAbsorbClamped = frame.predictionCalc:GetHealAbsorbs()
+
+	if frame.healAbsorb then
+		frame.healAbsorb:SetMinMaxValues(0,maxHealth)
+		frame.healAbsorb:SetValue(healAbsorbAmount)
+
+		frame.healAbsorb.overflowIndicator:SetAlphaFromBoolean(healAbsorbClamped, 1, 0)
+	end
+end
+
 function module:HealthBar_OnLoad(frame, unit)
 
 	frame.unit = unit
+	if C_CurveUtil then
+		frame.curve = C_CurveUtil.CreateColorCurve()
+		frame.curve:AddPoint(0, CreateColor(1, 0, 0))
+		frame.curve:AddPoint(0.5, CreateColor(1, 1, 0))
+		frame.curve:AddPoint(1, CreateColor(0, 1, 0))
+	end
+
+	if frame.predictMyHeals then
+		frame.predictMyHeals:SetSize(frame:GetSize())
+		frame.predictMyHeals:SetPoint("TOPLEFT", frame:GetStatusBarTexture(), "TOPRIGHT", 0, 0)
+		frame.predictMyHeals:SetPoint("BOTTOMLEFT", frame:GetStatusBarTexture(), "BOTTOMRIGHT", 0, 0)
+	end
+
+	if frame.predictOtherHeals then
+		frame.predictOtherHeals:SetSize(frame:GetSize())
+		frame.predictOtherHeals:SetPoint("TOPLEFT", frame.predictMyHeals:GetStatusBarTexture(), "TOPRIGHT", 0, 0)
+		frame.predictOtherHeals:SetPoint("BOTTOMLEFT", frame.predictMyHeals:GetStatusBarTexture(), "BOTTOMRIGHT", 0, 0)
+	end
+
+	if frame.damageAbsorb then
+		frame.damageAbsorb:SetSize(frame:GetSize())
+		frame.damageAbsorb:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
+		frame.damageAbsorb:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
+		frame.damageAbsorb.overlay:ClearAllPoints()
+		frame.damageAbsorb.overlay:SetPoint("TOPLEFT", frame.damageAbsorb:GetStatusBarTexture(), "TOPLEFT", 0, 0)
+		frame.damageAbsorb.overlay:SetPoint("BOTTOMLEFT", frame.damageAbsorb:GetStatusBarTexture(), "BOTTOMLEFT", 0, 0)
+		frame.damageAbsorb.overlay:SetPoint("TOPRIGHT", frame.damageAbsorb:GetStatusBarTexture(), "TOPRIGHT", 0, 0)
+		frame.damageAbsorb.overlay:SetPoint("BOTTOMRIGHT", frame.damageAbsorb:GetStatusBarTexture(), "BOTTOMRIGHT", 0, 0)
+	end
+
+	if frame.healAbsorb then
+		frame.healAbsorb:SetSize(frame:GetSize())
+		frame.healAbsorb:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
+		frame.healAbsorb:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
+	end
+
+
+	if UnitGetDetailedHealPrediction then
+		frame.predictionCalc = CreateUnitHealPredictionCalculator()
+		frame.predictionCalc:SetIncomingHealOverflowPercent(1)
+
+		frame.predictionCalc:SetIncomingHealClampMode(Enum.UnitIncomingHealClampMode.MissingHealth)
+		-- frame.predictionCalc:SetIncomingHealClampMode(Enum.UnitIncomingHealClampMode.MaximumHealth)
+
+		--  frame.predictionCalc:SetDamageAbsorbClampMode(Enum.UnitDamageAbsorbClampMode.MissingHealth)
+		-- frame.predictionCalc:SetDamageAbsorbClampMode(Enum.UnitDamageAbsorbClampMode.MissingHealthWithoutIncomingHeals)
+		frame.predictionCalc:SetDamageAbsorbClampMode(Enum.UnitDamageAbsorbClampMode.MaximumHealth)
+
+		frame.predictionCalc:SetHealAbsorbMode(Enum.UnitHealAbsorbMode.ReducedByIncomingHeals)
+		-- frame.predictionCalc:SetHealAbsorbMode(Enum.UnitHealAbsorbMode.Total)
+		-- frame.predictionCalc:SetHealAbsorbClampMode(Enum.UnitHealAbsorbClampMode.CurrentHealth)
+		frame.predictionCalc:SetHealAbsorbClampMode(Enum.UnitHealAbsorbClampMode.MaximumHealth)
+
+
+		frame:RegisterUnitEvent("UNIT_MAXHEALTH", frame.unit)
+		frame:RegisterUnitEvent("UNIT_HEAL_PREDICTION", frame.unit)
+		frame:RegisterUnitEvent("UNIT_ABSORB_AMOUNT_CHANGED", frame.unit)
+		frame:RegisterUnitEvent("UNIT_HEAL_ABSORB_AMOUNT_CHANGED", frame.unit)
+		frame:RegisterUnitEvent("UNIT_MAX_HEALTH_MODIFIERS_CHANGED", frame.unit)
+		
+		
+	end
 
 	frame.pauseUpdates = false
 
 	-- This is used for the low health flashing. See HealthBar_Gradient() for more info
 	frame.statusSign = 1
-
+	frame:SetScript("OnEvent", HealthBar_OnEvent)
 	frame:SetScript("OnUpdate", HealthBar_OnUpdate)
 end
 
@@ -1634,8 +1781,9 @@ local function PowerBar_Text(frame)
 	-- end
 
 	if text ~= nil then
-		text = text:gsub("$cur", addon:CommaNumber(frame.currValue))
-		text = text:gsub("$max", addon:FormatNumber(frame.maxValue))
+		text = text:gsub("$cur", "%%1$s")
+		text = text:gsub("$max", "%%2$s")
+		text = text:format(addon:CommaNumber(frame.currValue), addon:FormatNumber(frame.maxValue))
 	end
 
 	if frame.text then frame.text:SetText(text) end
@@ -1644,6 +1792,10 @@ end
 local GetSpellPowerCost = _G["GetSpellPowerCost"] or C_Spell.GetSpellPowerCost
 
 local function PowerBar_CostPrediction(frame, isStarting, startTime, endTime, spellId)
+	local maxPower = UnitPowerMax(frame.unit)
+
+	if addon:IsSecretValue(maxPower) then return end
+
 	local cost = 0
 	local powerType = frame.powerType or UnitPowerType(frame.unit)
 	if not isStarting or startTime == endTime then
@@ -1663,7 +1815,7 @@ local function PowerBar_CostPrediction(frame, isStarting, startTime, endTime, sp
 		frame.predictedPowerCost = cost
 	end
 
-	local _, maxPower= frame:GetMinMaxValues()
+	-- local _, maxPower= frame:GetMinMaxValues()
 	local perc = maxPower > 0 and cost / maxPower or 0
 	local texture = frame:GetStatusBarTexture()
 	local colorInfo = PowerBarColor[powerType]
@@ -1676,7 +1828,7 @@ local function PowerBar_CostPrediction(frame, isStarting, startTime, endTime, sp
 		frame.costPredictionBar.fillReserve:Show()
 	end
 
-	PredictionBar_Fill(frame, texture, frame.costPredictionBar, cost, -perc)
+	PredictionBar_Fill(frame, texture, frame.costPredictionBar, cost, -perc, maxPower)
 end
 
 local function PowerBar_OnEvent(frame, event, ...)
@@ -1697,20 +1849,28 @@ local function PowerBar_OnUpdate(frame, e)
     -- if UnitExists(unit) then
 		if not frame.pauseUpdates then
 			local powerType = frame.powerType or UnitPowerType(unit)
-			local maxValue = UnitPowerMax(unit, powerType)
 			local currValue = UnitPower(unit, powerType)
+			local maxValue = UnitPowerMax(unit, powerType) -- Sometimes not a secret value. Very weird.
 
-			if maxValue ~= frame.maxValue then
-				frame:SetMinMaxValues(0, maxValue)
-				frame.maxValue = maxValue
-			end
-
-			frame.endvalue = currValue
-			if currValue ~= frame.currValue then
+			-- Checking for secret value on currValue can't be trusted. During loading screen it might return `false`.
+			if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
 				frame.currValue = currValue
-			end
+				frame.maxValue = maxValue
+				frame:SetValue(currValue)
+				frame:SetMinMaxValues(0, maxValue)
+			else
+				if maxValue ~= frame.maxValue then
+					frame:SetMinMaxValues(0, maxValue)
+					frame.maxValue = maxValue
+				end
 
-			Glide(frame, e)
+				frame.endvalue = currValue
+				if currValue ~= frame.currValue then
+					frame.currValue = currValue
+				end
+
+				Glide(frame, e)
+			end
 
 			PowerBar_Text(frame);
 		end
@@ -1728,7 +1888,7 @@ function module:PowerBar_Update(frame)
 		frame:updateFunc()
 	end
 
-	frame:SetStatusBarColor(powerBarColor.r, powerBarColor.g,powerBarColor.b)
+	frame:GetStatusBarTexture():SetVertexColor(powerBarColor.r, powerBarColor.g,powerBarColor.b)
 	frame.bg:SetVertexColor(powerBarColor.r, powerBarColor.g,powerBarColor.b)
 
 	--- For Glide animation!
@@ -1741,7 +1901,8 @@ function module:PowerBar_Update(frame)
 	frame:SetMinMaxValues(0, maxValue);
 	frame:SetValue(currValue)
 
-	if maxValue == 0 and powerType == 1 then
+
+	if not (addon:IsSecretValue(maxValue) or addon:IsSecretValue(powerType)) and maxValue == 0 and powerType == 1 then
 		frame:Hide()
 	else
 		frame:Show()
@@ -2336,17 +2497,42 @@ local PLAYER_UNITS = {
 	pet = true,
 }
 
+local function UnpackAuraData(auraData)
+	if not auraData then
+		return nil;
+	end
+
+	return not addon:IsSecretValue(auraData.name) and auraData.name or nil,
+		not addon:IsSecretValue(auraData.icon) and auraData.icon or nil,
+		not addon:IsSecretValue(auraData.applications) and auraData.applications or 0,
+		not addon:IsSecretValue(auraData.dispelName) and auraData.dispelName or nil,
+		not addon:IsSecretValue(auraData.duration) and auraData.duration or 0,
+		not addon:IsSecretValue(auraData.expirationTime) and auraData.expirationTime or 0,
+		not addon:IsSecretValue(auraData.sourceUnit) and auraData.sourceUnit or nil,
+		not addon:IsSecretValue(auraData.isStealable) and auraData.isStealable or false,
+		not addon:IsSecretValue(auraData.nameplateShowPersonal) and auraData.nameplateShowPersonal or false,
+		not addon:IsSecretValue(auraData.spellId) and auraData.spellId or 0,
+		not addon:IsSecretValue(auraData.canApplyAura) and auraData.canApplyAura or false,
+		not addon:IsSecretValue(auraData.isBossAura) and auraData.isBossAura or false,
+		not addon:IsSecretValue(auraData.isFromPlayerOrPlayerPet) and auraData.isFromPlayerOrPlayerPet or false,
+		not addon:IsSecretValue(auraData.nameplateShowAll) and auraData.nameplateShowAll or false,
+		not addon:IsSecretValue(auraData.timeMod) and auraData.timeMod or 1,
+		not addon:IsSecretValue(auraData.points) and unpack(auraData.points)
+end
+
 local ShouldShowDebuffs = _G["TargetFrame_ShouldShowDebuffs"] or function(unit, caster, nameplateShowAll, casterIsAPlayer)
 	return TargetFrame:ShouldShowDebuffs(unit, caster, nameplateShowAll, casterIsAPlayer)
 end
 
 local UnitBuff = _G["UnitBuff"] or function(unitToken, index, filter)
-	 return AuraUtil.UnpackAuraData(C_UnitAuras.GetBuffDataByIndex(unitToken, index, filter))
+	return UnpackAuraData(C_UnitAuras.GetBuffDataByIndex(unitToken, index, filter))
 end
 
 local UnitDebuff = _G["UnitDebuff"] or function(unitToken, index, filter)
-	return AuraUtil.UnpackAuraData(C_UnitAuras.GetDebuffDataByIndex(unitToken, index, filter))
+	return UnpackAuraData(C_UnitAuras.GetDebuffDataByIndex(unitToken, index, filter))
 end
+
+local DebuffTypeColor = DebuffTypeColor or AuraUtil.GetDebuffDisplayInfoTable()
 
 local function UpdateAuraAnchor(auraFrame, index, size)
 	local aura = auraFrame["aura"..index]
@@ -2358,7 +2544,7 @@ local function UpdateAuraAnchor(auraFrame, index, size)
 end
 
 function module:UpdateAuras(frame)
-	if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then return end
+	-- if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then return end
 
 	local normalSize, largeSize = 17, 21
 	local aura, auraFrame, auraFrameHeight
@@ -2375,7 +2561,7 @@ function module:UpdateAuras(frame)
 	auraFrame = frame.buffs
 	auraFrameHeight = normalSize
 	for i = 1, maxBuffs do
-		local buffName, icon, count, debuffType, duration, expirationTime, caster, canStealOrPurge, _ , spellId, _, _, casterIsPlayer, nameplateShowAll = UnitBuff(frame.unit, i, nil);
+		local buffName, icon, count, _, duration, expirationTime, caster, canStealOrPurge, _ , spellId = UnitBuff(frame.unit, i, nil);
 		if icon then
 			if not auraFrame["aura"..i] then
 				auraFrame["aura"..i] = CreateFrame("Button", nil, auraFrame, self.db.profile.templatePrefix.."Buff")
@@ -2511,13 +2697,18 @@ function module:UpdateAuras(frame)
 					aura:SetSize(size, size)
 
 					-- set debuff type color
-					local color
+					local colorInfo
 					if debuffType then
-						color = DebuffTypeColor[debuffType]
+						colorInfo = DebuffTypeColor[debuffType]
 					else
-						color = DebuffTypeColor["none"]
+						colorInfo = DebuffTypeColor["none"] or DebuffTypeColor["None"]
 					end
-					aura.border:SetVertexColor(color.r, color.g, color.b)
+
+					if colorInfo.r then
+						aura.border:SetVertexColor(color.r, color.g, color.b)
+					else
+						aura.border:SetVertexColor(colorInfo.color:GetRGB())
+					end
 
 					aura:ClearAllPoints()
 					UpdateAuraAnchor(auraFrame, frameNum)

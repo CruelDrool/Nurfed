@@ -201,7 +201,7 @@ end
 
 local function UpdateRange(frame)
 	local inRange, checkedRange = UnitInRange(frame.unit)
-	if checkedRange and not inRange then
+	if not addon:IsSecretValue(inRange) and checkedRange and not inRange then
 		frame:SetBackdropBorderColor(1,0,0)
 	else
 		frame:SetBackdropBorderColor(1,1,1)

@@ -32,11 +32,11 @@ Nurfed.lua
 Modules\UnitFrame\Templates.xml
 Modules\UnitFrame\UnitFrame.lua
 Modules\UnitFrame\PlayerFrame.xml
-#Modules\UnitFrame\TargetFrame.xml
-#Modules\UnitFrame\FocusFrame.xml
-#Modules\UnitFrame\PartyFrames.xml
-#Modules\UnitFrame\PetFrame.xml
-#Modules\UnitFrame\BossFrames.xml
+Modules\UnitFrame\TargetFrame.xml
+Modules\UnitFrame\FocusFrame.xml
+Modules\UnitFrame\PartyFrames.xml
+Modules\UnitFrame\PetFrame.xml
+Modules\UnitFrame\BossFrames.xml
 
 Modules\MicroMenu\MicroMenu.lua
 Modules\Chat\Chat.lua
