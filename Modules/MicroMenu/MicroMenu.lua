@@ -150,6 +150,45 @@ elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_CLASSIC then
 			"PETBOOK",
 		},
 	}
+elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_THE_BURNING_CRUSADE_CLASSIC then
+	mainMenu = {
+		"TITLE",
+		"BLANK",
+		"CHARACTER",
+		"SPELLBOOK_ABILITIES_MENU", -- Submenu
+		"TALENTS",
+		"QUESTLOG",
+		"SOCIAL_MENU", -- Submenu
+		"MAP",
+		"GAME_MENU", -- Submenu
+		"HELP_REQUEST",
+		"SEPARATOR",
+		"CANCEL"
+	}
+	subMenus = {
+		GAME_MENU = {
+			"OPTIONS",
+			-- "BLIZZARD_STORE",
+			"SEPARATOR",
+			"ADDONS",
+			"EDIT_MODE",
+			"SUPPORT",
+			"MACROS",
+			-- "SEPARATOR",
+			-- "LOGOUT",
+			-- "EXIT_GAME",
+		},
+		SOCIAL_MENU = {
+			"FRIENDS",
+			"WHO",
+			"GUILD",
+			"RAID",
+		},
+		SPELLBOOK_ABILITIES_MENU = {
+			"SPELLBOOK",
+			"PETBOOK",
+		},
+	}
 elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MISTS_OF_PANDARIA_CLASSIC then
 	mainMenu = {
 		"TITLE",
@@ -229,6 +268,17 @@ local function ButtonsArray()
 		optionsFunc = function() if InCombatLockdown() then return end; GameMenuButtonOptions:Click() end
 		addonsFunc = function() if InCombatLockdown() then return end; GameMenuButtonAddons:Click() end
 		professionsFunc = function() if InCombatLockdown() then return end; ToggleSpellBook(BOOKTYPE_PROFESSION) end
+	elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_THE_BURNING_CRUSADE_CLASSIC then
+		minLevelSpec = 10
+		minLevelLFD = 1
+		talentsText = TALENTS
+		toggleRaidTabFunc = function() if InCombatLockdown() then return end; ToggleFriendsFrame(4) end
+		toggleGuildFrameFunc = function() if InCombatLockdown() then return end; ToggleFriendsFrame(3) end
+		talentsFunc = function() if InCombatLockdown() then return end; TalentMicroButton:Click() end
+		addonsFunc = function() if InCombatLockdown() then return end; ShowUIPanel(AddonList, nil, G_GameMenuFrameContextKey) end
+		LFDtext = string.format("%s/%s", LFG_TITLE, LFM_TITLE)
+		LFDKeybind = "TOGGLELFGPARENT"
+		optionsFunc = function() if InCombatLockdown() then return end; SettingsPanel.Open(SettingsPanel) end
 	elseif addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MISTS_OF_PANDARIA_CLASSIC then
 		minLevelSpec = 10
 		minLevelLFD = SHOW_LFD_LEVEL
@@ -308,8 +358,13 @@ local function ButtonsArray()
 
 	if (C_SpecializationInfo and C_SpecializationInfo.CanPlayerUseTalentSpecUI) and not C_SpecializationInfo.CanPlayerUseTalentSpecUI() then
 		local _, failureReason = C_SpecializationInfo.CanPlayerUseTalentSpecUI();
+		if failureReason == "LEVEL_TOO_LOW" then
+			buttons["TALENTS"]["text"] = GetMenuButtonText(string.format('%s (%s)', talentsText, string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, minLevelSpec)), "TOGGLETALENTS")
+		else
+			buttons["TALENTS"]["text"] = GetMenuButtonText(string.format('%s (%s)', talentsText, failureReason), "TOGGLETALENTS")
+		end
 		buttons["TALENTS"]["disabled"] = true
-		buttons["TALENTS"]["text"] = GetMenuButtonText(string.format('%s (%s)', talentsText, failureReason), "TOGGLETALENTS")
+
 	elseif level < minLevelSpec then
 		buttons["TALENTS"]["disabled"] = true
 		buttons["TALENTS"]["text"] = GetMenuButtonText(string.format('%s (%s)', talentsText, string.format(FEATURE_BECOMES_AVAILABLE_AT_LEVEL, minLevelSpec)), "TOGGLETALENTS")

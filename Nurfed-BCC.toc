@@ -28,8 +28,8 @@ Libs\LibBabble-CreatureType-3.0\lib.xml
 
 Nurfed.lua
 
-Modules\UnitFrame\UnitFrame.lua
 Modules\UnitFrame\Templates.xml
+Modules\UnitFrame\UnitFrame.lua
 Modules\UnitFrame\PlayerFrame.xml
 Modules\UnitFrame\TargetFrame.xml
 Modules\UnitFrame\FocusFrame.xml

@@ -59,7 +59,7 @@ function module:SecondsToTimeAbbrev(seconds)
 	return t
 end
 
-if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
+if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE or addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_THE_BURNING_CRUSADE_CLASSIC then
 	local updateAura = function(aura, timeleft)
 		if timeleft and not addon:IsSecretValue(timeleft) and module.db.profile.enabled then
 			aura.Duration:SetText(module:SecondsToTimeAbbrev(timeleft))
