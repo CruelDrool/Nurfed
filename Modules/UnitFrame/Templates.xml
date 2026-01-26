@@ -149,8 +149,9 @@
 		</Member>
 	</FontFamily>
 
-	<Font name="Nurfed_CountFontOutline" font="Fonts\ARIALN.TTF" outline="NORMAL" virtual="true">
-		<FontHeight val="12"/>
+	<Font name="Nurfed_CountdownFontOutline" font="Fonts\FRIZQT__.TTF" outline="NORMAL" virtual="true">
+		<Color r="1" g="1" b="0.102" />
+		<FontHeight val="10"/>
 	</Font>
 
 	<Font name="Nurfed_UnitFontHPperc" font="Interface\AddOns\Nurfed\Fonts\framd.ttf" outline="NONE" virtual="true">
@@ -230,6 +231,22 @@
 				</Layers>
 				<BarTexture file="Interface\RaidFrame\Absorb-Fill" vertTile="true" horizTile="true" parentKey="absorbFill" />
 			</StatusBar>
+
+			<Frame parentKey="texts" setAllPoints="true" frameLevel="4">
+				<Layers>
+					<Layer level="OVERLAY" textureSubLevel="1">
+						<FontString parentKey="healthInfo" inherits="Nurfed_UnitFont" justifyH="LEFT">
+							<Shadow x="-1" y="-1">
+								<Color r="0" g="0" b="0" a="0.75"/>
+								<!--<Offset x="-1" y="-1"/>-->
+							</Shadow>
+						</FontString>
+						<FontString parentKey="missing" inherits="Nurfed_UnitFontOutline" justifyH="RIGHT">
+							<Color r="0.8" g="0.06666666666666666666666666666667" b="0.06666666666666666666666666666667"/>
+						</FontString>
+					</Layer>
+				</Layers>	
+			</Frame>
 
 			<!-- START - Old healing prediction frames -->
 			<Frame parentKey="healAbsorbOld" frameLevel="2">
@@ -314,17 +331,7 @@
 				</Texture>
 			</Layer>
 			<!-- END - Old overflow indicators -->
-			<Layer level="OVERLAY" textureSubLevel="1">
-				<FontString parentKey="text" inherits="Nurfed_UnitFont" justifyH="LEFT">
-					<Shadow x="-1" y="-1">
-						<Color r="0" g="0" b="0" a="0.75"/>
-						<!--<Offset x="-1" y="-1"/>-->
-					</Shadow>
-				</FontString>
-				<FontString parentKey="miss" inherits="Nurfed_UnitFontOutline" justifyH="RIGHT">
-					<Color r="0.8" g="0.06666666666666666666666666666667" b="0.06666666666666666666666666666667"/>
-				</FontString>
-			</Layer>
+
 		</Layers>
 		<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5"/>
 	</StatusBar>

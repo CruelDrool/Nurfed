@@ -102,7 +102,16 @@ module.options = {
 			get = function() return module.db.profile.enabled end,
 			set = function(info, value) module.db.profile.enabled = value; if module:IsEnabled() then module:DisableUnitframes() else module:EnableUnitframes() end end,
 		},
+		showAllDebuffs = {
+			order = 2,
+			type = "toggle",
+			name = "Show all debuffs",
+			desc = "Changes the value of the CVar \"noBuffDebuffFilterOnTarget\"",
+			get = function() return GetCVarBool("noBuffDebuffFilterOnTarget") end,
+			set = function(info, value) SetCVar("noBuffDebuffFilterOnTarget", value) end,
+		},
 		decimalpoints = {
+			hidden = addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE,
 			order = 7,
 			name = "Decimal points",
 			-- desc = "",
@@ -113,6 +122,7 @@ module.options = {
 			-- disabled = function() return not module.db.profile.foo end,
 		},
 		glideanimation = {
+			hidden = addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE,
 			order = 4,
 			type = "group",
 			width = "full",
@@ -141,6 +151,7 @@ module.options = {
 			},
 		},
 		lowhealthflash = {
+			hidden = addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE,
 			order = 5,
 			type = "group",
 			width = "full",
@@ -573,8 +584,8 @@ function module:CreateFrame(modName, unit, events, oneventfunc, isWatched, id)
 	if frame.pet then self:TargetofTarget_Onload(frame.pet, unit.."pet"..id) end -- partypetN, not partyNpet!
 	if frame.buffs or frame.debuffs then frame.showAuraCount = true end
 
+	if frame.cast then self:CastBar_OnLoad(frame.cast, frame.unit) end
 	if addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_MAINLINE then
-		if frame.cast then self:CastBar_OnLoad(frame.cast, frame.unit) end
 	end
 
 	if frame.threat then self:ThreatBar_OnLoad(frame.threat, frame.unit) end
@@ -1320,7 +1331,7 @@ local GHOST
 local function HealthBar_Text(frame)
 	local unit = frame:GetParent().unit
 
-	local text = module:GetTextFormat("health", frame:GetParent())
+	local healthInfo = module:GetTextFormat("health", frame:GetParent())
 	local miss = module:GetTextFormat("miss", frame:GetParent())
 	local perc = module:GetTextFormat("perc", frame:GetParent())
 
@@ -1338,7 +1349,7 @@ local function HealthBar_Text(frame)
 		perc = DEAD
 		miss = ""
 	elseif UnitHealthPercent then
-		perc = format("%.2f",UnitHealthPercent(frame.unit))
+		perc = format("%d%%",UnitHealthPercent(frame.unit, false, CurveConstants.ScaleTo100))
 		miss = AbbreviateNumbers(UnitHealthMissing(frame.unit))
 	else
 		if miss ~= nil then
@@ -1360,21 +1371,23 @@ local function HealthBar_Text(frame)
 		end
 	end
 
-	if text ~= nil then
-		text = text:gsub("$cur", "%%1$s")
-		text = text:gsub("$max", "%%2$s")
-		text = text:format(addon:CommaNumber(frame.currValue), addon:FormatNumber(frame.maxValue))
+	if healthInfo ~= nil then
+		healthInfo = healthInfo:gsub("$cur", "%%1$s")
+		healthInfo = healthInfo:gsub("$max", "%%2$s")
+		healthInfo = healthInfo:format(addon:CommaNumber(frame.currValue), addon:FormatNumber(frame.maxValue))
 	end
 
-	if frame.miss then frame.miss:SetText(miss) end
-	if frame.text then frame.text:SetText(text) end
+	if frame.texts then
+		if frame.texts.missing then frame.texts.missing:SetText(miss) end
+		if frame.texts.healthInfo then frame.texts.healthInfo:SetText(healthInfo) end
+	end
 	if frame.perc then frame.perc:SetText(perc) end
 
 end
 
 local function HealthBar_Gradient(frame, elapsed, gradient)
 	if C_CurveUtil then
-		local color = UnitHealthPercent(frame.unit, true, frame.curve)
+		local color = UnitHealthPercent(frame.unit, true, frame.colorCurve)
 		frame:GetStatusBarTexture():SetVertexColor(color:GetRGBA())
 		return
 	end
@@ -1457,7 +1470,7 @@ local function PredictionBar_Fill(frame, previousTexture, bar, amount, barOffset
 	bar:SetPoint("BOTTOMLEFT", previousTexture, "BOTTOMRIGHT", barOffsetX, 0)
 
 	local totalWidth = frame:GetWidth()
-	totalMax = totalMax or frame:GetMinMaxValues()
+	totalMax = totalMax or select(2, frame:GetMinMaxValues())
 	-- local _, totalMax = frame:GetMinMaxValues()
 
 	local barSize = (amount / totalMax) * totalWidth
@@ -1467,7 +1480,7 @@ local function PredictionBar_Fill(frame, previousTexture, bar, amount, barOffset
 	return bar
 end
 
-local function HealPredictionBar_Update(frame)
+local function HealthBar_HealthPredictions_Old(frame)
 	if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then return end
 
 	if not frame.myHealPrediction or not frame.otherHealPrediction or not frame.totalAbsorb or not frame.healAbsorbOld then
@@ -1588,66 +1601,11 @@ local function HealPredictionBar_Update(frame)
 
 end
 
-local function HealthBar_OnUpdate(frame, e)
-	local unit = frame.unit
-    -- if UnitExists(unit) then
-		--if not frame.pauseUpdates then
-			local currValue = UnitHealth(unit)
-			local maxValue = UnitHealthMax(unit) -- Sometimes not a secret value. Very confusing.
 
-			if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
-				frame.currValue = currValue
-				frame.maxValue = maxValue
-				frame:SetValue(currValue)
-				frame:SetMinMaxValues(0, maxValue)
-			else
-				if maxValue ~= frame.maxValue then
-					frame:SetMinMaxValues(0, maxValue)
-					frame.maxValue = maxValue
-				end
+local function HealthBar_HealthPredictions(frame)
 
-				frame.endvalue = currValue
-				if currValue ~= frame.currValue then
-					frame.currValue = currValue
-				end
+	if addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_MAINLINE then return end
 
-				Glide(frame, e)
-			end
-
-
-			HealthBar_Gradient(frame,e)
-			HealthBar_Text(frame)
-			HealPredictionBar_Update(frame)
-		--end
-    -- end
-end
-
-function module:HealthBar_Update(frame)
-	local unit = frame.unit
-	-- if frame.unit == unit then
-        local maxValue = UnitHealthMax(unit)
-		local currValue = UnitHealth(unit)
-
-		--- For Glide animation!
-		frame.startvalue = currValue
-		frame.endvalue = currValue
-
-		frame.currValue = currValue
-		frame.maxValue = maxValue
-
-		frame:SetMinMaxValues(0, maxValue)
-		frame:SetValue(currValue)
-
-		HealthBar_Text(frame)
-		-- HealPredictionBar_Update(frame)
-
-		if UnitExists(frame.unit) then
-			HealthBar_Gradient(frame)
-		end
-	-- end
-end
-
-function HealthBar_OnEvent(frame, event, ...)
 	local maxHealth = UnitHealthMax(frame.unit)
 	local healerUnit = "player"
 	UnitGetDetailedHealPrediction(frame.unit, healerUnit, frame.predictionCalc)
@@ -1683,14 +1641,78 @@ function HealthBar_OnEvent(frame, event, ...)
 	end
 end
 
+local function HealthBar_OnUpdate(frame, e)
+	local unit = frame.unit
+    -- if UnitExists(unit) then
+		--if not frame.pauseUpdates then
+			local currValue = UnitHealth(unit)
+			local maxValue = UnitHealthMax(unit) -- Sometimes not a secret value. Very confusing.
+
+			if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
+				frame.currValue = currValue
+				frame.maxValue = maxValue
+				frame:SetValue(currValue)
+				frame:SetMinMaxValues(0, maxValue)
+			else
+				if maxValue ~= frame.maxValue then
+					frame:SetMinMaxValues(0, maxValue)
+					frame.maxValue = maxValue
+				end
+
+				frame.endvalue = currValue
+				if currValue ~= frame.currValue then
+					frame.currValue = currValue
+				end
+
+				Glide(frame, e)
+			end
+
+			HealthBar_Gradient(frame,e)
+
+			HealthBar_Text(frame)
+		--end
+    -- end
+end
+
+function module:HealthBar_Update(frame)
+	local unit = frame.unit
+	-- if frame.unit == unit then
+        local maxValue = UnitHealthMax(unit)
+		local currValue = UnitHealth(unit)
+
+		--- For Glide animation!
+		frame.startvalue = currValue
+		frame.endvalue = currValue
+
+		frame.currValue = currValue
+		frame.maxValue = maxValue
+
+		frame:SetMinMaxValues(0, maxValue)
+		frame:SetValue(currValue)
+
+		HealthBar_Text(frame)
+		HealthBar_HealthPredictions(frame)
+		HealthBar_HealthPredictions_Old(frame)
+
+		if UnitExists(frame.unit) then
+			HealthBar_Gradient(frame)
+		end
+	-- end
+end
+
+function HealthBar_OnEvent(frame, event, ...)
+	HealthBar_HealthPredictions(frame)
+	HealthBar_HealthPredictions_Old(frame)
+end
+
 function module:HealthBar_OnLoad(frame, unit)
 
 	frame.unit = unit
 	if C_CurveUtil then
-		frame.curve = C_CurveUtil.CreateColorCurve()
-		frame.curve:AddPoint(0, CreateColor(1, 0, 0))
-		frame.curve:AddPoint(0.5, CreateColor(1, 1, 0))
-		frame.curve:AddPoint(1, CreateColor(0, 1, 0))
+		frame.colorCurve = C_CurveUtil.CreateColorCurve()
+		frame.colorCurve:AddPoint(0, CreateColor(1, 0, 0))
+		frame.colorCurve:AddPoint(0.5, CreateColor(1, 1, 0))
+		frame.colorCurve:AddPoint(1, CreateColor(0, 1, 0))
 	end
 
 	if frame.predictMyHeals then
@@ -1723,7 +1745,7 @@ function module:HealthBar_OnLoad(frame, unit)
 	end
 
 
-	if UnitGetDetailedHealPrediction then
+	if CreateUnitHealPredictionCalculator then
 		frame.predictionCalc = CreateUnitHealPredictionCalculator()
 		frame.predictionCalc:SetIncomingHealOverflowPercent(1)
 
@@ -1738,16 +1760,13 @@ function module:HealthBar_OnLoad(frame, unit)
 		-- frame.predictionCalc:SetHealAbsorbMode(Enum.UnitHealAbsorbMode.Total)
 		-- frame.predictionCalc:SetHealAbsorbClampMode(Enum.UnitHealAbsorbClampMode.CurrentHealth)
 		frame.predictionCalc:SetHealAbsorbClampMode(Enum.UnitHealAbsorbClampMode.MaximumHealth)
-
-
-		frame:RegisterUnitEvent("UNIT_MAXHEALTH", frame.unit)
-		frame:RegisterUnitEvent("UNIT_HEAL_PREDICTION", frame.unit)
-		frame:RegisterUnitEvent("UNIT_ABSORB_AMOUNT_CHANGED", frame.unit)
-		frame:RegisterUnitEvent("UNIT_HEAL_ABSORB_AMOUNT_CHANGED", frame.unit)
-		frame:RegisterUnitEvent("UNIT_MAX_HEALTH_MODIFIERS_CHANGED", frame.unit)
-		
-		
 	end
+
+	frame:RegisterUnitEvent("UNIT_MAXHEALTH", frame.unit)
+	frame:RegisterUnitEvent("UNIT_HEAL_PREDICTION", frame.unit)
+	frame:RegisterUnitEvent("UNIT_ABSORB_AMOUNT_CHANGED", frame.unit)
+	frame:RegisterUnitEvent("UNIT_HEAL_ABSORB_AMOUNT_CHANGED", frame.unit)
+	frame:RegisterUnitEvent("UNIT_MAX_HEALTH_MODIFIERS_CHANGED", frame.unit)
 
 	frame.pauseUpdates = false
 
@@ -2003,6 +2022,9 @@ local function CastBar_OnEvent(frame, event, unit,...)
 		frame:Clear()
 		if event == "UNIT_SPELLCAST_START" then
 			name, _, texture, startTime, endTime, _, castID, notInterruptible = UnitCastingInfo(unit)
+
+			if addon:IsSecretValue(startTime) or addon:IsSecretValue(castID) then return end
+
 			if not endTime then frame:Hide(); frame:Clear(); return end
 			frame.castID = castID
 			frame.value = GetTime() - (startTime / 1000)
@@ -2029,7 +2051,8 @@ local function CastBar_OnEvent(frame, event, unit,...)
 				frame.channeling = true
 				frame.reverseChanneling = false
 			end
-			if not endTime then frame:Hide(); frame:Clear(); return end
+
+			if not endTime or addon:IsSecretValue(startTime) then frame:Hide()frame:Clear(); return end
 
 			if frame.reverseChanneling then
 				-- Same calculations as a regular cast.
@@ -2103,6 +2126,9 @@ local function CastBar_OnEvent(frame, event, unit,...)
 			end
 		end
 	elseif event == "UNIT_SPELLCAST_FAILED" or event == "UNIT_SPELLCAST_INTERRUPTED" then
+
+		if addon:IsSecretValue(frame.castID) then frame:Hide()frame:clear() return end
+
 		if frame.casting and select(1,...) == frame.castID then
 			frame.statusbar:SetValue(frame.maxValue)
 			frame.statusbar:SetStatusBarColor(1.0, 0.0, 0.0)
@@ -2123,10 +2149,14 @@ local function CastBar_OnEvent(frame, event, unit,...)
 			local _, startTime, endTime
 			if frame.casting then
 				_, _, _, startTime, endTime = UnitCastingInfo(unit)
-				if not endTime then frame:Hide(); frame:Clear(); return end
+
+				if not endTime or addon:IsSecretValue(startTime)  then frame:Hide()frame:Clear(); return end
+
 				frame.value = GetTime() - (startTime / 1000)
 			elseif frame.channeling or frame.reverseChanneling then
 				_, _, _, startTime, endTime = UnitChannelInfo(unit)
+
+				if addon:IsSecretValue(startTime)  then frame:Hide()frame:Clear(); return end
 
 				if not endTime then frame:Hide(); frame:Clear(); return end
 
@@ -2590,13 +2620,6 @@ function module:UpdateAuras(frame)
 					expirationTime = expirationTimeNew
 				end
 			end
-			-- Handle cooldowns
-			if ( duration > 0 ) then
-				aura.cooldown:Show()
-				CooldownFrame_Set(aura.cooldown, expirationTime - duration, duration, duration > 0, true)
-			else
-				aura.cooldown:Hide()
-			end
 
 			-- set the buff to be big if the buff is cast by the player or the player's pet
 			local size
@@ -2607,6 +2630,19 @@ function module:UpdateAuras(frame)
 				size = normalSize
 			end
 			aura:SetSize(size, size)
+
+			-- Handle cooldowns
+			if not OmniCC then
+				local fontHeight = 
+				aura.cooldown:SetCountdownFont("Nurfed_CountdownFontOutline")
+				aura.cooldown:SetHideCountdownNumbers(false)
+			end
+			if ( duration > 0 ) then
+				aura.cooldown:Show()
+				CooldownFrame_Set(aura.cooldown, expirationTime - duration, duration, duration > 0, true)
+			else
+				aura.cooldown:Hide()
+			end
 
 			-- Show stealable frame if the target is not the current player and the buff is stealable.
 			if ( not playerIsTarget and canStealOrPurge ) then
@@ -2678,6 +2714,10 @@ function module:UpdateAuras(frame)
 						end
 					end
 					-- Handle cooldowns
+					if not OmniCC then
+						aura.cooldown:SetCountdownFont("Nurfed_CountdownFontOutline")
+						aura.cooldown:SetHideCountdownNumbers(false)
+					end
 					if duration > 0 then
 						aura.cooldown:Show();
 						CooldownFrame_Set(aura.cooldown, expirationTime - duration, duration, duration > 0, true)
