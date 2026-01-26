@@ -68,6 +68,8 @@ local doNotSellList = {
 		-- [20560] = true, -- Alterac Valley Mark of Honor (common)
 		-- [29024] = true, -- Eye of the Storm Mark of Honor (common)
 		[32823] = true, -- Illidari Lord Balthas' Instructions (poor)
+		[39317] = true, -- News From The North (poor)
+		[39355] = true, -- Haute Club Membership Card (poor)
 		[161437] = true, -- Shipping Contract (poor)
 		[228431] = true, -- Rock Buddy (poor)
 }
