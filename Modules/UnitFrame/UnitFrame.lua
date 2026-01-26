@@ -1613,11 +1613,13 @@ local function HealthBar_HealthPredictions(frame)
 	if frame.predictMyHeals then
 		frame.predictMyHeals:SetMinMaxValues(0, maxHealth)
 		frame.predictMyHeals:SetValue(amountFromHealer)
+		frame.predictMyHeals:SetAlpha(1)
 	end
 
 	if frame.predictOtherHeals then
 		frame.predictOtherHeals:SetMinMaxValues(0, maxHealth)
 		frame.predictOtherHeals:SetValue(amountFromOthers)
+		frame.predictOtherHeals:SetAlpha(1)
 	end
 
 	local damageAbsorbAmount, damageAbsorbClamped = frame.predictionCalc:GetDamageAbsorbs()
@@ -1625,6 +1627,7 @@ local function HealthBar_HealthPredictions(frame)
 	if frame.damageAbsorb then
 		frame.damageAbsorb:SetMinMaxValues(0,maxHealth)
 		frame.damageAbsorb:SetValue(damageAbsorbAmount)
+		frame.damageAbsorb:SetAlpha(0.75)
 
 		frame.damageAbsorb.overflowIndicator:SetAlphaFromBoolean(damageAbsorbClamped, 1, 0)
 	end
@@ -1634,6 +1637,7 @@ local function HealthBar_HealthPredictions(frame)
 	if frame.healAbsorb then
 		frame.healAbsorb:SetMinMaxValues(0,maxHealth)
 		frame.healAbsorb:SetValue(healAbsorbAmount)
+		frame.healAbsorb:SetAlpha(1)
 
 		frame.healAbsorb.overflowIndicator:SetAlphaFromBoolean(healAbsorbClamped, 1, 0)
 	end
@@ -1689,6 +1693,7 @@ function module:HealthBar_Update(frame)
 		frame:SetValue(currValue)
 
 		HealthBar_Text(frame)
+
 		HealthBar_HealthPredictions(frame)
 		HealthBar_HealthPredictions_Old(frame)
 
@@ -1717,14 +1722,12 @@ function module:HealthBar_OnLoad(frame, unit)
 		frame.predictMyHeals:SetSize(frame:GetSize())
 		frame.predictMyHeals:SetPoint("TOPLEFT", frame:GetStatusBarTexture(), "TOPRIGHT", 0, 0)
 		frame.predictMyHeals:SetPoint("BOTTOMLEFT", frame:GetStatusBarTexture(), "BOTTOMRIGHT", 0, 0)
-		frame.predictMyHeals:Show()
 	end
 
 	if frame.predictOtherHeals then
 		frame.predictOtherHeals:SetSize(frame:GetSize())
 		frame.predictOtherHeals:SetPoint("TOPLEFT", frame.predictMyHeals:GetStatusBarTexture(), "TOPRIGHT", 0, 0)
 		frame.predictOtherHeals:SetPoint("BOTTOMLEFT", frame.predictMyHeals:GetStatusBarTexture(), "BOTTOMRIGHT", 0, 0)
-		frame.predictOtherHeals:Show()
 	end
 
 	if frame.damageAbsorb then
@@ -1736,14 +1739,12 @@ function module:HealthBar_OnLoad(frame, unit)
 		frame.damageAbsorb.overlay:SetPoint("BOTTOMLEFT", frame.damageAbsorb:GetStatusBarTexture(), "BOTTOMLEFT", 0, 0)
 		frame.damageAbsorb.overlay:SetPoint("TOPRIGHT", frame.damageAbsorb:GetStatusBarTexture(), "TOPRIGHT", 0, 0)
 		frame.damageAbsorb.overlay:SetPoint("BOTTOMRIGHT", frame.damageAbsorb:GetStatusBarTexture(), "BOTTOMRIGHT", 0, 0)
-		frame.damageAbsorb:Show()
 	end
 
 	if frame.healAbsorb then
 		frame.healAbsorb:SetSize(frame:GetSize())
 		frame.healAbsorb:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
 		frame.healAbsorb:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
-		frame.healAbsorb:Show()
 	end
 
 
