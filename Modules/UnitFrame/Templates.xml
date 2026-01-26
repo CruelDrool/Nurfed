@@ -187,17 +187,20 @@
 	
 	<StatusBar name="Nurfed_Unit_hp" virtual="true">
 		<Frames>
-			<StatusBar parentKey="predictMyHeals" frameLevel="2" minValue="0" maxValue="0" defaultValue="0">
+			<StatusBar parentKey="predictMyHeals" frameLevel="2" minValue="0" maxValue="0" defaultValue="0" hidden="true">
+				<Size x="0" y="0"/>
 				<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5" />
 				<BarColor r="0.0" g="0.827" b="0.765" />
 			</StatusBar>
 
-			<StatusBar parentKey="predictOtherHeals" frameLevel="2" minValue="0" maxValue="0" defaultValue="0">
+			<StatusBar parentKey="predictOtherHeals" frameLevel="2" minValue="0" maxValue="0" defaultValue="0" hidden="true">
+				<Size x="0" y="0"/>
 				<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5" />
 				<BarColor r="0.0" g="0.631" b="0.557" />
 			</StatusBar>
 
-			<StatusBar parentKey="damageAbsorb" frameLevel="3" minValue="0" maxValue="0" defaultValue="0" reverseFill="true" alpha="0.75">
+			<StatusBar parentKey="damageAbsorb" frameLevel="3" minValue="0" maxValue="0" defaultValue="0" reverseFill="true" alpha="0.75" hidden="true">
+				<Size x="0" y="0"/>
 				<Layers>
 					<Layer level="OVERLAY" textureSubLevel="1">
 						<Texture parentKey="overlay" file="Interface\RaidFrame\Shield-Overlay" vertTile="true" horizTile="true"/>
@@ -216,7 +219,8 @@
 				<BarColor r="0.6745" g="0.759" b="0.9765" />
 			</StatusBar>
 
-			<StatusBar parentKey="healAbsorb" frameLevel="4" minValue="0" maxValue="0" defaultValue="0" reverseFill="true">
+			<StatusBar parentKey="healAbsorb" frameLevel="4" minValue="0" maxValue="0" defaultValue="0" reverseFill="true" hidden="true">
+				<Size x="0" y="0"/>
 				<Layers>
 					<Layer level="OVERLAY">
 						<Texture parentKey="overflowIndicator" file="Interface\RaidFrame\Absorb-Overabsorb" alphaMode="ADD" alpha="0">

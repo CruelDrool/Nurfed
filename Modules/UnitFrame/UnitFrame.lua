@@ -585,8 +585,6 @@ function module:CreateFrame(modName, unit, events, oneventfunc, isWatched, id)
 	if frame.buffs or frame.debuffs then frame.showAuraCount = true end
 
 	if frame.cast then self:CastBar_OnLoad(frame.cast, frame.unit) end
-	if addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_MAINLINE then
-	end
 
 	if frame.threat then self:ThreatBar_OnLoad(frame.threat, frame.unit) end
 
@@ -1719,12 +1717,14 @@ function module:HealthBar_OnLoad(frame, unit)
 		frame.predictMyHeals:SetSize(frame:GetSize())
 		frame.predictMyHeals:SetPoint("TOPLEFT", frame:GetStatusBarTexture(), "TOPRIGHT", 0, 0)
 		frame.predictMyHeals:SetPoint("BOTTOMLEFT", frame:GetStatusBarTexture(), "BOTTOMRIGHT", 0, 0)
+		frame.predictMyHeals:Show()
 	end
 
 	if frame.predictOtherHeals then
 		frame.predictOtherHeals:SetSize(frame:GetSize())
 		frame.predictOtherHeals:SetPoint("TOPLEFT", frame.predictMyHeals:GetStatusBarTexture(), "TOPRIGHT", 0, 0)
 		frame.predictOtherHeals:SetPoint("BOTTOMLEFT", frame.predictMyHeals:GetStatusBarTexture(), "BOTTOMRIGHT", 0, 0)
+		frame.predictOtherHeals:Show()
 	end
 
 	if frame.damageAbsorb then
@@ -1736,12 +1736,14 @@ function module:HealthBar_OnLoad(frame, unit)
 		frame.damageAbsorb.overlay:SetPoint("BOTTOMLEFT", frame.damageAbsorb:GetStatusBarTexture(), "BOTTOMLEFT", 0, 0)
 		frame.damageAbsorb.overlay:SetPoint("TOPRIGHT", frame.damageAbsorb:GetStatusBarTexture(), "TOPRIGHT", 0, 0)
 		frame.damageAbsorb.overlay:SetPoint("BOTTOMRIGHT", frame.damageAbsorb:GetStatusBarTexture(), "BOTTOMRIGHT", 0, 0)
+		frame.damageAbsorb:Show()
 	end
 
 	if frame.healAbsorb then
 		frame.healAbsorb:SetSize(frame:GetSize())
 		frame.healAbsorb:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
 		frame.healAbsorb:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
+		frame.healAbsorb:Show()
 	end
 
 
