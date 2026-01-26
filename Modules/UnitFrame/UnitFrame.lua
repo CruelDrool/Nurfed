@@ -2745,7 +2745,7 @@ function module:UpdateAuras(frame)
 					end
 
 					if colorInfo.r then
-						aura.border:SetVertexColor(color.r, color.g, color.b)
+						aura.border:SetVertexColor(colorInfo.r, colorInfo.g, colorInfo.b)
 					else
 						aura.border:SetVertexColor(colorInfo.color:GetRGB())
 					end
