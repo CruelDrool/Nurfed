@@ -1145,10 +1145,7 @@ function module:OnEnable()
 		self.frame = UnitFrames:CreateFrame(moduleName, unit, events, OnEvent)
 		if self.frame.xp then XPbar_OnLoad(self.frame.xp) end
 		if self.frame.reputation then RepBar_OnLoad(self.frame.reputation) end
-
-		if addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_MAINLINE then
-			if self.frame.additionalPowerBar then AdditionalPowerBar_OnLoad(self.frame.additionalPowerBar) end
-		end
+		if self.frame.additionalPowerBar then AdditionalPowerBar_OnLoad(self.frame.additionalPowerBar) end
 	end
 
 	if self.frame then

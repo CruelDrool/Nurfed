@@ -1814,12 +1814,12 @@ end
 local GetSpellPowerCost = _G["GetSpellPowerCost"] or C_Spell.GetSpellPowerCost
 
 local function PowerBar_CostPrediction(frame, isStarting, startTime, endTime, spellId)
-	local maxPower = UnitPowerMax(frame.unit)
+	local powerType = frame.powerType or UnitPowerType(frame.unit)
+	local maxPower = UnitPowerMax(frame.unit, powerType)
 
 	if addon:IsSecretValue(maxPower) then return end
 
 	local cost = 0
-	local powerType = frame.powerType or UnitPowerType(frame.unit)
 	if not isStarting or startTime == endTime then
 		local currentSpellID = select(9, UnitCastingInfo(frame.unit));
 		if currentSpellID and frame.predictedPowerCost then
