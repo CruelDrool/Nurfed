@@ -1000,12 +1000,13 @@ function module:ClassResourceBars()
 			resourceBars.runes = CreateClassResourceBar(resourceBars, "Nurfed_DeathKnight_Resource_Bar_Template", relativeTo, relativePoint, xOffset, yOffset)
 			resourceBars.runes:UpdateRunes(true)
 		end
-
+		--[[
 		if classFileName == "SHAMAN" then
 			resourceBars.totems = CreateClassResourceBar(resourceBars, "Nurfed_TotemFrame_Horizontal_Template", relativeTo, relativePoint, xOffset, yOffset + 5)
 		else
 			resourceBars.totems = CreateClassResourceBar(resourceBars, "Nurfed_TotemFrame_Horizontal_Template", "BOTTOMLEFT", "TOPLEFT", -2, 3)
 		end
+		]]
 	end
 
 	-- Yoink! Let's hope nothing yoinks it back.
