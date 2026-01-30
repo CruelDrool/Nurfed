@@ -77,7 +77,7 @@ module.options = {
 					name = "Enabled",
 					-- desc = "",
 					get = function() return module.db.profile.scrolling end,
-					set = function(info, value) module.db.profile.scrolling = value; module:Scrolling() end,
+					set = function(info, value) module.db.profile.scrolling = value; end,
 				},
 			},
 		},
@@ -94,7 +94,7 @@ module.options = {
 					width = "full",
 					-- desc = "",
 					get = function() return module.db.profile.timestamp end,
-					set = function(info, value) module.db.profile.timestamp = value; module:TimeStamp() end,
+					set = function(info, value) module.db.profile.timestamp = value; module:ToggleTimeStamp() end,
 				},
 				timestampformat = {
 					type = "select",
@@ -123,48 +123,66 @@ module.options = {
 	},
 }
 
-local function ScrollingHook(frame, delta)
-	if IsShiftKeyDown() then
-		if delta > 0 then frame:PageUp()
-		elseif delta < 0 then frame:PageDown()
+local function OnMouseWheel(self, delta)
+	if not (module.db.profile.enabled and module.db.profile.scrolling) then return end
+
+	if delta > 0 then
+		if IsControlKeyDown() then
+			self:ScrollToTop()
+		elseif IsShiftKeyDown() then
+			self:PageUp()
+		else
+			self:ScrollUp()
 		end
-	elseif IsControlKeyDown() then
-		if delta > 0 then frame:ScrollToTop()
-		elseif delta < 0 then frame:ScrollToBottom()
-		end
-	end
-end
-
-function module:Scrolling()
-	local enabled = self.db.profile.scrolling
-
-	if not self.db.profile.enabled then
-		enabled = false
-	end
-
-	if enabled then
-		SetCVar("chatMouseScroll","1")
-		if addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_MAINLINE then
-			self:SecureHook("FloatingChatFrame_OnMouseScroll", ScrollingHook)
-		end
-	end
-
-	if not enabled then
-		SetCVar("chatMouseScroll","0")
-		if addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_MAINLINE then
-			self:Unhook("FloatingChatFrame_OnMouseScroll")
+	else
+		if IsControlKeyDown() then
+			self:ScrollToBottom()
+		elseif IsShiftKeyDown() then
+			self:PageDown()
+		else
+			self:ScrollDown()
 		end
 	end
 end
 
--- local currentTime
--- local function TimeKeepingOnUpdate(self, elapsed)
--- 	currentTime = GetTime()
--- end
+local function OnMouseWheelHook(self, delta)
+	if not (module.db.profile.enabled and module.db.profile.scrolling) then return end
+
+	if delta > 0 then
+		if IsControlKeyDown() then
+			self:ScrollToTop()
+		elseif IsShiftKeyDown() then
+			self:ScrollDown()
+			self:PageUp()
+		end
+	else
+		if IsControlKeyDown() then
+			self:ScrollToBottom()
+		elseif IsShiftKeyDown() then
+			self:ScrollUp()
+			self:PageDown()
+		end
+	end
+end
+
+function module:VARIABLES_LOADED(event)
+	-- Mimic Classic. Works in Retail too.
+	for i = 1, NUM_CHAT_WINDOWS do
+		local chatframe = _G["ChatFrame"..i]
+		if chatframe then
+			if chatframe:GetScript("OnMouseWheel") then
+				chatframe:HookScript("OnMouseWheel", OnMouseWheelHook)
+			else
+				chatframe:SetScript("OnMouseWheel", OnMouseWheel)
+			end
+		end
+	end
+
+	self:UnregisterEvent(event)
+end
 
 local function AddMessage(self, msg, ...)
-	if msg and type(msg) == "string" then
-		-- local ms = (currentTime-math.floor(currentTime))*1000
+	if msg and type(msg) == "string" and not addon:IsSecretValue(msg) then
 
 		if GetCVar("showTimestamps") ~= "none" then
 			local blizzStamp = date( GetCVar("showTimestamps") )
@@ -178,23 +196,16 @@ local function AddMessage(self, msg, ...)
 		local outputFormat = tostring(module.db.profile.outputformats[module.db.profile.outputformats.selected])
 		local timestamp = outputFormat:format( date( timestampformat:format( ( currentTime - math.floor(currentTime) ) * 1000) )  )
 		msg = timestamp .. " " .. msg
-		return self:O_AddMessage(msg, ...)
 	end
+
+	return self:O_AddMessage(msg, ...)
 end
 
-function module:TimeStamp()
-	local enabled = self.db.profile.timestamp
+function module:ToggleTimeStamp()
+	local enabled = self.db.profile.timestamp and self.db.profile.enabled
 
-	if not self.db.profile.enabled then
-		enabled = false
-	end
 
 	if enabled then
-		-- if not self.timekeeping then
-			-- self.timekeeping = CreateFrame("Frame")
-			-- currentTime = GetTime()
-			-- self.timekeeping:SetScript("OnUpdate", TimeKeepingOnUpdate)
-		-- end
 
 		local skip = {
 			[2] = true, -- Combat Log
@@ -210,17 +221,12 @@ function module:TimeStamp()
 				chatframe.AddMessage = AddMessage
 			end
 		end
-	end
-
-	if not enabled then
+	else
 		for i = 1, NUM_CHAT_WINDOWS, 1 do
 			local chatframe = _G["ChatFrame"..i]
 			if chatframe.O_AddMessage then
 				chatframe.AddMessage = chatframe.O_AddMessage
 				chatframe.O_AddMessage = nil
-			end
-			if self.timekeeping then
-				self.timekeeping:SetScript("OnUpdate", nil)
 			end
 		end
 	end
@@ -235,6 +241,7 @@ function module:OnInitialize()
 	self.db.RegisterCallback(self, "OnProfileChanged", "UpdateConfigs")
 	self.db.RegisterCallback(self, "OnProfileCopied", "UpdateConfigs")
 	self.db.RegisterCallback(self, "OnProfileReset", "UpdateConfigs")
+	self:RegisterEvent("VARIABLES_LOADED")
 
 	-- Enable if we're supposed to be enabled
 	if self.db.profile.enabled then
@@ -244,14 +251,12 @@ end
 
 function module:OnEnable()
 	self.db.profile.enabled = true
-	self:Scrolling()
-	self:TimeStamp()
+	self:ToggleTimeStamp()
 end
 
 function module:OnDisable()
 	self.db.profile.enabled = false
-	self:Scrolling()
-	self:TimeStamp()
+	self:ToggleTimeStamp()
 end
 
 function module:UpdateConfigs()
