@@ -187,19 +187,20 @@
 	
 	<StatusBar name="Nurfed_Unit_hp" virtual="true">
 		<Frames>
-			<StatusBar parentKey="predictMyHeals" frameLevel="2" minValue="0" maxValue="0" defaultValue="0" alpha="0">
-				<Size x="0" y="0"/>
-				<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5" />
-				<BarColor r="0.0" g="0.827" b="0.765" />
-			</StatusBar>
 
-			<StatusBar parentKey="predictOtherHeals" frameLevel="2" minValue="0" maxValue="0" defaultValue="0" alpha="0">
+			<StatusBar parentKey="predictAllHeals" frameLevel="2" minValue="0" maxValue="0" defaultValue="0" alpha="0">
 				<Size x="0" y="0"/>
 				<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5" />
 				<BarColor r="0.0" g="0.631" b="0.557" />
 			</StatusBar>
 
-			<StatusBar parentKey="damageAbsorb" frameLevel="3" minValue="0" maxValue="0" defaultValue="0" reverseFill="true" alpha="0">
+			<StatusBar parentKey="predictMyHeals" frameLevel="3" minValue="0" maxValue="0" defaultValue="0" alpha="0">
+				<Size x="0" y="0"/>
+				<BarTexture file="Interface\AddOns\Nurfed\Images\statusbar5" />
+				<BarColor r="0.0" g="0.827" b="0.765" />
+			</StatusBar>
+
+			<StatusBar parentKey="damageAbsorb" frameLevel="4" minValue="0" maxValue="0" defaultValue="0" alpha="0" setAllPoints="true">
 				<Size x="0" y="0"/>
 				<Layers>
 					<Layer level="OVERLAY" textureSubLevel="1">
@@ -219,7 +220,7 @@
 				<BarColor r="0.6745" g="0.759" b="0.9765" />
 			</StatusBar>
 
-			<StatusBar parentKey="healAbsorb" frameLevel="4" minValue="0" maxValue="0" defaultValue="0" reverseFill="true">
+			<StatusBar parentKey="healAbsorb" frameLevel="5" minValue="0" maxValue="0" defaultValue="0" reverseFill="true" setAllPoints="true">
 				<Size x="0" y="0"/>
 				<Layers>
 					<Layer level="OVERLAY">
@@ -236,7 +237,7 @@
 				<BarTexture file="Interface\RaidFrame\Absorb-Fill" vertTile="true" horizTile="true" parentKey="absorbFill" />
 			</StatusBar>
 
-			<Frame parentKey="texts" setAllPoints="true" frameLevel="4">
+			<Frame parentKey="texts" setAllPoints="true" frameLevel="5">
 				<Layers>
 					<Layer level="OVERLAY" textureSubLevel="1">
 						<FontString parentKey="healthInfo" inherits="Nurfed_UnitFont" justifyH="LEFT">
