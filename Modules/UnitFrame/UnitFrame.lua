@@ -719,7 +719,7 @@ function module:GetTextFormat(f,frame, modName)
 					end
 				end
 				return self.db.profile[modName].formats[f]
-			elseif self.db.profile.formats[f] then
+			elseif self.db.profile.formats and self.db.profile.formats[f] then
 				if self.db.profile.formats[f] == "" then
 					return defaults.profile.formats[f]
 				end
