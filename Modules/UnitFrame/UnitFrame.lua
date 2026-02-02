@@ -2034,6 +2034,7 @@ local function CastBar_OnEvent(frame, event, unit,...)
 		elseif event == "UNIT_SPELLCAST_CHANNEL_START" or event == "UNIT_SPELLCAST_EMPOWER_START" then
 			if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
 				name, _, texture, startTime, endTime, _, notInterruptible, _, _, numStages = UnitChannelInfo(unit)
+				if addon:IsSecretValue(endTime) then frame:Hide()frame:Clear(); return end
 				if numStages and numStages > 0 then
 					endTime = endTime + GetUnitEmpowerHoldAtMaxTime(unit)
 					frame.reverseChanneling = true
