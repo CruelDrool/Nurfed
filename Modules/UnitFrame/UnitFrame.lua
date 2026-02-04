@@ -2531,9 +2531,9 @@ local function UnpackAuraData(auraData)
 		return nil;
 	end
 
-	return not addon:IsSecretValue(auraData.name) and auraData.name or nil,
-		not addon:IsSecretValue(auraData.icon) and auraData.icon or nil,
-		not addon:IsSecretValue(auraData.applications) and auraData.applications or 0,
+	return auraData.name,
+		auraData.icon,
+		auraData.applications,
 		not addon:IsSecretValue(auraData.dispelName) and auraData.dispelName or nil,
 		not addon:IsSecretValue(auraData.duration) and auraData.duration or 0,
 		not addon:IsSecretValue(auraData.expirationTime) and auraData.expirationTime or 0,
@@ -2605,11 +2605,17 @@ function module:UpdateAuras(frame)
 			aura.icon:SetTexture(icon)
 
 			-- set the count
-			if count > 1 and frame.showAuraCount then
+			if frame.showAuraCount then
 				aura.count:SetText(count)
 				aura.count:Show()
 			else
 				aura.count:Hide()
+			end
+
+			if not addon:IsSecretValue(count) then
+				if count <= 1 then
+					aura.count:Hide()
+				end
 			end
 
 			if LibClassicDurations then
@@ -2632,7 +2638,6 @@ function module:UpdateAuras(frame)
 
 			-- Handle cooldowns
 			if not OmniCC then
-				local fontHeight = 
 				aura.cooldown:SetCountdownFont("Nurfed_CountdownFontOutline")
 				aura.cooldown:SetHideCountdownNumbers(false)
 			end
@@ -2698,11 +2703,17 @@ function module:UpdateAuras(frame)
 					aura.icon:SetTexture(icon)
 
 					-- set the count
-					if count > 1 and frame.showAuraCount then
-						aura.count:SetText(count)
+					if frame.showAuraCount then
 						aura.count:Show()
+						aura.count:SetText(count)
 					else
 						aura.count:Hide()
+					end
+
+					if not addon:IsSecretValue(count) then
+						if count <= 1 then
+							aura.count:Hide()
+						end
 					end
 
 					if LibClassicDurations then
