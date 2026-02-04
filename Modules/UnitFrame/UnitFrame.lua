@@ -558,6 +558,14 @@ function module:CreateFrame(modName, unit, events, oneventfunc, isWatched, id)
 
 	if PingableType_UnitFrameMixin then
 		Mixin(frame, PingableType_UnitFrameMixin)
+		function frame:GetContextualPingType()
+			local pingGUID = self:GetTargetPingGUID()
+			if not addon:IsSecretValue(pingGUID) then
+				return PingUtil:GetContextualPingTypeForUnit(pingGUID)
+			end
+
+			return UnitIsEnemy("player", self.unit) and Enum.PingSubjectType.AlertThreat or Enum.PingSubjectType.AlertNotThreat
+		end
 	end
 
 	if id > 0 then
