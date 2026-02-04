@@ -850,9 +850,11 @@ function module:Replace(unit, textFormat)
 
 	if string.find(textFormat,"$pvpname") then
 		local name = UnitPVPName(unit)
-
-		if not addon:IsSecretValue(name) and self.db.profile.transliterate.enabled then
-			name = addon:Transliterate(name, self.db.profile.transliterate.mark)
+		if not addon:IsSecretValue(name) then
+			name = name ~= "" and name or UnitName(unit)
+			if self.db.profile.transliterate.enabled then
+				name = addon:Transliterate(name, self.db.profile.transliterate.mark)
+			end
 		end
 
 		local color = GetUnitClassColor(unit)
