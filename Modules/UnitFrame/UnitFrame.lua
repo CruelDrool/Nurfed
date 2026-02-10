@@ -2546,7 +2546,7 @@ local function UnpackAuraData(auraData)
 		not addon:IsSecretValue(auraData.duration) and auraData.duration or 0,
 		not addon:IsSecretValue(auraData.expirationTime) and auraData.expirationTime or 0,
 		not addon:IsSecretValue(auraData.sourceUnit) and auraData.sourceUnit or nil,
-		not addon:IsSecretValue(auraData.isStealable) and auraData.isStealable or false,
+		auraData.isStealable,
 		not addon:IsSecretValue(auraData.nameplateShowPersonal) and auraData.nameplateShowPersonal or false,
 		not addon:IsSecretValue(auraData.spellId) and auraData.spellId or 0,
 		not addon:IsSecretValue(auraData.canApplyAura) and auraData.canApplyAura or false,
@@ -2657,11 +2657,7 @@ function module:UpdateAuras(frame)
 			end
 
 			-- Show stealable frame if the target is not the current player and the buff is stealable.
-			if ( not playerIsTarget and canStealOrPurge ) then
-				aura.stealable:Show()
-			else
-				aura.stealable:Hide()
-			end
+			aura.stealable:SetAlphaFromBoolean(not playerIsTarget and canStealOrPurge, 1, 0)
 
 			aura:ClearAllPoints()
 			UpdateAuraAnchor(auraFrame, i)

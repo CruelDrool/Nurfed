@@ -705,7 +705,7 @@
 				</FontString>
 			</Layer>
 			<Layer level="OVERLAY">
-				<Texture parentKey="stealable" file="Interface\TargetingFrame\UI-TargetingFrame-Stealable" hidden="true" alphaMode="ADD">
+				<Texture parentKey="stealable" file="Interface\TargetingFrame\UI-TargetingFrame-Stealable" alpha="0" alphaMode="ADD">
 					<Size x="21" y="21"/>
 					<Anchors>
 						<Anchor point="CENTER" x="0" y="0"/>
