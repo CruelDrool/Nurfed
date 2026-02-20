@@ -1357,8 +1357,8 @@ local function HealthBar_Text(frame)
 		perc = DEAD
 		miss = ""
 	elseif UnitHealthPercent then
-		perc = format("%d%%",UnitHealthPercent(frame.unit, false, CurveConstants.ScaleTo100))
-		miss = AbbreviateNumbers(UnitHealthMissing(frame.unit))
+		perc = format("%d%%", UnitExists(frame.unit) and UnitHealthPercent(frame.unit, false, CurveConstants.ScaleTo100) or 0)
+		miss = AbbreviateNumbers(UnitExists(frame.unit) and UnitHealthMissing(frame.unit) or 0)
 	else
 		if miss ~= nil then
 			local missing = frame.currValue - frame.maxValue
@@ -1395,7 +1395,7 @@ end
 
 local function HealthBar_Gradient(frame, elapsed, gradient)
 	if C_CurveUtil then
-		local color = UnitHealthPercent(frame.unit, true, frame.colorCurve)
+		local color = UnitExists(frame.unit) and UnitHealthPercent(frame.unit, true, frame.colorCurve) or frame.colorCurve:Evaluate(0)
 		frame:GetStatusBarTexture():SetVertexColor(color:GetRGBA())
 		return
 	end
@@ -1612,7 +1612,7 @@ end
 
 local function HealthBar_HealthPredictions(frame)
 
-	if addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_MAINLINE then return end
+	if addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_MAINLINE or not UnitExists(frame.unit) then return end
 
 	local maxHealth = UnitHealthMax(frame.unit)
 	local healerUnit = "player"
@@ -1657,8 +1657,8 @@ local function HealthBar_OnUpdate(frame, e)
 	local unit = frame.unit
     -- if UnitExists(unit) then
 		--if not frame.pauseUpdates then
-			local currValue = UnitHealth(unit)
-			local maxValue = UnitHealthMax(unit) -- Sometimes not a secret value. Very confusing.
+			local currValue = UnitExists(unit) and UnitHealth(unit) or 0
+			local maxValue = UnitExists(unit) and UnitHealthMax(unit) or 0 -- Sometimes not a secret value. Very confusing.
 
 			if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
 				frame.currValue = currValue
