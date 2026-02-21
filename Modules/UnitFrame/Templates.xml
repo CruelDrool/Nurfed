@@ -654,8 +654,8 @@
 			</Layer>
 			<Layer level="OVERLAY">
 				<Texture parentKey="border" file="Interface\Buttons\UI-Debuff-Overlays" setAllPoints="true">
-					<Size x="17" y="17"/>
-					<!--<Anchors>
+					<!--<Size x="17" y="17"/>
+					<Anchors>
 						<Anchor point="TOPLEFT" x="-1" y="1"/>
 						<Anchor point="BOTTOMRIGHT" x="1" y="-1"/>
 					</Anchors>-->
@@ -697,16 +697,17 @@
 			<Layer level="BACKGROUND">
 				<Texture parentKey="icon" setAllPoints="true"/>
 			</Layer>
-			<Layer level="ARTWORK">
+			<Layer level="OVERLAY">
+				<Texture parentKey="border" file="Interface\Buttons\UI-Debuff-Overlays" setAllPoints="true">
+					<TexCoords left="0.296875" right="0.5703125" top="0" bottom="0.515625"/>
+				</Texture>
 				<FontString parentKey="count" inherits="Nurfed_UnitFontOutline" justifyH="RIGHT">
 					<Anchors>
 						<Anchor point="BOTTOMRIGHT" x="0" y="0"/>
 					</Anchors>
 				</FontString>
-			</Layer>
-			<Layer level="OVERLAY">
 				<Texture parentKey="stealable" file="Interface\TargetingFrame\UI-TargetingFrame-Stealable" alpha="0" alphaMode="ADD">
-					<Size x="21" y="21"/>
+					<!-- <Size x="21" y="21"/> -->
 					<Anchors>
 						<Anchor point="CENTER" x="0" y="0"/>
 					</Anchors>
