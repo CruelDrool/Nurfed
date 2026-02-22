@@ -150,8 +150,8 @@
 	</FontFamily>
 
 	<Font name="Nurfed_CountdownFontOutline" font="Fonts\FRIZQT__.TTF" outline="NORMAL" virtual="true">
-		<Color r="1" g="1" b="0.102" />
-		<FontHeight val="10"/>
+		<Color r="1" g="1" b="1" />
+		<FontHeight val="18"/>
 	</Font>
 
 	<Font name="Nurfed_UnitFontHPperc" font="Interface\AddOns\Nurfed\Fonts\framd.ttf" outline="NONE" virtual="true">
@@ -698,7 +698,7 @@
 				<Texture parentKey="icon" setAllPoints="true"/>
 			</Layer>
 			<Layer level="OVERLAY">
-				<Texture parentKey="border" file="Interface\Buttons\UI-Debuff-Overlays" setAllPoints="true">
+				<Texture parentKey="border" file="Interface\Buttons\UI-Debuff-Overlays" setAllPoints="true" hidden="true">
 					<TexCoords left="0.296875" right="0.5703125" top="0" bottom="0.515625"/>
 				</Texture>
 				<FontString parentKey="count" inherits="Nurfed_UnitFontOutline" justifyH="RIGHT">
