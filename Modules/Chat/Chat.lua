@@ -182,7 +182,9 @@ function module:VARIABLES_LOADED(event)
 end
 
 local function AddMessage(self, msg, ...)
-	if msg and type(msg) == "string" and not addon:IsSecretValue(msg) then
+	if msg and not addon:IsSecretValue(msg) then
+
+		msg = tostring(msg)
 
 		if GetCVar("showTimestamps") ~= "none" then
 			local blizzStamp = date( GetCVar("showTimestamps") )
