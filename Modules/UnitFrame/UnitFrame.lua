@@ -2534,50 +2534,15 @@ local PLAYER_UNITS = {
 	pet = true,
 }
 
-local function UnpackAuraData(auraData)
-	if not auraData then
-		return nil;
-	end
-
-	return auraData.name,
-		auraData.icon,
-		auraData.applications,
-		not addon:IsSecretValue(auraData.dispelName) and auraData.dispelName or nil,
-		not addon:IsSecretValue(auraData.duration) and auraData.duration or 0,
-		not addon:IsSecretValue(auraData.expirationTime) and auraData.expirationTime or 0,
-		not addon:IsSecretValue(auraData.sourceUnit) and auraData.sourceUnit or nil,
-		auraData.isStealable,
-		not addon:IsSecretValue(auraData.nameplateShowPersonal) and auraData.nameplateShowPersonal or false,
-		not addon:IsSecretValue(auraData.spellId) and auraData.spellId or 0,
-		not addon:IsSecretValue(auraData.canApplyAura) and auraData.canApplyAura or false,
-		not addon:IsSecretValue(auraData.isBossAura) and auraData.isBossAura or false,
-		not addon:IsSecretValue(auraData.isFromPlayerOrPlayerPet) and auraData.isFromPlayerOrPlayerPet or false,
-		not addon:IsSecretValue(auraData.nameplateShowAll) and auraData.nameplateShowAll or false,
-		not addon:IsSecretValue(auraData.timeMod) and auraData.timeMod or 1,
-		auraData.auraInstanceID
-end
-
-local ShouldShowDebuffs = _G["TargetFrame_ShouldShowDebuffs"] or function(unit, caster, nameplateShowAll, casterIsAPlayer)
-	return TargetFrame:ShouldShowDebuffs(unit, caster, nameplateShowAll, casterIsAPlayer)
-end
-
-local UnitBuff = _G["UnitBuff"] or function(unitToken, index, filter)
-	return UnpackAuraData(C_UnitAuras.GetBuffDataByIndex(unitToken, index, filter))
-end
-
-local UnitDebuff = _G["UnitDebuff"] or function(unitToken, index, filter)
-	return UnpackAuraData(C_UnitAuras.GetDebuffDataByIndex(unitToken, index, filter))
-end
-
 local DebuffTypeColor = DebuffTypeColor or AuraUtil.GetDebuffDisplayInfoTable()
 
 local function UpdateAuraAnchor(auraFrame, index, size)
 	local aura = auraFrame["aura"..index]
-    if ( index == 1 ) then
+	if ( index == 1 ) then
 		aura:SetPoint("TOPLEFT", auraFrame, "TOPLEFT", 0, 0);
-    else
+	else
 		aura:SetPoint("LEFT", auraFrame["aura"..index-1],"RIGHT", 0, 0);
-    end
+	end
 end
 
 local dispelColorCurve
@@ -2630,95 +2595,93 @@ function module:UpdateAuras(frame)
 	local playerIsTarget = UnitIsUnit("player", frame.unit)
 	local canAssist = UnitCanAssist("player", frame.unit)
 
-	local buffFilter
-
-	local maxBuffs = frame.maxBuffs or MAX_TARGET_BUFFS
 	auraFrame = frame.buffs
 	auraFrameHeight = normalSize
+	local buffFilter
+	local maxBuffs = frame.maxBuffs or MAX_TARGET_BUFFS
 	for i = 1, maxBuffs do
-		local buffName, icon, count, dispelName, duration, expirationTime, caster, canStealOrPurge, _ , spellId, _, _, _ ,_ , _, auraInstanceID = UnitBuff(frame.unit, i, nil);
-		if icon then
+		local auraData = C_UnitAuras.GetBuffDataByIndex(frame.unit, i)
+		if auraData then
 			if not auraFrame["aura"..i] then
 				auraFrame["aura"..i] = CreateFrame("Button", nil, auraFrame, self.db.profile.templatePrefix.."Buff")
 
 				if not OmniCC then
 					auraFrame["aura"..i].cooldown:SetCountdownFont("Nurfed_CountdownFontOutline")
-					-- auraFrame["aura"..i].cooldown:SetHideCountdownNumbers(false)
 				end
 			end
 
 			aura = auraFrame["aura"..i]
 			aura.unit = frame.unit
 			aura:SetID(i)
-			aura.icon:SetTexture(icon)
+			aura.icon:SetTexture(auraData.icon)
 			local colorInfo
 			local size = normalSize
 
 			if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
-				if not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unit, auraInstanceID, "HELPFUL|PLAYER") then
+				if not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unit, auraData.auraInstanceID, "HELPFUL|PLAYER") then
 					size = largeSize
 					auraFrameHeight = largeSize
 				end
 
-				if not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unit, auraInstanceID, "HELPFUL|BIG_DEFENSIVE") then
+				if not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unit, auraData.auraInstanceID, "HELPFUL|BIG_DEFENSIVE") then
 					size = extraLarge
 					auraFrameHeight = extraLarge
 				end
 
-				aura.count:SetText(C_UnitAuras.GetAuraApplicationDisplayCount(frame.unit, auraInstanceID, 2, 999))
+				aura.count:SetText(C_UnitAuras.GetAuraApplicationDisplayCount(frame.unit, auraData.auraInstanceID, 2, 999))
 
-				local dur = C_UnitAuras.GetAuraDuration(frame.unit, auraInstanceID)
+				local duration = C_UnitAuras.GetAuraDuration(frame.unit, auraData.auraInstanceID)
 
-				if dur then
-					aura.cooldown:SetCooldownFromDurationObject(dur)
+				if duration then
+					aura.cooldown:SetCooldownFromDurationObject(duration)
 					aura.cooldown:Show()
 
-					local cooldownColor = dur:EvaluateRemainingDuration(cooldownColorCurve)
+					local cooldownColor = duration:EvaluateRemainingDuration(cooldownColorCurve)
 					aura.cooldown:GetCountdownFontString():SetTextColor(cooldownColor:GetRGB())
 
 				else
 					aura.cooldown:Hide()
 				end
 
-				aura.stealable:SetAlphaFromBoolean(not playerIsTarget and canStealOrPurge, 1, 0)
+				aura.stealable:SetAlphaFromBoolean(not playerIsTarget and auraData.isStealable, 1, 0)
 
-				colorInfo = C_UnitAuras.GetAuraDispelTypeColor(frame.unit, auraInstanceID, dispelColorCurve)
+				colorInfo = C_UnitAuras.GetAuraDispelTypeColor(frame.unit, auraData.auraInstanceID, dispelColorCurve)
 
 				if not colorInfo then
 					colorInfo = dispelColorCurve:Evaluate(0)
 				end
 			else
-				if PLAYER_UNITS[caster] then
+				if PLAYER_UNITS[auraData.sourceUnit] then
 					size = largeSize
 					auraFrameHeight = largeSize
 				end
 
-				if count > 1 then
-					aura.count:SetText(count)
+				if auraData.applications > 1 then
+					aura.count:SetText(auraData.applications)
 					aura.count:Show()
 				else
 					aura.count:Hide()
 				end
 
 				if LibClassicDurations then
-					local durationNew, expirationTimeNew = LibClassicDurations:GetAuraDurationByUnit(frame.unit, spellId, caster, buffName)
-					if duration == 0 and durationNew then
-						duration = durationNew
-						expirationTime = expirationTimeNew
+					local durationNew, expirationTimeNew = LibClassicDurations:GetAuraDurationByUnit(frame.unit, auraData.spellId, auraData.sourceUnit, auraData.name)
+					if auraData.duration == 0 and durationNew then
+						auraData.duration = durationNew
+						auraData.expirationTime = expirationTimeNew
 					end
 				end
 
-				if duration > 0  then
+				if auraData.duration > 0  then
 					aura.cooldown:Show()
-					CooldownFrame_Set(aura.cooldown, expirationTime - duration, duration, duration > 0, true)
+					CooldownFrame_Set(aura.cooldown, auraData.expirationTime - auraData.duration, auraData.duration, true, true, auraData.timeMod)
 				else
 					aura.cooldown:Hide()
 				end
 
-				aura.stealable:SetAlpha((not playerIsTarget and canStealOrPurge) and 1 or 0)
+				aura.stealable:SetAlpha((not playerIsTarget and auraData.isStealable) and 1 or 0)
 
-				if dispelName then
-					colorInfo = DebuffTypeColor[dispelName]
+				if auraData.dispelName then
+					colorInfo = DebuffTypeColor[auraData.dispelName]
 				else
 					colorInfo = DebuffTypeColor["none"] or DebuffTypeColor["None"]
 				end
@@ -2759,11 +2722,11 @@ function module:UpdateAuras(frame)
 
 	auraFrame:SetHeight(auraFrameHeight)
 
-	local maxDebuffs = frame.maxDebuffs or MAX_TARGET_DEBUFFS
 	auraFrame = frame.debuffs
 	auraFrameHeight = normalSize
-	local debuffFilterPlayerOnly = "INCLUDE_NAME_PLATE_ONLY|HARMFUL|PLAYER"
-	local debuffFilterAll = "INCLUDE_NAME_PLATE_ONLY|HARMFUL"
+	local maxDebuffs = frame.maxDebuffs or MAX_TARGET_DEBUFFS
+	local debuffFilterPlayerOnly = "INCLUDE_NAME_PLATE_ONLY|PLAYER"
+	local debuffFilterAll = "INCLUDE_NAME_PLATE_ONLY"
 	local debuffFilter = debuffFilterPlayerOnly
 
 	if self.db.profile.showAllDebuffs or canAssist then
@@ -2771,79 +2734,78 @@ function module:UpdateAuras(frame)
 	end
 
 	for i = 1, maxDebuffs do
-		local debuffName, icon, count, debuffType, duration, expirationTime, caster, _, _, spellId, _, _, casterIsPlayer, nameplateShowAll, _, auraInstanceID = UnitDebuff(frame.unit, i, debuffFilter);
-		if icon then
+		local auraData = C_UnitAuras.GetDebuffDataByIndex(frame.unit, i, debuffFilter)
+		if auraData then
 			if not auraFrame["aura"..i] then
 				auraFrame["aura"..i] = CreateFrame("Button", nil, auraFrame, self.db.profile.templatePrefix.."Debuff")
 
 				if not OmniCC then
 					auraFrame["aura"..i].cooldown:SetCountdownFont("Nurfed_CountdownFontOutline")
-					-- auraFrame["aura"..i].cooldown:SetHideCountdownNumbers(false)
 				end
 			end
 
 			aura = auraFrame["aura"..i]
 			aura.unit = frame.unit
 			aura:SetID(i)
-			aura.icon:SetTexture(icon)
+			aura.icon:SetTexture(auraData.icon)
 			local colorInfo
 			local size = normalSize
 
 			if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
-				if not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unit, auraInstanceID, debuffFilterPlayerOnly) then
+				if not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unit, auraData.auraInstanceID, debuffFilterPlayerOnly .. "|HARMFUL") then
 					size = largeSize
 					auraFrameHeight = largeSize
 				end
 
-				aura.count:SetText(C_UnitAuras.GetAuraApplicationDisplayCount(frame.unit, auraInstanceID, 2, 999))
+				aura.count:SetText(C_UnitAuras.GetAuraApplicationDisplayCount(frame.unit, auraData.auraInstanceID, 2, 999))
 
-				local dur = C_UnitAuras.GetAuraDuration(frame.unit, auraInstanceID)
+				local duration = C_UnitAuras.GetAuraDuration(frame.unit, auraData.auraInstanceID)
 
-				if dur then
-					aura.cooldown:SetCooldownFromDurationObject(dur)
+				if duration then
+					aura.cooldown:SetCooldownFromDurationObject(duration)
 					aura.cooldown:Show()
 
-					local cooldownColor = dur:EvaluateRemainingDuration(cooldownColorCurve)
+					local cooldownColor = duration:EvaluateRemainingDuration(cooldownColorCurve)
 					aura.cooldown:GetCountdownFontString():SetTextColor(cooldownColor:GetRGB())
 
 				else
 					aura.cooldown:Hide()
 				end
 
-				colorInfo = C_UnitAuras.GetAuraDispelTypeColor(frame.unit, auraInstanceID, dispelColorCurve)
+				colorInfo = C_UnitAuras.GetAuraDispelTypeColor(frame.unit, auraData.auraInstanceID, dispelColorCurve)
 				if not colorInfo then
 					colorInfo = dispelColorCurve:Evaluate(0)
 				end
 			else
-				if PLAYER_UNITS[caster] then
+				if PLAYER_UNITS[auraData.sourceUnit] then
 					size = largeSize
 					auraFrameHeight = largeSize
 				end
 
-				if count > 1 then
-					aura.count:SetText(count)
+				if auraData.applications > 1 then
+					aura.count:SetText(auraData.applications)
 					aura.count:Show()
 				else
 					aura.count:Hide()
 				end
 
 				if LibClassicDurations then
-					local durationNew, expirationTimeNew = LibClassicDurations:GetAuraDurationByUnit(frame.unit, spellId, caster, debuffName)
-					if duration == 0 and durationNew then
-						duration = durationNew
-						expirationTime = expirationTimeNew
+					local durationNew, expirationTimeNew = LibClassicDurations:GetAuraDurationByUnit(frame.unit, auraData.spellId, auraData.sourceUnit, auraData.name)
+					if auraData.duration == 0 and durationNew then
+						auraData.duration = durationNew
+						auraData.expirationTime = expirationTimeNew
 					end
 				end
 
-				if duration > 0  then
+				if auraData.duration > 0  then
 					aura.cooldown:Show()
-					CooldownFrame_Set(aura.cooldown, expirationTime - duration, duration, duration > 0, true)
+					CooldownFrame_Set(aura.cooldown, auraData.expirationTime - auraData.duration, auraData.duration, true, true, auraData.timeMod)
 				else
 					aura.cooldown:Hide()
 				end
 
-				if debuffType then
-					colorInfo = DebuffTypeColor[debuffType]
+				if auraData.dispelName then
+					colorInfo = DebuffTypeColor[auraData.dispelName]
 				else
 					colorInfo = DebuffTypeColor["none"] or DebuffTypeColor["None"]
 				end
