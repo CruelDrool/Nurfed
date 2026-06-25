@@ -52,6 +52,7 @@ local defaults = {
 		decimalpoints = 2,
 		skin = "Nurfed",
 		templatePrefix = "Nurfed_Unit_",
+		statusBarTexture = "Interface\\AddOns\\Nurfed\\Images\\BantoBar",
 		showAllDebuffs = false,
 		glideAnimation = {
 			enabled = true,
@@ -82,6 +83,49 @@ local defaults = {
 	}
 }
 
+-- Nurfed's own bundled bar textures (texture path -> SharedMedia name).
+-- BantoBar is the old NurfedUI look; the rest are Nurfed's bundled textures.
+local NURFED_TEXTURES = {
+	["Interface\\AddOns\\Nurfed\\Images\\BantoBar"]   = "BantoBar",
+	["Interface\\AddOns\\Nurfed\\Images\\statusbar1"] = "Nurfed 1",
+	["Interface\\AddOns\\Nurfed\\Images\\statusbar2"] = "Nurfed 2",
+	["Interface\\AddOns\\Nurfed\\Images\\statusbar3"] = "Nurfed 3",
+	["Interface\\AddOns\\Nurfed\\Images\\statusbar4"] = "Nurfed 4",
+	["Interface\\AddOns\\Nurfed\\Images\\statusbar5"] = "Nurfed 5",
+	["Interface\\AddOns\\Nurfed\\Images\\statusbar6"] = "Nurfed 6",
+	["Interface\\AddOns\\Nurfed\\Images\\statusbar7"] = "Nurfed 7",
+	["Interface\\AddOns\\Nurfed\\Images\\statusbar8"] = "Nurfed 8",
+	["Interface\\AddOns\\Nurfed\\Images\\statusbar9"] = "Nurfed 9",
+}
+
+-- Optional SharedMedia integration. If any installed addon provides LibSharedMedia-3.0,
+-- register Nurfed's own textures into it and pull in every other registered statusbar
+-- texture so they all show up (with their proper names) in the dropdown below.
+local LSM = LibStub("LibSharedMedia-3.0", true)
+if LSM then
+	for path, name in pairs(NURFED_TEXTURES) do
+		LSM:Register(LSM.MediaType.STATUSBAR, name, path)
+	end
+end
+
+-- Dropdown choices for the bar texture select (texture path -> display name).
+local function barTextureValues()
+	local values = {}
+	if LSM then
+		for name, path in pairs(LSM:HashTable("statusbar")) do
+			values[path] = name
+		end
+	else
+		for path, name in pairs(NURFED_TEXTURES) do
+			values[path] = name
+		end
+	end
+	-- Keep the current selection visible even if the addon that provided it is gone.
+	local cur = module.db and module.db.profile and module.db.profile.statusBarTexture
+	if cur and not values[cur] then values[cur] = cur:match("([^\\]+)$") or tostring(cur) end
+	return values
+end
+
 module.options = {
 	-- order = 3,
 	type = "group",
@@ -109,6 +153,24 @@ module.options = {
 			name = "Show all debuffs",
 			get = function() return module.db.profile.showAllDebuffs end,
 			set = function(info, value) module.db.profile.showAllDebuffs = value end,
+		},
+		bars = {
+			order = 3,
+			type = "group",
+			width = "full",
+			name = "Bars",
+			guiInline = true,
+			args = {
+				statusBarTexture = {
+					order = 1,
+					type = "select",
+					name = "Bar texture",
+					desc = "Texture used for all unit frame bars (health, power, cast, threat, XP, etc.). With a SharedMedia addon installed, all its statusbar textures appear here too.",
+					values = barTextureValues,
+					get = function() return module.db.profile.statusBarTexture end,
+					set = function(info, value) module.db.profile.statusBarTexture = value; module:ApplyAllBarTextures() end,
+				},
+			},
 		},
 		decimalpoints = {
 			hidden = addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE,
@@ -498,6 +560,100 @@ function module:DisableUnitframes()
 	self:Disable()
 end
 
+-- GetTexture() returns a numeric fileDataID (not a path) for textures already loaded,
+-- so we resolve our own texture paths to their fileDataIDs once via a scratch texture
+-- and match by ID. A string fallback covers the rare case GetTexture() returns a path.
+local OUR_TEXTURE_IDS
+local scratchTex
+local function resolveTextureId(path)
+	if not scratchTex then
+		scratchTex = UIParent:CreateTexture(nil, "BACKGROUND")
+		scratchTex:Hide()
+	end
+	scratchTex:SetTexture(path)
+	return scratchTex:GetTexture()
+end
+local function buildOurTextureIds()
+	OUR_TEXTURE_IDS = {}
+	for path in pairs(NURFED_TEXTURES) do
+		local id = resolveTextureId(path)
+		if id then OUR_TEXTURE_IDS[id] = true end
+	end
+end
+-- Mark a texture (by path) as one we manage, so a bar we already swapped to it can be
+-- recognised and swapped again later (e.g. switching between non-bundled SharedMedia textures).
+local function rememberTexture(path)
+	if not OUR_TEXTURE_IDS then buildOurTextureIds() end
+	local id = resolveTextureId(path)
+	if id then OUR_TEXTURE_IDS[id] = true end
+end
+
+-- True only for Nurfed's own bar textures (statusbarN / BantoBar), so the recursive
+-- swap below never touches Blizzard art (absorb/shield overlays, raid frame fills, etc.).
+local function isOurBarTexture(cur)
+	if cur == nil then return false end
+	if type(cur) == "number" then
+		if not OUR_TEXTURE_IDS then buildOurTextureIds() end
+		return OUR_TEXTURE_IDS[cur] == true
+	end
+	if type(cur) == "string" then
+		local path = cur:lower():gsub("/", "\\")
+		return path:find("images\\statusbar", 1, true) ~= nil
+			or path:find("images\\bantobar", 1, true) ~= nil
+	end
+	return false
+end
+
+-- Swap the bar texture on a single region (StatusBar fill or Texture), preserving its color.
+local function applyToRegion(region, tex)
+	local objType = region.GetObjectType and region:GetObjectType()
+	if objType == "StatusBar" then
+		local cur = region:GetStatusBarTexture()
+		if cur and isOurBarTexture(cur:GetTexture()) then
+			local r, g, b, a = region:GetStatusBarColor()
+			region:SetStatusBarTexture(tex)
+			region:SetStatusBarColor(r, g, b, a)
+		end
+	elseif objType == "Texture" then
+		if isOurBarTexture(region:GetTexture()) then
+			local r, g, b, a = region:GetVertexColor()
+			region:SetTexture(tex)
+			region:SetVertexColor(r, g, b, a)
+		end
+	end
+end
+
+local function applyBarTextureRecursive(frame, tex)
+	applyToRegion(frame, tex)
+	for _, region in ipairs({ frame:GetRegions() }) do
+		applyToRegion(region, tex)
+	end
+	for _, child in ipairs({ frame:GetChildren() }) do
+		applyBarTextureRecursive(child, tex)
+	end
+end
+
+-- Recursively apply the configured bar texture to a frame and everything beneath it.
+function module:ApplyBarTexture(frame, tex)
+	if not frame then return end
+	tex = tex or (self.db and self.db.profile.statusBarTexture)
+	if not tex then return end
+	rememberTexture(tex)
+	applyBarTextureRecursive(frame, tex)
+end
+
+-- Apply the configured bar texture to every registered unit frame.
+function module:ApplyAllBarTextures()
+	if not (self.db and self.db.profile) then return end
+	local tex = self.db.profile.statusBarTexture
+	for name in pairs(self.frames) do
+		local frame = _G[name]
+		if frame then
+			self:ApplyBarTexture(frame, tex)
+		end
+	end
+end
+
 function module:UpdateConfigs()
 	-- Go through the modules again to give them access to their databases.
 	for name, m in self:IterateModules() do
@@ -532,6 +688,8 @@ function module:UpdateConfigs()
 			end
 		end
 	end
+
+	self:ApplyAllBarTextures()
 
 	-- Go through the modules again, run :UpdateConfigs() if they have one.
 	for _, m in self:IterateModules() do
@@ -612,6 +770,8 @@ function module:CreateFrame(modName, unit, events, oneventfunc, isWatched, id)
 	frame.RegisterConfig(frame, db)
 
 	self.frames[name] = modName
+
+	self:ApplyBarTexture(frame)
 
 	return frame
 end
