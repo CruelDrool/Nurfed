@@ -361,3 +361,17 @@ end
 function addon:IsSecretValue(value)
 	return issecretvalue and issecretvalue(value) or false
 end
+
+function addon:pcall(func, fallback)
+	fallback = fallback or false
+
+	if type(func) ~= "function" then return fallback end
+
+	local success, result = pcall(func)
+
+	if success then
+		return result
+	else
+		return fallback
+	end
+end
