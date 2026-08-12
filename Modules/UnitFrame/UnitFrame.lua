@@ -2594,6 +2594,11 @@ end
 
 function module:UpdateAuras(frame)
 
+	if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
+		-- Temporary disable for retail. 12.1 introduced new aura system...
+		return
+	end
+
 	local normalSize, largeSize, extraLarge = 17, 21, 27
 	local aura, auraFrame, auraFrameHeight
 	local playerIsTarget = UnitIsUnit("player", frame.unit)
