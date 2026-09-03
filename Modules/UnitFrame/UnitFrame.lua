@@ -407,6 +407,10 @@ function module:OnInitialize()
 	end
 end
 
+function module:ShouldUnitIdentityBeSecret(unit)
+	return C_Secrets and C_Secrets.ShouldUnitIdentityBeSecret and C_Secrets.ShouldUnitIdentityBeSecret(unit) or false
+end
+
 local runOnPlayerEnteringWorld = {}
 
 function module:RunOnPlayerEnteringWorld(...)
@@ -554,17 +558,30 @@ function module:CreateFrame(modName, unit, events, oneventfunc, isWatched, id)
 
 	if self.frames[name] then return end
 
-	local frame = CreateFrame("Button", name, UIParent, PingableType_UnitFrameMixin and template..", PingReceiverAttributeTemplate" or template , id)
+	local frame = CreateFrame("Button", name, UIParent, PingableType_UnitFrameMixin and template..", PingableUnitFrameTemplate" or template , id)
 
 	if PingableType_UnitFrameMixin then
-		Mixin(frame, PingableType_UnitFrameMixin)
-		function frame:GetContextualPingType()
-			local pingGUID = self:GetTargetPingGUID()
-			if not addon:IsSecretValue(pingGUID) then
-				return PingUtil:GetContextualPingTypeForUnit(pingGUID)
+		function frame:GetTargetInfo()
+			local u = self.unit or self:GetAttribute("unit")
+
+			if module:ShouldUnitIdentityBeSecret(u) then
+				return {}
 			end
 
-			return UnitIsEnemy("player", self.unit) and Enum.PingSubjectType.AlertThreat or Enum.PingSubjectType.AlertNotThreat
+			local targetInfo = {
+				guid = UnitGUID(u),
+				-- isPlayerResource = (u == "player" and not self.model:IsMouseOver()) or nil,
+				isPlayerResource = (u == "player" and (self.health:IsMouseOver() or self.powerBar:IsMouseOver())) or nil,
+			}
+
+			return targetInfo
+		end
+
+		function frame:GetAllowRadialWheel()
+			local u = self.unit or self:GetAttribute("unit")
+
+			-- return not (u == "player" and not self.model:IsMouseOver())
+			return not (u == "player" and (self.health:IsMouseOver() or self.powerBar:IsMouseOver()))
 		end
 	end
 
@@ -803,8 +820,9 @@ local function GetUnitClassColor(unit)
 	local creatureType = not addon:IsSecretValue(UnitCreatureType(unit)) and CreatureTypeReverseLocalisation[UnitCreatureType(unit)] or ""
 	local color = {1,1,1}
 	if UnitIsPlayer(unit) or (creatureType == "Humanoid" and UnitIsFriend("player", unit) and UnitPlayerOrPetInParty(unit)) then
-		local _, englishClass = UnitClass(unit)
-		if RAID_CLASS_COLORS[englishClass] ~= nil then color = RAID_CLASS_COLORS[englishClass] else color = {UnitSelectionColor(unit)} end
+		local _, classFileName = UnitClass(unit)
+
+		color = addon:pcall(function() return C_ClassColor.GetClassColor(classFileName):GenerateHexColor() end, {UnitSelectionColor(unit)})
 	else
 		-- if not UnitPlayerControlled(unit) and UnitIsTapped(unit) then
 			-- if not UnitIsTappedByPlayer(unit) and not UnitIsTappedByAllThreatList(unit) then
@@ -1113,6 +1131,14 @@ function module:UpdateLoot(frame)
 end
 
 function module:UpdatePartyLeader(frame)
+	frame.assistant:Hide()
+	frame.leader:Hide()
+	frame.guide:Hide()
+
+	if not UnitIsFriend("player", frame.unit) then return end
+
+	if self:ShouldUnitIdentityBeSecret(frame.unit) then return end
+
 	if UnitIsGroupLeader(frame.unit) then
 		frame.assistant:Hide()
 		if HasLFGRestrictions and HasLFGRestrictions() then
@@ -1126,11 +1152,8 @@ function module:UpdatePartyLeader(frame)
 		frame.leader:Hide()
 		frame.guide:Hide()
 		frame.assistant:Show()
-	else
-		frame.assistant:Hide()
-		frame.leader:Hide()
-		frame.guide:Hide()
 	end
+
 end
 
 local GetTexCoordsForRoleSmallCircle = _G["GetTexCoordsForRoleSmallCircle"]  or function(role)
@@ -1146,26 +1169,30 @@ local GetTexCoordsForRoleSmallCircle = _G["GetTexCoordsForRoleSmallCircle"]  or 
 end;
 
 function module:UpdateRoles(frame)
-    local LFGRole = UnitGroupRolesAssigned and UnitGroupRolesAssigned(frame.unit) or "NONE"
-    local LFGicon = frame.LFGRole
+	local LFGicon = frame.LFGRole
+	local raidIcon = frame.raidRole
 
-    if ( LFGRole == "TANK" or LFGRole == "HEALER" or LFGRole == "DAMAGER") then
-        LFGicon:SetTexCoord(GetTexCoordsForRoleSmallCircle(LFGRole));
-        LFGicon:Show()
-    else
-        LFGicon:Hide()
-    end
+	LFGicon:Hide()
+	raidIcon:Hide()
+
+	if not UnitIsFriend("player", frame.unit) then return end
+
+	if self:ShouldUnitIdentityBeSecret(frame.unit) then return end
+
+	local LFGRole = UnitGroupRolesAssigned and UnitGroupRolesAssigned(frame.unit) or "NONE"
+
+	if LFGRole == "TANK" or LFGRole == "HEALER" or LFGRole == "DAMAGER" then
+		LFGicon:SetTexCoord(GetTexCoordsForRoleSmallCircle(LFGRole));
+		LFGicon:Show()
+	end
 
 	local _, raidRole = RaidInfo(frame.unit)
-	local raidIcon = frame.raidRole
 	if raidRole == "MAINASSIST" then
 		raidIcon:SetTexture("Interface\\GroupFrame\\UI-GROUP-MAINASSISTICON")
 		raidIcon:Show()
 	elseif raidRole == "MAINTANK" then
 		raidIcon:SetTexture("Interface\\GroupFrame\\UI-GROUP-MAINTANKICON")
 		raidIcon:Show()
-	else
-		raidIcon:Hide()
 	end
 end
 
@@ -1264,19 +1291,23 @@ end
 
 function module:UpdateModel(frame)
 	if not frame.model then return end
+
 	local unit = frame.unit
 	local model = frame.model
+
 	if not UnitExists(unit) then
 		model:ClearModel()
 		model.portrait:Hide()
 		return
 	end
+
 	model:SetUnit(unit)
 	model:RefreshUnit()
 	model:SetPortraitZoom(1)
+
 	if model.portrait then
 		SetPortraitTexture(model.portrait, unit)
-		if not UnitIsVisible(unit) then
+		if not UnitIsVisible(unit) or self:ShouldUnitIdentityBeSecret(unit) then
 			model.portrait:Show()
 		else
 			model.portrait:Hide()
