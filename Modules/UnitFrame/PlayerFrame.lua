@@ -1127,9 +1127,9 @@ function module:OnInitialize()
 		self:Enable()
 		if self.frame then
 			UnitFrames:RunOnPlayerEnteringWorld(function()
-				self:DisableBlizz()
 				self:ClassResourceBars()
 				self:ToggleClassResourceBars()
+				self:DisableBlizz()
 			end)
 		end
 	end
@@ -1163,9 +1163,9 @@ function module:OnEnable()
 		end
 
 		if UnitFrames:IsPlayerInWorld() then
-			self:DisableBlizz()
 			self:ClassResourceBars()
 			self:ToggleClassResourceBars()
+			self:DisableBlizz()
 		end
 	end
 end
