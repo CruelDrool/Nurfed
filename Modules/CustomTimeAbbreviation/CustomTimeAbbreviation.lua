@@ -59,31 +59,22 @@ function module:SecondsToTimeAbbrev(seconds)
 	return t
 end
 
-if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE or addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_THE_BURNING_CRUSADE_CLASSIC then
-	local updateAura = function(aura, timeleft)
-		if timeleft and not addon:IsSecretValue(timeleft) and module.db.profile.enabled then
-			aura.Duration:SetText(module:SecondsToTimeAbbrev(timeleft))
-		end
+local updateAura = function(aura, timeleft)
+	if timeleft and not addon:IsSecretValue(timeleft) and module.db.profile.enabled then
+		aura.Duration:SetText(module:SecondsToTimeAbbrev(timeleft))
 	end
-    for _, button in ipairs(BuffFrame.auraFrames) do
-		if button.UpdateDuration then
-       		hooksecurefunc(button, "UpdateDuration", updateAura)
-		end
-    end
+end
 
-	for _, button in ipairs(DebuffFrame.auraFrames) do
-		if button.UpdateDuration then
-        	hooksecurefunc(button, "UpdateDuration", updateAura)
-		end
-    end
-else
-	local updateAura = function(aura, timeleft)
-		if timeleft and not addon:IsSecretValue(timeleft) and module.db.profile.enabled then
-			local duration = _G[aura:GetName().."Duration"]
-			duration:SetText(module:SecondsToTimeAbbrev(timeleft))
-		end
+for _, button in ipairs(BuffFrame.auraFrames) do
+	if button.UpdateDuration then
+		hooksecurefunc(button, "UpdateDuration", updateAura)
 	end
-	hooksecurefunc("AuraButton_UpdateDuration", updateAura)
+end
+
+for _, button in ipairs(DebuffFrame.auraFrames) do
+	if button.UpdateDuration then
+		hooksecurefunc(button, "UpdateDuration", updateAura)
+	end
 end
 
 function module:OnInitialize()
