@@ -1242,19 +1242,17 @@ end
 function module:UpdatePVPStatus(frame)
 	local unit = frame.unitId
 	local icon = frame.pvp
-	local factionGroup = UnitFactionGroup(unit)
+	icon:Hide()
+
 	if UnitIsPVPFreeForAll(unit) then
 		icon:SetTexture("Interface\\TargetingFrame\\UI-PVP-FFA")
 		icon:Show()
-	elseif factionGroup and UnitIsPVP(unit) then
-		if factionGroup == "Neutral" then
-			icon:Hide()
-		else
+	elseif not self:ShouldUnitIdentityBeSecret(unit) then
+		local factionGroup = UnitFactionGroup(unit)
+		if UnitIsPVP(unit) and factionGroup and factionGroup ~= "Neutral" then
 			icon:SetTexture("Interface\\TargetingFrame\\UI-PVP-"..factionGroup)
 			icon:Show()
 		end
-	else
-		icon:Hide()
 	end
 end
 
