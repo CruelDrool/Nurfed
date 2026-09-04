@@ -72,6 +72,7 @@ local doNotSellList = {
 		[39355] = true, -- Haute Club Membership Card (poor)
 		[161437] = true, -- Shipping Contract (poor)
 		[228431] = true, -- Rock Buddy (poor)
+		[278397] = true, -- Ephemeral Star Ooze (poor)
 }
 
 local GetContainerNumSlots = _G["GetContainerNumSlots"] or C_Container.GetContainerNumSlots
