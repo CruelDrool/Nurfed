@@ -127,7 +127,7 @@ local function Update(frame)
 	UnitFrames:PowerBar_Update(frame.powerBar)
 	UnitFrames:HealthBar_Update(frame.health)
 	UnitFrames:UpdateModel(frame)
-	if UnitExists(frame.unit) then
+	if UnitExists(frame.unitId) then
 		UnitFrames:UpdateInfo(frame)
 		UnitFrames:UpdateRaidIcon(frame)
 	end
@@ -142,24 +142,24 @@ local function OnEvent(frame, event, ...)
 		Update(frame)
 	elseif event == "DISPLAY_SIZE_CHANGED" or event == "INSTANCE_ENCOUNTER_ENGAGE_UNIT" then
 		Update(frame)
-		if UnitExists("target") and UnitIsUnit("target", frame.unit) then
+		if UnitExists("target") and UnitIsUnit("target", frame.unitId) then
 			frame:LockHighlight()
 		else
 			frame:UnlockHighlight()
 		end
 	elseif event == "UNIT_LEVEL" or event == "UNIT_FACTION" or event == "UNIT_NAME_UPDATE" or event == "UNIT_CLASSIFICATION_CHANGED" then
-		if arg1 == frame.unit then
+		if arg1 == frame.unitId then
 			UnitFrames:UpdateInfo(frame)
 		end
 	elseif event == "PLAYER_TARGET_CHANGED" then
-		if UnitExists("target") and UnitIsUnit("target", frame.unit) then
+		if UnitExists("target") and UnitIsUnit("target", frame.unitId) then
 			frame:LockHighlight()
 		else
 			frame:UnlockHighlight()
 		end
 	elseif event == "UNIT_TARGETABLE_CHANGED" then
-		if arg1 == frame.unit then
-			-- if UnitCanAttack("player", frame.unit) then
+		if arg1 == frame.unitId then
+			-- if UnitCanAttack("player", frame.unitId) then
 				-- frame:SetAlpha(1.0)
 			-- else
 				-- frame:SetAlpha(0.6)
@@ -170,7 +170,7 @@ local function OnEvent(frame, event, ...)
 	elseif event == "RAID_TARGET_UPDATE" then
 		UnitFrames:UpdateRaidIcon(frame)
 	elseif event == "UNIT_MODEL_CHANGED" then
-		if arg1 == frame.unit then
+		if arg1 == frame.unitId then
 			UnitFrames:UpdateModel(frame)
 		end
 	elseif event == "UI_SCALE_CHANGED" then

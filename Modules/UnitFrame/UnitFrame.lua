@@ -526,7 +526,7 @@ function module:UpdateConfigs()
 	for f, modName in pairs(self.frames) do
 		if f then
 			local frame = _G[f]
-			local db = self.db.profile[modName].frames[frame.unit]
+			local db = self.db.profile[modName].frames[frame.unitId]
 			-- The reference to where the frame stores its positioning data has been removed.
 			-- Need to re-register the config/storage.
 			frame.RegisterConfig(frame, db)
@@ -545,54 +545,38 @@ function module:UpdateConfigs()
 	end
 end
 
-function module:CreateFrame(modName, unit, events, oneventfunc, isWatched, id)
+function module:CreateFrame(modName, baseUnitId, events, oneventfunc, isWatched, id)
 	if not self:GetModule(modName) then return end
-	if not type(unit) == "string" then return end
+	if not type(baseUnitId) == "string" then return end
 	if not type(events) == "table" then return end
-	if not id then id = 0 end
+	id = id or 0
 
-	local name = addonName.."_"..unit
-	local template = self.db.profile.templatePrefix..unit
-
-	if id > 0 then name = name..id end
+	local name = ("%s_%s%s"):format(addonName, baseUnitId, id > 0 and id or "")
+	local template = self.db.profile.templatePrefix..baseUnitId
 
 	if self.frames[name] then return end
 
-	local frame = CreateFrame("Button", name, UIParent, PingableType_UnitFrameMixin and template..", PingableUnitFrameTemplate" or template , id)
+	local frame = CreateFrame("Button", name, UIParent, PingableType_UnitFrameMixin and ("%s, PingableUnitFrameTemplate"):format(template) or template , id)
 
-	if PingableType_UnitFrameMixin then
+	frame.unitId = ("%s%s"):format(baseUnitId, id > 0 and id or "")
+
+	if PingableType_UnitFrameMixin and frame.unitId == "player" then
+		local guid = UnitGUID("player")
 		function frame:GetTargetInfo()
-			local u = self.unit or self:GetAttribute("unit")
-
-			if module:ShouldUnitIdentityBeSecret(u) then
-				return {}
-			end
-
 			local targetInfo = {
-				guid = UnitGUID(u),
-				-- isPlayerResource = (u == "player" and not self.model:IsMouseOver()) or nil,
-				isPlayerResource = (u == "player" and (self.health:IsMouseOver() or self.powerBar:IsMouseOver())) or nil,
+				guid = guid,
+				isPlayerResource = self.health:IsMouseOver() or self.powerBar:IsMouseOver()
 			}
 
 			return targetInfo
 		end
 
 		function frame:GetAllowRadialWheel()
-			local u = self.unit or self:GetAttribute("unit")
-
-			-- return not (u == "player" and not self.model:IsMouseOver())
-			return not (u == "player" and (self.health:IsMouseOver() or self.powerBar:IsMouseOver()))
+			return not(self.health:IsMouseOver() or self.powerBar:IsMouseOver())
 		end
 	end
 
-	if id > 0 then
-		frame.unit = unit..id
-	else
-		frame.unit = unit
-	end
-
 	if isWatched then
-		-- RegisterUnitWatch(frame);
 		frame.isWatched = true
 	end
 
@@ -602,16 +586,16 @@ function module:CreateFrame(modName, unit, events, oneventfunc, isWatched, id)
 		end
 	end
 
-	if frame.health then self:HealthBar_OnLoad(frame.health, frame.unit) end
-	if frame.powerBar then self:PowerBar_OnLoad(frame.powerBar, frame.unit) end
-	if frame.target then self:TargetofTarget_Onload(frame.target, frame.unit.."target") end
-	if frame.targettarget then self:TargetofTarget_Onload(frame.targettarget, frame.unit.."targettarget") end
-	if frame.pet then self:TargetofTarget_Onload(frame.pet, unit.."pet"..id) end -- partypetN, not partyNpet!
+	if frame.health then self:HealthBar_OnLoad(frame.health, frame.unitId) end
+	if frame.powerBar then self:PowerBar_OnLoad(frame.powerBar, frame.unitId) end
+	if frame.target then self:TargetofTarget_Onload(frame.target, frame.unitId.."target") end
+	if frame.targettarget then self:TargetofTarget_Onload(frame.targettarget, frame.unitId.."targettarget") end
+	if frame.pet then self:TargetofTarget_Onload(frame.pet, baseUnitId.."pet"..id) end -- partypetN, not partyNpet!
 	if frame.buffs or frame.debuffs then frame.showAuraCount = true end
 
-	if frame.cast then self:CastBar_OnLoad(frame.cast, frame.unit) end
+	if frame.cast then self:CastBar_OnLoad(frame.cast, frame.unitId) end
 
-	if frame.threat then self:ThreatBar_OnLoad(frame.threat, frame.unit) end
+	if frame.threat then self:ThreatBar_OnLoad(frame.threat, frame.unitId) end
 
 	if type(oneventfunc) == "function" then
 		frame:SetScript("OnEvent", oneventfunc)
@@ -622,9 +606,9 @@ function module:CreateFrame(modName, unit, events, oneventfunc, isWatched, id)
 	frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 	frame:SetAttribute("*type1", "target")
 	frame:SetAttribute("*type2", "togglemenu")
-	frame:SetAttribute("unit", frame.unit)
+	frame:SetAttribute("unit", frame.unitId)
 
-	local db = self.db.profile[modName].frames[frame.unit]
+	local db = self.db.profile[modName].frames[frame.unitId]
 	LibStub("LibWindow-1.1"):Embed(frame)
 	frame.RegisterConfig(frame, db)
 
@@ -665,7 +649,7 @@ function module:EnableFrame(frame)
 end
 
 function module:ShowHideHighlight(frame)
-	if UnitExists("target") and UnitIsUnit("target", frame.unit) then
+	if UnitExists("target") and UnitIsUnit("target", frame.unitId) then
 		frame:LockHighlight()
 	else
 		frame:UnlockHighlight()
@@ -855,7 +839,7 @@ end
 function module:Replace(unit, textFormat)
 	if textFormat == nil then return "" end
 	if not UnitExists(unit) then return textFormat end
-	-- local unit = frame.unit
+	-- local unit = frame.unitId
 
 	local textReplacements = {}
 
@@ -1099,7 +1083,7 @@ end
 
 function module:UpdateLoot(frame)
 	local icon = frame.master
-	local unit = frame.unit
+	local unit = frame.unitId
 	local showIcon = false
 	if UnitPlayerOrPetInParty(unit) then
 		if GetNumGroupMembers() > 0 then
@@ -1135,11 +1119,11 @@ function module:UpdatePartyLeader(frame)
 	frame.leader:Hide()
 	frame.guide:Hide()
 
-	if not UnitIsFriend("player", frame.unit) then return end
+	if not UnitIsFriend("player", frame.unitId) then return end
 
-	if self:ShouldUnitIdentityBeSecret(frame.unit) then return end
+	if self:ShouldUnitIdentityBeSecret(frame.unitId) then return end
 
-	if UnitIsGroupLeader(frame.unit) then
+	if UnitIsGroupLeader(frame.unitId) then
 		frame.assistant:Hide()
 		if HasLFGRestrictions and HasLFGRestrictions() then
 			frame.guide:Show()
@@ -1148,7 +1132,7 @@ function module:UpdatePartyLeader(frame)
 			frame.guide:Hide()
 			frame.leader:Show()
 		end
-	elseif UnitIsGroupAssistant(frame.unit) and IsInRaid() then
+	elseif UnitIsGroupAssistant(frame.unitId) and IsInRaid() then
 		frame.leader:Hide()
 		frame.guide:Hide()
 		frame.assistant:Show()
@@ -1175,18 +1159,18 @@ function module:UpdateRoles(frame)
 	LFGicon:Hide()
 	raidIcon:Hide()
 
-	if not UnitIsFriend("player", frame.unit) then return end
+	if not UnitIsFriend("player", frame.unitId) then return end
 
-	if self:ShouldUnitIdentityBeSecret(frame.unit) then return end
+	if self:ShouldUnitIdentityBeSecret(frame.unitId) then return end
 
-	local LFGRole = UnitGroupRolesAssigned and UnitGroupRolesAssigned(frame.unit) or "NONE"
+	local LFGRole = UnitGroupRolesAssigned and UnitGroupRolesAssigned(frame.unitId) or "NONE"
 
 	if LFGRole == "TANK" or LFGRole == "HEALER" or LFGRole == "DAMAGER" then
 		LFGicon:SetTexCoord(GetTexCoordsForRoleSmallCircle(LFGRole));
 		LFGicon:Show()
 	end
 
-	local _, raidRole = RaidInfo(frame.unit)
+	local _, raidRole = RaidInfo(frame.unitId)
 	if raidRole == "MAINASSIST" then
 		raidIcon:SetTexture("Interface\\GroupFrame\\UI-GROUP-MAINASSISTICON")
 		raidIcon:Show()
@@ -1200,7 +1184,7 @@ function module:UpdateName(frame)
 	local textFormat = self:GetTextFormat("name", frame)
 	local name
 	if textFormat ~= nil then
-		name = self:Replace(frame.unit, textFormat)
+		name = self:Replace(frame.unitId, textFormat)
 	end
 	frame.name:SetText(name)
 end
@@ -1209,7 +1193,7 @@ function module:UpdateLevel(frame)
 	local textFormat = self:GetTextFormat("level", frame)
 	local level
 	if textFormat ~= nil then
-		level = self:Replace(frame.unit, textFormat)
+		level = self:Replace(frame.unitId, textFormat)
 	end
 
 	frame.level:SetText(level)
@@ -1219,7 +1203,7 @@ function module:UpdateGroupIndicator(frame)
 	local textFormat = self:GetTextFormat("group", frame)
 	local text
 	if textFormat ~= nil then
-		text = self:Replace(frame.unit, textFormat)
+		text = self:Replace(frame.unitId, textFormat)
 	end
 	frame.group:SetText(text)
 	if text ~= "" then
@@ -1237,7 +1221,7 @@ function module:UpdateInfo(frame)
 		local textFormat = self:GetTextFormat("infoline", frame)
 		local infoline
 		if textFormat ~= nil then
-			infoline = self:Replace(frame.unit, textFormat)
+			infoline = self:Replace(frame.unitId, textFormat)
 		end
 		frame.infoline:SetText(infoline)
 	end
@@ -1246,7 +1230,7 @@ end
 
 function module:UpdateRaidIcon(frame)
 	local icon = frame.raidtarget
-	local index = GetRaidTargetIndex(frame.unit)
+	local index = GetRaidTargetIndex(frame.unitId)
 	if index then
 		SetRaidTargetIconTexture(icon, index)
 		icon:Show()
@@ -1256,7 +1240,7 @@ function module:UpdateRaidIcon(frame)
 end
 
 function module:UpdatePVPStatus(frame)
-	local unit = frame.unit
+	local unit = frame.unitId
 	local icon = frame.pvp
 	local factionGroup = UnitFactionGroup(unit)
 	if UnitIsPVPFreeForAll(unit) then
@@ -1292,7 +1276,7 @@ end
 function module:UpdateModel(frame)
 	if not frame.model then return end
 
-	local unit = frame.unit
+	local unit = frame.unitId
 	local model = frame.model
 
 	if not UnitExists(unit) then
@@ -1368,7 +1352,7 @@ end
 local GHOST
 
 local function HealthBar_Text(frame)
-	local unit = frame:GetParent().unit
+	local unit = frame:GetParent().unitId
 
 	local healthInfo = module:GetTextFormat("health", frame:GetParent())
 	local miss = module:GetTextFormat("miss", frame:GetParent())
@@ -1388,8 +1372,8 @@ local function HealthBar_Text(frame)
 		perc = DEAD
 		miss = ""
 	elseif UnitHealthPercent then
-		perc = format("%d%%", addon:pcall(function() return UnitHealthPercent(frame.unit, false, CurveConstants.ScaleTo100) end, 0))
-		miss = AbbreviateNumbers(addon:pcall(function() return UnitHealthMissing(frame.unit) end, 0))
+		perc = format("%d%%", addon:pcall(function() return UnitHealthPercent(frame.unitId, false, CurveConstants.ScaleTo100) end, 0))
+		miss = AbbreviateNumbers(addon:pcall(function() return UnitHealthMissing(frame.unitId) end, 0))
 	else
 		if miss ~= nil then
 			local missing = frame.currValue - frame.maxValue
@@ -1426,17 +1410,17 @@ end
 
 local function HealthBar_Gradient(frame, elapsed, gradient)
 	if C_CurveUtil then
-		local color = addon:pcall(function() return UnitHealthPercent(frame.unit, true, frame.colorCurve) end, frame.colorCurve:Evaluate(0))
+		local color = addon:pcall(function() return UnitHealthPercent(frame.unitId, true, frame.colorCurve) end, frame.colorCurve:Evaluate(0))
 		frame:GetStatusBarTexture():SetVertexColor(color:GetRGBA())
 		return
 	end
 	if not gradient then gradient = 0 end
 	if frame.maxValue == 0 then return end
-	-- local unit = frame:GetParent().unit
+	-- local unit = frame:GetParent().unitId
 	local alpha = 1;
 	local perc = frame.currValue / frame.maxValue
 
-	if module.db.profile.lowHealthFlash and module.db.profile.lowHealthFlash.enabled and UnitIsFriend("player", frame:GetParent().unit) and perc <= module.db.profile.lowHealthFlash.warning.perc then
+	if module.db.profile.lowHealthFlash and module.db.profile.lowHealthFlash.enabled and UnitIsFriend("player", frame:GetParent().unitId) and perc <= module.db.profile.lowHealthFlash.warning.perc then
 		local interval = module.db.profile.lowHealthFlash.warning.interval
 
 		if perc <= module.db.profile.lowHealthFlash.dangerous.perc then
@@ -1526,7 +1510,7 @@ local function HealthBar_HealthPredictions_Old(frame)
 		return
 	end
 
-	local unit = frame:GetParent().unit
+	local unit = frame:GetParent().unitId
 	local health = frame:GetValue()
     local _, maxHealth = frame:GetMinMaxValues()
 	if maxHealth == 0 then return end
@@ -1643,15 +1627,15 @@ end
 
 local function HealthBar_HealthPredictions(frame)
 
-	if addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_MAINLINE or not UnitExists(frame.unit) then return end
+	if addon.WOW_PROJECT_ID ~= addon.WOW_PROJECT_ID_MAINLINE or not UnitExists(frame.unitId) then return end
 
-	local success, result = pcall(function() return UnitHealthMax(frame.unit) end)
+	local success, result = pcall(function() return UnitHealthMax(frame.unitId) end)
 
 	if not success then return end
 
 	local maxHealth = result
 	local healerUnit = "player"
-	UnitGetDetailedHealPrediction(frame.unit, healerUnit, frame.predictionCalc)
+	UnitGetDetailedHealPrediction(frame.unitId, healerUnit, frame.predictionCalc)
 
 	local totalHealAmount, amountFromHealer, amountFromOthers, healClamped = frame.predictionCalc:GetIncomingHeals()
 
@@ -1689,7 +1673,7 @@ local function HealthBar_HealthPredictions(frame)
 end
 
 local function HealthBar_OnUpdate(frame, e)
-	local unit = frame.unit
+	local unit = frame.unitId
     -- if UnitExists(unit) then
 		--if not frame.pauseUpdates then
 			local currValue = addon:pcall(function() return UnitHealth(unit) end, 0)
@@ -1722,8 +1706,8 @@ local function HealthBar_OnUpdate(frame, e)
 end
 
 function module:HealthBar_Update(frame)
-	local unit = frame.unit
-	-- if frame.unit == unit then
+	local unit = frame.unitId
+	-- if frame.unitId == unit then
         local maxValue = UnitHealthMax(unit)
 		local currValue = UnitHealth(unit)
 
@@ -1742,7 +1726,7 @@ function module:HealthBar_Update(frame)
 		HealthBar_HealthPredictions(frame)
 		HealthBar_HealthPredictions_Old(frame)
 
-		if UnitExists(frame.unit) then
+		if UnitExists(frame.unitId) then
 			HealthBar_Gradient(frame)
 		end
 	-- end
@@ -1755,7 +1739,7 @@ end
 
 function module:HealthBar_OnLoad(frame, unit)
 
-	frame.unit = unit
+	frame.unitId = unit
 	if C_CurveUtil then
 		frame.colorCurve = C_CurveUtil.CreateColorCurve()
 		frame.colorCurve:AddPoint(0, CreateColor(1, 0, 0))
@@ -1802,12 +1786,12 @@ function module:HealthBar_OnLoad(frame, unit)
 		frame.predictionCalc:SetHealAbsorbClampMode(Enum.UnitHealAbsorbClampMode.MaximumHealth)
 	end
 
-	frame:RegisterUnitEvent("UNIT_HEALTH", frame.unit)
-	frame:RegisterUnitEvent("UNIT_MAXHEALTH", frame.unit)
-	frame:RegisterUnitEvent("UNIT_HEAL_PREDICTION", frame.unit)
-	frame:RegisterUnitEvent("UNIT_ABSORB_AMOUNT_CHANGED", frame.unit)
-	frame:RegisterUnitEvent("UNIT_HEAL_ABSORB_AMOUNT_CHANGED", frame.unit)
-	frame:RegisterUnitEvent("UNIT_MAX_HEALTH_MODIFIERS_CHANGED", frame.unit)
+	frame:RegisterUnitEvent("UNIT_HEALTH", frame.unitId)
+	frame:RegisterUnitEvent("UNIT_MAXHEALTH", frame.unitId)
+	frame:RegisterUnitEvent("UNIT_HEAL_PREDICTION", frame.unitId)
+	frame:RegisterUnitEvent("UNIT_ABSORB_AMOUNT_CHANGED", frame.unitId)
+	frame:RegisterUnitEvent("UNIT_HEAL_ABSORB_AMOUNT_CHANGED", frame.unitId)
+	frame:RegisterUnitEvent("UNIT_MAX_HEALTH_MODIFIERS_CHANGED", frame.unitId)
 
 	frame.pauseUpdates = false
 
@@ -1832,11 +1816,11 @@ local function PowerBar_Text(frame)
 		parent = frame:GetParent():GetParent()
 	end
 	local text = module:GetTextFormat("power", parent)
-	-- if not UnitIsConnected(frame.unit) UnitIsPlayer(frame.unit) then
+	-- if not UnitIsConnected(frame.unitId) UnitIsPlayer(frame.unitId) then
 		-- text = ""
-	-- elseif UnitIsGhost(frame.unit) then
+	-- elseif UnitIsGhost(frame.unitId) then
 		-- text = ""
-	-- elseif (UnitIsDead(frame.unit) or UnitIsCorpse(frame.unit)) then
+	-- elseif (UnitIsDead(frame.unitId) or UnitIsCorpse(frame.unitId)) then
 		-- text = ""
 	-- end
 
@@ -1852,14 +1836,14 @@ end
 local GetSpellPowerCost = _G["GetSpellPowerCost"] or C_Spell.GetSpellPowerCost
 
 local function PowerBar_CostPrediction(frame, isStarting, startTime, endTime, spellId)
-	local powerType = frame.powerType or UnitPowerType(frame.unit)
-	local maxPower = UnitPowerMax(frame.unit, powerType)
+	local powerType = frame.powerType or UnitPowerType(frame.unitId)
+	local maxPower = UnitPowerMax(frame.unitId, powerType)
 
 	if addon:IsSecretValue(maxPower) then return end
 
 	local cost = 0
 	if not isStarting or startTime == endTime then
-		local currentSpellID = select(9, UnitCastingInfo(frame.unit));
+		local currentSpellID = select(9, UnitCastingInfo(frame.unitId));
 		if currentSpellID and frame.predictedPowerCost then
 			cost = frame.predictedPowerCost
 		else
@@ -1897,7 +1881,7 @@ local function PowerBar_OnEvent(frame, event, ...)
 	if event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_SPECIALIZATION_CHANGED" or event == "UNIT_DISPLAYPOWER" then
 		module:PowerBar_Update(frame)
 	elseif event == "UNIT_SPELLCAST_START" or event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_FAILED" or event == "UNIT_SPELLCAST_SUCCEEDED" then
-		local _, _, _, startTime, endTime, _, _, _, spellId = UnitCastingInfo(frame.unit);
+		local _, _, _, startTime, endTime, _, _, _, spellId = UnitCastingInfo(frame.unitId);
 		PowerBar_CostPrediction(frame, event == "UNIT_SPELLCAST_START", startTime, endTime, spellId);
 	end
 end
@@ -1905,7 +1889,7 @@ end
 local function PowerBar_OnUpdate(frame, e)
 	-- if not (frame:GetParent().isEnabled or frame:GetParent():GetParent().isEnabled) then return end
 
-	local unit = frame.unit
+	local unit = frame.unitId
     -- if UnitExists(unit) then
 		if not frame.pauseUpdates then
 			local powerType = frame.powerType or UnitPowerType(unit)
@@ -1939,7 +1923,7 @@ end
 
 function module:PowerBar_Update(frame)
 
-	local unit = frame.unit
+	local unit = frame.unitId
 	local powerType = frame.powerType or UnitPowerType(unit) or 0
 	local powerBarColor = PowerBarColor[powerType]
 	local maxValue = UnitPowerMax(unit, powerType)
@@ -1973,7 +1957,7 @@ end
 
 function module:PowerBar_OnLoad(frame, unit)
 	frame.pauseUpdates = false
-	frame.unit = unit
+	frame.unitId = unit
 
 	frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 	frame:RegisterUnitEvent("PLAYER_SPECIALIZATION_CHANGED", unit)
@@ -2036,7 +2020,7 @@ end
 
 local function CastBar_OnEvent(frame, event, unit,...)
 
-	local frameUnit = frame:GetParent().unit
+	local frameUnit = frame:GetParent().unitId
 	if event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_TARGET_CHANGED" or event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_FOCUS_CHANGED" then
 		local nameChannel  = UnitChannelInfo(frameUnit)
 		local nameSpell  = UnitCastingInfo(frameUnit)
@@ -2260,11 +2244,11 @@ local function CastBar_OnUpdate(frame, e)
 end
 
 function module:CastBar_OnLoad(frame, unit)
-	if not frame.unit then
+	if not frame.unitId then
 		if unit then
-			frame.unit = unit
-		elseif not unit and frame:GetParent().unit then
-			frame.unit = frame:GetParent().unit
+			frame.unitId = unit
+		elseif not unit and frame:GetParent().unitId then
+			frame.unitId = frame:GetParent().unitId
 		else
 			return
 		end
@@ -2344,7 +2328,7 @@ Target of Target and Target of Target's Target! This can keep on going on and on
 ]]
 
 local function TargetofTarget_Update(frame, e)
-	if UnitExists(frame.unit) then
+	if UnitExists(frame.unitId) then
 		module:UpdateName(frame)
 	end
 end
@@ -2354,14 +2338,14 @@ local function TargetofTarget_OnEvent(frame, event, ...)
 	TargetofTarget_Update(frame)
 	-- if event == "PLAYER_ENTERING_WORLD" then
 		-- TargetofTarget_Update(self)
-		-- --module:HealthBar_OnLoad(self.hp, self.unit, event)
+		-- --module:HealthBar_OnLoad(self.hp, self.unitId, event)
 	-- elseif event == "UNIT_FACTION" then
 		-- TargetofTarget_Update(self)
 	-- end
 end
 
 function module:TargetofTarget_Onload(frame, unit)
-	frame.unit = unit
+	frame.unitId = unit
 	RegisterUnitWatch(frame)
 	-- self.isWatched = true
 	-- self:RegisterEvent("PLAYER_ENTERING_WORLD");
@@ -2370,8 +2354,8 @@ function module:TargetofTarget_Onload(frame, unit)
 
 
 	frame:RegisterForClicks("LeftButtonUp");
-	SecureUnitButton_OnLoad(frame, frame.unit)
-	self:HealthBar_OnLoad(frame.hp, frame.unit)
+	SecureUnitButton_OnLoad(frame, frame.unitId)
+	self:HealthBar_OnLoad(frame.hp, frame.unitId)
 
 	-- Uncomment the next line to use Glide animation on the Target of Target hp bar.
 	-- self:HealthBar_Update(frame.hp)
@@ -2431,21 +2415,21 @@ local function ThreatBar_Text(frame)
 end
 
 function module:ThreatBar_Update(frame)
-	if not UnitExists(frame.unit) then
+	if not UnitExists(frame.unitId) then
 		frame:Hide()
 		return
 	 end
-	if UnitIsPlayer(frame.unit) then
+	if UnitIsPlayer(frame.unitId) then
 		frame:Hide()
 		return
 	end
 
-	if UnitIsDead(frame.unit) then
+	if UnitIsDead(frame.unitId) then
 		frame:Hide()
 		return
 	end
 
-	local isTanking, status, _, rawPercent, threatValue = UnitDetailedThreatSituation(frame.threatUnit, frame.unit)
+	local isTanking, status, _, rawPercent, threatValue = UnitDetailedThreatSituation(frame.threatUnit, frame.unitId)
 
 	if not threatValue then
 		frame:Hide()
@@ -2490,8 +2474,8 @@ local function ThreatBar_OnEvent(frame,event,...)
 end
 
 local function ThreatBar_OnUpdate(frame, e)
-	if UnitExists(frame.unit) and not UnitIsPlayer(frame.unit) then
-		local isTanking, status, _, rawPercent, threatValue = UnitDetailedThreatSituation(frame.threatUnit, frame.unit)
+	if UnitExists(frame.unitId) and not UnitIsPlayer(frame.unitId) then
+		local isTanking, status, _, rawPercent, threatValue = UnitDetailedThreatSituation(frame.threatUnit, frame.unitId)
 			if not threatValue then
 				return
 			end
@@ -2531,11 +2515,11 @@ local function ThreatBar_OnUpdate(frame, e)
 end
 
 function module:ThreatBar_OnLoad(frame, unit)
-	if not frame.unit then
+	if not frame.unitId then
 		if unit then
-			frame.unit = unit
-		elseif not unit and frame:GetParent().unit then
-			frame.unit = frame:GetParent().unit
+			frame.unitId = unit
+		elseif not unit and frame:GetParent().unitId then
+			frame.unitId = frame:GetParent().unitId
 		else
 			return
 		end
@@ -2632,15 +2616,15 @@ function module:UpdateAuras(frame)
 
 	local normalSize, largeSize, extraLarge = 17, 21, 27
 	local aura, auraFrame, auraFrameHeight
-	local playerIsTarget = UnitIsUnit("player", frame.unit)
-	local canAssist = UnitCanAssist("player", frame.unit)
+	local playerIsTarget = UnitIsUnit("player", frame.unitId)
+	local canAssist = UnitCanAssist("player", frame.unitId)
 
 	auraFrame = frame.buffs
 	auraFrameHeight = normalSize
 	local buffFilter
 	local maxBuffs = frame.maxBuffs or MAX_TARGET_BUFFS
 	for i = 1, maxBuffs do
-		local auraData = C_UnitAuras.GetBuffDataByIndex(frame.unit, i)
+		local auraData = C_UnitAuras.GetBuffDataByIndex(frame.unitId, i)
 		if auraData then
 			if not auraFrame["aura"..i] then
 				auraFrame["aura"..i] = CreateFrame("Button", nil, auraFrame, self.db.profile.templatePrefix.."Buff")
@@ -2651,26 +2635,26 @@ function module:UpdateAuras(frame)
 			end
 
 			aura = auraFrame["aura"..i]
-			aura.unit = frame.unit
+			aura.unit = frame.unitId
 			aura:SetID(i)
 			aura.icon:SetTexture(auraData.icon)
 			local colorInfo
 			local size = normalSize
 
 			if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
-				if not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unit, auraData.auraInstanceID, "HELPFUL|PLAYER") then
+				if not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unitId, auraData.auraInstanceID, "HELPFUL|PLAYER") then
 					size = largeSize
 					auraFrameHeight = largeSize
 				end
 
-				if not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unit, auraData.auraInstanceID, "HELPFUL|BIG_DEFENSIVE") then
+				if not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unitId, auraData.auraInstanceID, "HELPFUL|BIG_DEFENSIVE") then
 					size = extraLarge
 					auraFrameHeight = extraLarge
 				end
 
-				aura.count:SetText(C_UnitAuras.GetAuraApplicationDisplayCount(frame.unit, auraData.auraInstanceID, 2, 999))
+				aura.count:SetText(C_UnitAuras.GetAuraApplicationDisplayCount(frame.unitId, auraData.auraInstanceID, 2, 999))
 
-				local duration = C_UnitAuras.GetAuraDuration(frame.unit, auraData.auraInstanceID)
+				local duration = C_UnitAuras.GetAuraDuration(frame.unitId, auraData.auraInstanceID)
 
 				if duration then
 					aura.cooldown:SetCooldownFromDurationObject(duration)
@@ -2685,7 +2669,7 @@ function module:UpdateAuras(frame)
 
 				aura.stealable:SetAlphaFromBoolean(not playerIsTarget and auraData.isStealable, 1, 0)
 
-				colorInfo = C_UnitAuras.GetAuraDispelTypeColor(frame.unit, auraData.auraInstanceID, dispelColorCurve)
+				colorInfo = C_UnitAuras.GetAuraDispelTypeColor(frame.unitId, auraData.auraInstanceID, dispelColorCurve)
 
 				if not colorInfo then
 					colorInfo = dispelColorCurve:Evaluate(0)
@@ -2704,7 +2688,7 @@ function module:UpdateAuras(frame)
 				end
 
 				if LibClassicDurations then
-					local durationNew, expirationTimeNew = LibClassicDurations:GetAuraDurationByUnit(frame.unit, auraData.spellId, auraData.sourceUnit, auraData.name)
+					local durationNew, expirationTimeNew = LibClassicDurations:GetAuraDurationByUnit(frame.unitId, auraData.spellId, auraData.sourceUnit, auraData.name)
 					if auraData.duration == 0 and durationNew then
 						auraData.duration = durationNew
 						auraData.expirationTime = expirationTimeNew
@@ -2734,7 +2718,7 @@ function module:UpdateAuras(frame)
 			-- aura.stealable:SetSize(size, size)
 
 --[[
-			if colorInfo and UnitIsEnemy(frame.unit, "player") then
+			if colorInfo and UnitIsEnemy(frame.unitId, "player") then
 				if colorInfo.r then
 					aura.border:SetVertexColor(colorInfo.r, colorInfo.g, colorInfo.b)
 				elseif colorInfo.color then
@@ -2774,7 +2758,7 @@ function module:UpdateAuras(frame)
 	end
 
 	for i = 1, maxDebuffs do
-		local auraData = C_UnitAuras.GetDebuffDataByIndex(frame.unit, i, debuffFilter)
+		local auraData = C_UnitAuras.GetDebuffDataByIndex(frame.unitId, i, debuffFilter)
 		if auraData then
 			if not auraFrame["aura"..i] then
 				auraFrame["aura"..i] = CreateFrame("Button", nil, auraFrame, self.db.profile.templatePrefix.."Debuff")
@@ -2785,21 +2769,21 @@ function module:UpdateAuras(frame)
 			end
 
 			aura = auraFrame["aura"..i]
-			aura.unit = frame.unit
+			aura.unit = frame.unitId
 			aura:SetID(i)
 			aura.icon:SetTexture(auraData.icon)
 			local colorInfo
 			local size = normalSize
 
 			if addon.WOW_PROJECT_ID == addon.WOW_PROJECT_ID_MAINLINE then
-				if not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unit, auraData.auraInstanceID, debuffFilterPlayerOnly .. "|HARMFUL") then
+				if not C_UnitAuras.IsAuraFilteredOutByInstanceID(frame.unitId, auraData.auraInstanceID, debuffFilterPlayerOnly .. "|HARMFUL") then
 					size = largeSize
 					auraFrameHeight = largeSize
 				end
 
-				aura.count:SetText(C_UnitAuras.GetAuraApplicationDisplayCount(frame.unit, auraData.auraInstanceID, 2, 999))
+				aura.count:SetText(C_UnitAuras.GetAuraApplicationDisplayCount(frame.unitId, auraData.auraInstanceID, 2, 999))
 
-				local duration = C_UnitAuras.GetAuraDuration(frame.unit, auraData.auraInstanceID)
+				local duration = C_UnitAuras.GetAuraDuration(frame.unitId, auraData.auraInstanceID)
 
 				if duration then
 					aura.cooldown:SetCooldownFromDurationObject(duration)
@@ -2812,7 +2796,7 @@ function module:UpdateAuras(frame)
 					aura.cooldown:Hide()
 				end
 
-				colorInfo = C_UnitAuras.GetAuraDispelTypeColor(frame.unit, auraData.auraInstanceID, dispelColorCurve)
+				colorInfo = C_UnitAuras.GetAuraDispelTypeColor(frame.unitId, auraData.auraInstanceID, dispelColorCurve)
 				if not colorInfo then
 					colorInfo = dispelColorCurve:Evaluate(0)
 				end
@@ -2830,7 +2814,7 @@ function module:UpdateAuras(frame)
 				end
 
 				if LibClassicDurations then
-					local durationNew, expirationTimeNew = LibClassicDurations:GetAuraDurationByUnit(frame.unit, auraData.spellId, auraData.sourceUnit, auraData.name)
+					local durationNew, expirationTimeNew = LibClassicDurations:GetAuraDurationByUnit(frame.unitId, auraData.spellId, auraData.sourceUnit, auraData.name)
 					if auraData.duration == 0 and durationNew then
 						auraData.duration = durationNew
 						auraData.expirationTime = expirationTimeNew

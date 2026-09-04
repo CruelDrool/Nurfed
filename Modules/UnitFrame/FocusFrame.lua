@@ -126,9 +126,9 @@ local function Update(frame)
 	UnitFrames:HealthBar_Update(frame.health)
 	if frame.threat then UnitFrames:ThreatBar_Update(frame.threat) end
 	UnitFrames:UpdateModel(frame)
-	if UnitExists(frame.unit) then
+	if UnitExists(frame.unitId) then
 		UnitFrames:UpdateLoot(frame)
-		UnitFrames:UpdateReadyCheck(frame.unit, frame.readyCheck)
+		UnitFrames:UpdateReadyCheck(frame.unitId, frame.readyCheck)
 		UnitFrames:UpdateRaidIcon(frame)
 		UnitFrames:UpdateInfo(frame)
 		UnitFrames:UpdatePartyLeader(frame)
@@ -149,31 +149,31 @@ local function OnEvent(frame, event, ...)
 	elseif event == "DISPLAY_SIZE_CHANGED" then
 		Update(frame)
 	elseif event == "PLAYER_TARGET_CHANGED" then
-		if UnitExists("target") and UnitIsUnit("target", frame.unit) then
+		if UnitExists("target") and UnitIsUnit("target", frame.unitId) then
 			frame:LockHighlight()
 		else
 			frame:UnlockHighlight()
 		end
 	elseif event == "PLAYER_FOCUS_CHANGED" then
 		Update(frame)
-		if UnitExists("target") and UnitIsUnit("target", frame.unit) then
+		if UnitExists("target") and UnitIsUnit("target", frame.unitId) then
 				frame:LockHighlight()
 			else
 				frame:UnlockHighlight()
 		end
 	elseif event == "UNIT_CLASSIFICATION_CHANGED" or event == "UNIT_LEVEL" or event == "UNIT_FACTION" or event == "UNIT_NAME_UPDATE" then
-		if arg1 == frame.unit then
+		if arg1 == frame.unitId then
 			UnitFrames:UpdateInfo(frame)
 			if event == "UNIT_FACTION" then
 				UnitFrames:UpdatePVPStatus(frame)
 			end
 		end
 	elseif event == "UNIT_AURA" then
-		if arg1 == frame.unit then
+		if arg1 == frame.unitId then
 			UnitFrames:UpdateAuras(frame)
 		end
 	elseif event == "UNIT_MODEL_CHANGED" then
-		if arg1 == frame.unit then
+		if arg1 == frame.unitId then
 			UnitFrames:UpdateModel(frame)
 		end
 	elseif event == "GROUP_ROSTER_UPDATE" then
@@ -189,7 +189,7 @@ local function OnEvent(frame, event, ...)
 	elseif event == "RAID_TARGET_UPDATE" then
 		UnitFrames:UpdateRaidIcon(frame)
 	elseif  event == "READY_CHECK" or event == "READY_CHECK_CONFIRM" then
-        UnitFrames:UpdateReadyCheck(frame.unit, frame.readyCheck)
+        UnitFrames:UpdateReadyCheck(frame.unitId, frame.readyCheck)
     elseif ( event == "READY_CHECK_FINISHED" ) then
         ReadyCheck_Finish(frame.readyCheck, DEFAULT_READY_CHECK_STAY_TIME)
 	elseif event == "CVAR_UPDATE" then

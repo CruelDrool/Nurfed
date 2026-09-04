@@ -174,11 +174,7 @@
 				</Anchors>
 			</Frame>
 		</Frames>
-		
-		<Scripts>
-			<OnEnter function="UnitFrame_OnEnter"/>
-			<OnLeave function="UnitFrame_OnLeave"/>
-		</Scripts>
+
 		<HighlightTexture file="Interface\QuestFrame\UI-QuestTitleHighlight" alphaMode="ADD" hidden="true" >
 			<Size x="130" y="18"/>
 			<Anchors>

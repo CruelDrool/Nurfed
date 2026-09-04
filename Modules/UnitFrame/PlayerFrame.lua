@@ -263,7 +263,7 @@ local function Update(frame)
 	UnitFrames:ShowHideHighlight(frame)
 
 	UnitFrames:UpdateModel(frame)
-	if UnitExists(frame.unit) then
+	if UnitExists(frame.unitId) then
 		UpdateStatus(frame)
 		UpdatePlaytime(frame.playTime)
 		UnitFrames:UpdateInfo(frame)
@@ -334,18 +334,18 @@ local function OnEvent(frame, event, ...)
 		frame.onHateList = nil;
 		Update(frame)
 	elseif event == "UNIT_LEVEL" or event == "UNIT_NAME_UPDATE" then
-		if arg1 == frame.unit then
+		if arg1 == frame.unitId then
 			UnitFrames:UpdateInfo(frame)
 		end
 	elseif event == "DISPLAY_SIZE_CHANGED" then
 		Update(frame)
 	elseif event == "UNIT_MODEL_CHANGED" then
-		if arg1 == frame.unit then
+		if arg1 == frame.unitId then
 			-- if frame.model then frame.model:RefreshUnit() end
 			UnitFrames:UpdateModel(frame)
 		end
 	elseif event == "UNIT_FACTION" then
-		if arg1 == frame.unit then
+		if arg1 == frame.unitId then
 			UnitFrames:UpdatePVPStatus(frame)
 		end
 	elseif event == "PLAYER_ENTER_COMBAT" then
@@ -379,13 +379,13 @@ local function OnEvent(frame, event, ...)
 	elseif event == "RAID_TARGET_UPDATE" then
 		UnitFrames:UpdateRaidIcon(frame)
 	elseif  event == "READY_CHECK" or event == "READY_CHECK_CONFIRM" then
-        UnitFrames:UpdateReadyCheck(frame.unit, frame.readyCheck)
+        UnitFrames:UpdateReadyCheck(frame.unitId, frame.readyCheck)
     elseif ( event == "READY_CHECK_FINISHED" ) then
         ReadyCheck_Finish(frame.readyCheck, DEFAULT_READY_CHECK_STAY_TIME)
 	elseif event == "UI_SCALE_CHANGED" then
 		if frame.model then frame.model:RefreshUnit() end
 	elseif event == "UNIT_COMBAT" then
-		if arg1 == frame.unit then
+		if arg1 == frame.unitId then
 			CombatFeedback_OnEvent(frame.feedback, arg2, arg3, arg4, arg5)
 		end
 	end
@@ -513,14 +513,14 @@ function module:XPbar_Update(frame)
 	local r, g, b = 0.58, 0.0, 0.55
 	local text = ""
 
-	if UnitLevel(frame.unit) < maxLevel and not XPDisabled then
+	if UnitLevel(frame.unitId) < maxLevel and not XPDisabled then
 		text = UnitFrames:GetTextFormat("xp", frame:GetParent())
 
 		if GetRestState() == 1 then
 			r, g, b = 0.0, 0.39, 0.88
 		end
 
-		currValue, maxValue = UnitXP(frame.unit), UnitXPMax(frame.unit)
+		currValue, maxValue = UnitXP(frame.unitId), UnitXPMax(frame.unitId)
 
 		text = text:gsub("$cur", addon:CommaNumber(currValue))
 		text = text:gsub("$max", addon:FormatNumber(maxValue))
@@ -549,7 +549,7 @@ local function XPbar_OnEvent(frame,event,...)
 end
 
 local function XPbar_OnLoad(frame)
-	frame.unit = unit
+	frame.unitId = unit
 
 	frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 	frame:RegisterEvent("UPDATE_EXHAUSTION")
@@ -590,7 +590,7 @@ local function AdditionalPowerBar_OnLoad(frame)
 			else
 				f = self
 			end
-			if UnitPowerType(self.unit) ~= statusbar.powerType and UnitPowerMax(self.unit, statusbar.powerType) ~= 0 and (not statusbar.specRestriction or statusbar.specRestriction == C_SpecializationInfo.GetSpecialization()) then
+			if UnitPowerType(self.unitId) ~= statusbar.powerType and UnitPowerMax(self.unitId, statusbar.powerType) ~= 0 and (not statusbar.specRestriction or statusbar.specRestriction == C_SpecializationInfo.GetSpecialization()) then
 				statusbar.pauseUpdates = false
 				f:Show()
 			else

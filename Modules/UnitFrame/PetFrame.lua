@@ -100,11 +100,11 @@ local events = {
 }
 
 local function Update(frame)
-	-- frame.cast.unit = frame.unit
+	-- frame.cast.unit = frame.unitId
 	UnitFrames:PowerBar_Update(frame.powerBar)
 	UnitFrames:HealthBar_Update(frame.health)
 	UnitFrames:UpdateModel(frame)
-	if UnitExists(frame.unit) then
+	if UnitExists(frame.unitId) then
 		UnitFrames:UpdateInfo(frame)
 		UnitFrames:UpdateRaidIcon(frame)
 		UnitFrames:UpdateAuras(frame)
@@ -123,30 +123,30 @@ local function OnEvent(frame, event, ...)
 		Update(frame)
 	elseif event == "UNIT_PET" and arg1 == "player" then
 		-- if UnitInVehicle(arg1) then
-			-- frame.unit = "vehicle"
+			-- frame.unitId = "vehicle"
 		-- else
-			-- frame.unit = "pet"
+			-- frame.unitId = "pet"
 		-- end
-		-- frame.cast.unit = frame.unit
+		-- frame.cast.unit = frame.unitId
 		Update(frame)
 	elseif event == "PET_ATTACK_START" then
 		frame.attackIcon:Show()
 	elseif event == "PET_ATTACK_STOP" then
 		frame.attackIcon:Hide()
 	elseif event == "UNIT_ENTERED_VEHICLE" and arg1 == "player" then
-		-- frame.unit = "vehicle"
-		-- frame.cast.unit = frame.unit
+		-- frame.unitId = "vehicle"
+		-- frame.cast.unit = frame.unitId
 		Update(frame)
 	elseif event == "UNIT_EXITED_VEHICLE" and arg1 == "player" then
-		-- frame.unit = "pet"
-		-- frame.cast.unit = frame.unit
+		-- frame.unitId = "pet"
+		-- frame.cast.unit = frame.unitId
 		Update(frame)
 	elseif event == "UNIT_LEVEL" or event == "UNIT_NAME_UPDATE" then
-		if arg1 == frame.unit then
+		if arg1 == frame.unitId then
 			UnitFrames:UpdateInfo(frame)
 		end
 	elseif event == "UNIT_AURA" then
-		if arg1 == frame.unit then
+		if arg1 == frame.unitId then
 			UnitFrames:UpdateAuras(frame)
 		end
 	elseif event == "RAID_TARGET_UPDATE" then
@@ -154,13 +154,13 @@ local function OnEvent(frame, event, ...)
 	-- elseif event == "PET_RENAMEABLE" then
 		-- StaticPopup_Show("RENAME_PET")
 	elseif event == "PLAYER_TARGET_CHANGED" then
-		if UnitExists("target") and UnitIsUnit("target", frame.unit) then
+		if UnitExists("target") and UnitIsUnit("target", frame.unitId) then
 			frame:LockHighlight()
 		else
 			frame:UnlockHighlight()
 		end
 	elseif event == "UNIT_MODEL_CHANGED" then
-		if arg1 == frame.unit then
+		if arg1 == frame.unitId then
 			UnitFrames:UpdateModel(frame)
 		end
 	elseif event == "UI_SCALE_CHANGED" then

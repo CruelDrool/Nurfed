@@ -128,7 +128,7 @@ local events = {
 }
 
 local function UpdatePhasing(frame)
-	local unit = frame.unit
+	local unit = frame.unitId
 	local icon = frame.phasingIcon
 	
 	if UnitInOtherParty(unit) then
@@ -185,11 +185,11 @@ local function UpdatePhasing(frame)
 end
 
 local function UpdateOnlineStatus(frame)
-	if not UnitIsConnected(frame.unit) and UnitIsPlayer(frame.unit) then
+	if not UnitIsConnected(frame.unitId) and UnitIsPlayer(frame.unitId) then
 		frame.classIcon:Hide()
 		frame.disconnected:Show()
 	else
-		local _, classFileName = UnitClass(frame.unit)
+		local _, classFileName = UnitClass(frame.unitId)
 		local coords = CLASS_ICON_TCOORDS[classFileName]
 		if coords ~= nil then
 			frame.classIcon:SetTexCoord(unpack(coords))
@@ -200,7 +200,7 @@ local function UpdateOnlineStatus(frame)
 end
 
 local function UpdateRange(frame)
-	local inRange, checkedRange = UnitInRange(frame.unit)
+	local inRange, checkedRange = UnitInRange(frame.unitId)
 	if not addon:IsSecretValue(inRange) and checkedRange and not inRange then
 		frame:SetBackdropBorderColor(1,0,0)
 	else
@@ -211,7 +211,7 @@ end
 local function Update(frame)
 	UnitFrames:PowerBar_Update(frame.powerBar)
 	UnitFrames:HealthBar_Update(frame.health)
-	if UnitExists(frame.unit) then
+	if UnitExists(frame.unitId) then
 		UnitFrames:UpdateInfo(frame)
 		UnitFrames:UpdatePartyLeader(frame)
 		UnitFrames:UpdateLoot(frame)
@@ -225,7 +225,7 @@ local function Update(frame)
 end
 
 local function OnUpdate(frame, elapsed)
-	if not UnitExists(frame.unit) then return end
+	if not UnitExists(frame.unitId) then return end
 	UpdateRange(frame)
 end
 
@@ -241,32 +241,32 @@ local function OnEvent(frame, event, ...)
 	elseif event == "CVAR_UPDATE" or event == "UPDATE_BINDINGS" or event == "DISPLAY_SIZE_CHANGED" then
 		Update(frame)
 	elseif event == "UNIT_PHASE" or event == "PARTY_MEMBER_ENABLE" or event == "PARTY_MEMBER_DISABLE" or event == "UNIT_FLAGS" or event == "UNIT_CTR_OPTIONS" then
-		if event ~= "UNIT_PHASE" or arg1 == frame.unit then
+		if event ~= "UNIT_PHASE" or arg1 == frame.unitId then
 			UpdatePhasing(frame)
 		end
-	elseif event == "UNIT_OTHER_PARTY_CHANGED" and arg1 == frame.unit then
+	elseif event == "UNIT_OTHER_PARTY_CHANGED" and arg1 == frame.unitId then
 		UpdatePhasing(frame)
 	elseif event == "INCOMING_SUMMON_CHANGED" then
 		UpdatePhasing(frame)
 	elseif event == "UNIT_CONNECTION" then
-		if arg1 == frame.unit then
+		if arg1 == frame.unitId then
 			UpdateOnlineStatus(frame)
 			UnitFrames:UpdateAuras(frame)
 		end
 	elseif event == "UNIT_LEVEL" or event == "UNIT_NAME_UPDATE" then
-		if arg1 == frame.unit then
+		if arg1 == frame.unitId then
 			UnitFrames:UpdateInfo(frame)
 		end
 	elseif event == "UNIT_AURA" then
-		if arg1 == frame.unit then
+		if arg1 == frame.unitId then
 			UnitFrames:UpdateAuras(frame)
 		end
 	elseif event == "UNIT_FACTION" then
-		if arg1 == frame.unit then
+		if arg1 == frame.unitId then
 			UnitFrames:UpdatePVPStatus(frame)
 		end
 	elseif event == "PLAYER_TARGET_CHANGED" then
-		if UnitExists("target") and UnitIsUnit("target", frame.unit) then
+		if UnitExists("target") and UnitIsUnit("target", frame.unitId) then
 			frame:LockHighlight()
 		else
 			frame:UnlockHighlight()
@@ -284,7 +284,7 @@ local function OnEvent(frame, event, ...)
 	elseif event == "RAID_TARGET_UPDATE" then
 		UnitFrames:UpdateRaidIcon(frame)
 	elseif  event == "READY_CHECK" or event == "READY_CHECK_CONFIRM" then
-        UnitFrames:UpdateReadyCheck(frame.unit, frame.readyCheck)
+        UnitFrames:UpdateReadyCheck(frame.unitId, frame.readyCheck)
     elseif ( event == "READY_CHECK_FINISHED" ) then
         ReadyCheck_Finish(frame.readyCheck, DEFAULT_READY_CHECK_STAY_TIME)
 	end

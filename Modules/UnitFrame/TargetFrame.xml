@@ -257,9 +257,5 @@
 			</Frame>
 		</Frames>
 
-		<Scripts>
-			<OnEnter function="UnitFrame_OnEnter"/>
-			<OnLeave function="UnitFrame_OnLeave"/>
-		</Scripts>
 	</Button>
 </Ui>

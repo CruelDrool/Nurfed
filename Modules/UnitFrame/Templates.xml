@@ -182,6 +182,19 @@
 				})
 				self:SetBackdropColor(0, 0, 0, 0.75)
 			</OnLoad>
+			<OnEnter>
+				GameTooltip_SetDefaultAnchor(GameTooltip, self)
+				if ( GameTooltip:SetUnit(self.unitId, self.hideStatusOnTooltip) ) then
+					GameTooltip:Show();
+					self.UpdateTooltip = self:GetScript("OnEnter")
+				else
+					self.UpdateTooltip = nil
+				end
+			</OnEnter>
+			<OnLeave>
+				self.UpdateTooltip = nil
+				GameTooltip:FadeOut()
+			</OnLeave>
 		</Scripts>
 	</Button>
 	
